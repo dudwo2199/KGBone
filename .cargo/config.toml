@@ -1,0 +1,5 @@
+# 테스트는 WebAssembly(WASI)로 빌드해 Node에서 돌린다.
+# 이유: 이 PC는 Windows 스마트 앱 컨트롤이 새로 빌드한 서명 없는 .exe(테스트·빌드 스크립트)를 막는다.
+# 실행: cargo test -p kgbone-core --target wasm32-wasip1   (또는 npm run test:rust)
+[target.wasm32-wasip1]
+runner = ["node", "../../tools/wasi-run.mjs"]

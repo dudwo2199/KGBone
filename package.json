@@ -1,0 +1,34 @@
+{
+  "name": "kgbone",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "KGBone - 2D 스켈레탈 애니메이션 에디터",
+  "scripts": {
+    "wasm": "node tools/build-wasm.mjs",
+    "dev": "npm run wasm && vite --config app/vite.config.ts",
+    "build": "npm run wasm && tsc -p app/tsconfig.json --noEmit && vite build --config app/vite.config.ts",
+    "test:rust": "cargo test -p kgbone-core --target wasm32-wasip1",
+    "test:ui": "vitest run --config app/vite.config.ts",
+    "test:e2e": "playwright test",
+    "test": "npm run test:rust && npm run test:ui && npm run test:e2e",
+    "samples": "node tools/gen-samples.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.0",
+    "vitest": "^4.0.0",
+    "jsdom": "^27.0.0",
+    "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-dialog": "^2.4.0",
+    "@tauri-apps/cli": "^2.9.0"
+  }
+}

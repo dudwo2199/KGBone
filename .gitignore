@@ -17,3 +17,5 @@ app/src/wasm/pkg/
 # 테스트 산출물
 test-results/
 playwright-report/
+app/public/kgbone.wasm
+app/dist/

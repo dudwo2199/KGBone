@@ -1,0 +1,12 @@
+[package]
+name = "kgbone-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "KGBone 핵심을 화면(WebAssembly)에서 쓰기 위한 연결층(C ABI + JSON 문자열)"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+kgbone-core = { path = "../kgbone-core" }

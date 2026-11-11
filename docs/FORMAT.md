@@ -189,7 +189,8 @@ KGBone의 기본 프로젝트 파일. 누구나 읽고 쓸 수 있도록 공개�
 }
 ```
 **키** 공통 모양: `{ "time": 초, "v": [값...], "s": 문자열, "curve": 곡선 }`
-- `v` 생략 = 빈 배열, `s`는 문자열 값이 필요한 타임라인만(첨부물 이름, 상속 종류, 시퀀스 모드). `s: null`은 "비움".
+- `v` 생략 = 빈 배열, `s`는 문자열 값이 필요한 타임라인만(첨부물 이름, 상속 종류, 시퀀스 모드). 첨부물 키에서 `s`가 없으면 "비움".
+- deform 키는 `offset`(정수, 기본 0)을 더 가진다.
 - `curve` 생략 = 선형, `"stepped"` = 계단, 숫자 배열 = 베지어. 베지어는 값 채널마다 `[cx1, cy1, cx2, cy2]`를 이어 붙인다. cx는 시간(초), cy는 값, 모두 절대 좌표.
 
 | 대상 | 타임라인 | v의 뜻 |
@@ -198,7 +199,7 @@ KGBone의 기본 프로젝트 파일. 누구나 읽고 쓸 수 있도록 공개�
 | 본 | translate, scale, shear | [x, y] |
 | 본 | translatex, translatey, scalex, scaley, shearx, sheary | [값] |
 | 본 | inherit | s = 상속 종류 (계단) |
-| 슬롯 | attachment | s = 첨부물 이름 또는 null (계단) |
+| 슬롯 | attachment | s = 첨부물 이름, 없으면 비움 (계단) |
 | 슬롯 | rgba / rgb / alpha | [r,g,b,a] / [r,g,b] / [a] (0~1) |
 | 슬롯 | rgba2 / rgb2 | [r,g,b,a, dr,dg,db] / [r,g,b, dr,dg,db] |
 | 제약(ik) | ik | [mix, softness, bendPositive(1/−1), compress(0/1), stretch(0/1)] |
