@@ -1,0 +1,19 @@
+# Claude Code 설정·작업 파일 (하위 전부)
+.claude/
+
+# 의존성
+node_modules/
+
+# Rust 빌드 산출물
+target/
+
+# 프론트엔드·패키징 빌드 산출물
+dist/
+src-tauri/target/
+*.log
+
+# Rust → WebAssembly 산출물
+app/src/wasm/pkg/
+# 테스트 산출물
+test-results/
+playwright-report/
