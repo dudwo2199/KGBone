@@ -1,0 +1,192 @@
+# KGBone Windows 실행 파일 빌드.
+# 개발 PC는 Windows 스마트 앱 컨트롤 때문에 Tauri 앱을 빌드할 수 없어서 여기서 빌드한다(CLAUDE.md 4장).
+# 결과는 ① Actions 아티팩트 ② build-output 브랜치(KGBone.exe, build-log.txt, build-info.txt)에 올린다.
+# 로컬에서 받기: git fetch origin build-output && git show origin/build-output:build-info.txt
+name: Windows 빌드
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# build-output 브랜치에 동시에 push하지 않도록 한 번에 하나씩
+concurrency:
+  group: build-windows
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      CARGO_TERM_COLOR: never
+      LOG_DIR: ${{ github.workspace }}\build-logs
+    steps:
+      - name: 저장소 받기
+        uses: actions/checkout@v4
+
+      - name: Node 준비
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Rust 준비
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add wasm32-unknown-unknown wasm32-wasip1
+          New-Item -ItemType Directory -Force $env:LOG_DIR | Out-Null
+          rustc --version | Tee-Object -FilePath "$env:LOG_DIR\00-toolchain.txt"
+          cargo --version | Tee-Object -FilePath "$env:LOG_DIR\00-toolchain.txt" -Append
+          node --version | Tee-Object -FilePath "$env:LOG_DIR\00-toolchain.txt" -Append
+
+      - name: Rust 빌드 캐시
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+            src-tauri -> target
+
+      - name: 화면 의존성 설치
+        run: |
+          $ErrorActionPreference = 'Continue'
+          npm ci --no-audit --no-fund 2>&1 | Tee-Object -FilePath "$env:LOG_DIR\01-npm-ci.txt"
+          exit $LASTEXITCODE
+
+      # 테스트가 실패해도 실행 파일은 만든다(결과는 build-info.txt에 적힌다)
+      - name: Rust 핵심 테스트(WASI)
+        id: test_core
+        continue-on-error: true
+        run: |
+          $ErrorActionPreference = 'Continue'
+          npm run test:rust 2>&1 | Tee-Object -FilePath "$env:LOG_DIR\02-test-rust.txt"
+          exit $LASTEXITCODE
+
+      - name: 화면 빌드(WebAssembly 포함)
+        id: build_front
+        run: |
+          $ErrorActionPreference = 'Continue'
+          npm run build 2>&1 | Tee-Object -FilePath "$env:LOG_DIR\03-build-front.txt"
+          exit $LASTEXITCODE
+
+      - name: 앱 본체 단위 테스트
+        id: test_app
+        continue-on-error: true
+        working-directory: src-tauri
+        run: |
+          $ErrorActionPreference = 'Continue'
+          cargo test 2>&1 | Tee-Object -FilePath "$env:LOG_DIR\04-test-app.txt"
+          exit $LASTEXITCODE
+
+      - name: 실행 파일 빌드
+        id: build_exe
+        run: |
+          $ErrorActionPreference = 'Continue'
+          npx tauri build --no-bundle 2>&1 | Tee-Object -FilePath "$env:LOG_DIR\05-tauri-build.txt"
+          $code = $LASTEXITCODE
+          Get-ChildItem src-tauri\target\release\*.exe -ErrorAction SilentlyContinue |
+            Format-Table Name, Length -AutoSize | Out-String |
+            Tee-Object -FilePath "$env:LOG_DIR\05-tauri-build.txt" -Append
+          exit $code
+
+      - name: 실행 파일 찾기
+        id: find_exe
+        if: always()
+        run: |
+          $candidates = @('src-tauri\target\release\KGBone.exe', 'src-tauri\target\release\kgbone-app.exe')
+          $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if ($found) {
+            New-Item -ItemType Directory -Force dist-exe | Out-Null
+            Copy-Item $found dist-exe\KGBone.exe
+            "path=dist-exe\KGBone.exe" >> $env:GITHUB_OUTPUT
+            "exists=true" >> $env:GITHUB_OUTPUT
+          } else {
+            "exists=false" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: 아티팩트 올리기
+        if: steps.find_exe.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: KGBone-windows-${{ github.sha }}
+          path: dist-exe/KGBone.exe
+          if-no-files-found: error
+
+      - name: build-output 브랜치에 결과 올리기
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+          TEST_CORE: ${{ steps.test_core.outcome }}
+          BUILD_FRONT: ${{ steps.build_front.outcome }}
+          TEST_APP: ${{ steps.test_app.outcome }}
+          BUILD_EXE: ${{ steps.build_exe.outcome }}
+          EXE_EXISTS: ${{ steps.find_exe.outputs.exists }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $sha = "${{ github.sha }}"
+          $short = $sha.Substring(0, 7)
+          $out = Join-Path $env:RUNNER_TEMP 'build-output'
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # 기존 브랜치가 있으면 그 위에, 없으면 orphan으로 새로 만든다(강제 push 없음)
+          git ls-remote --exit-code --heads origin build-output | Out-Null
+          if ($LASTEXITCODE -eq 0) {
+            git fetch --depth 1 origin "+refs/heads/build-output:refs/remotes/origin/build-output"
+            git worktree add -B build-output $out origin/build-output
+          } else {
+            git worktree add --detach $out
+            Push-Location $out
+            git checkout --orphan build-output
+            git rm -rf --quiet .
+            Pop-Location
+          }
+          if ($LASTEXITCODE -ne 0) { Write-Error "build-output 작업 폴더를 만들지 못했습니다"; exit 1 }
+
+          # 로그 합치기
+          $log = Join-Path $out 'build-log.txt'
+          Set-Content -Path $log -Value "KGBone 빌드 로그 $sha" -Encoding utf8
+          Get-ChildItem $env:LOG_DIR -Filter *.txt -ErrorAction SilentlyContinue | Sort-Object Name | ForEach-Object {
+            Add-Content -Path $log -Value "`n===== $($_.Name) =====" -Encoding utf8
+            Get-Content $_.FullName | Add-Content -Path $log -Encoding utf8
+          }
+
+          # 실행 파일(있을 때만 바꾼다. 실패하면 지난 실행 파일을 지운다 → 헷갈리지 않게)
+          $exe = Join-Path $out 'KGBone.exe'
+          if ($env:EXE_EXISTS -eq 'true') {
+            Copy-Item dist-exe\KGBone.exe $exe -Force
+          } elseif (Test-Path $exe) {
+            Remove-Item $exe -Force
+          }
+
+          $ok = if ($env:JOB_STATUS -eq 'success' -and $env:EXE_EXISTS -eq 'true') { '성공' } else { '실패' }
+          $info = @(
+            "커밋: $sha",
+            "시각(UTC): $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss'))",
+            "결과: $ok",
+            "실행 파일: $(if ($env:EXE_EXISTS -eq 'true') { '있음 (KGBone.exe)' } else { '없음' })",
+            "Rust 핵심 테스트(WASI): $env:TEST_CORE",
+            "화면 빌드: $env:BUILD_FRONT",
+            "앱 본체 단위 테스트: $env:TEST_APP",
+            "실행 파일 빌드: $env:BUILD_EXE",
+            "작업 상태: $env:JOB_STATUS",
+            "실행 기록: $env:RUN_URL"
+          )
+          Set-Content -Path (Join-Path $out 'build-info.txt') -Value $info -Encoding utf8
+
+          Push-Location $out
+          git add -A
+          git commit -m "[ADD] 실행 파일 빌드 결과 $short"
+          git push origin HEAD:refs/heads/build-output
+          $code = $LASTEXITCODE
+          Pop-Location
+          git worktree remove --force $out
+          exit $code

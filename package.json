@@ -12,7 +12,9 @@
     "test:ui": "vitest run --config app/vite.config.ts",
     "test:e2e": "playwright test",
     "test": "npm run test:rust && npm run test:ui && npm run test:e2e",
-    "samples": "node tools/gen-samples.mjs"
+    "samples": "node tools/gen-samples.mjs",
+    "tauri": "tauri",
+    "build:exe": "tauri build --no-bundle"
   },
   "dependencies": {
     "react": "^19.2.0",

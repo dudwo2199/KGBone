@@ -1,0 +1,38 @@
+[package]
+name = "kgbone-app"
+version = "0.1.0"
+edition = "2021"
+license = "UNLICENSED"
+description = "KGBone 앱 본체(Tauri 2): 파일·창·레지스트리. 계산은 kgbone-core가 한다"
+rust-version = "1.90"
+
+# 루트 워크스페이스(kgbone-core, kgbone-wasm: 외부 의존성 0개)와 분리한다.
+# 이 패키지는 Tauri를 쓰므로 빌드 스크립트가 필요하고, 이 PC(스마트 앱 컨트롤)에서는 빌드할 수 없다.
+# 빌드는 GitHub Actions(.github/workflows/build-windows.yml)에서 한다.
+[workspace]
+
+[lib]
+name = "kgbone_app_lib"
+crate-type = ["rlib"]
+
+[[bin]]
+name = "kgbone-app"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# 화면 쪽 @tauri-apps/api 2.12.x, @tauri-apps/plugin-dialog 2.8.x와 major.minor를 맞춘다(tauri build가 검사).
+tauri = { version = "~2.12", features = ["protocol-asset"] }
+tauri-plugin-dialog = "~2.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+kgbone-core = { path = "../crates/kgbone-core" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

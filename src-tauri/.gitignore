@@ -1,0 +1,3 @@
+# Rust 빌드 산출물, Tauri가 만드는 권한 스키마
+/target/
+/gen/schemas
