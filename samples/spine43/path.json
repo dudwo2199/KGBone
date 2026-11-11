@@ -1,0 +1,104 @@
+{
+	"skeleton": {
+		"hash": "kgbone-sample",
+		"spine": "4.3.00",
+		"x": -100,
+		"y": 0,
+		"width": 200,
+		"height": 300,
+		"images": "../images/",
+		"audio": ""
+	},
+	"bones": [
+		{
+			"name": "root"
+		},
+		{
+			"name": "p1",
+			"parent": "root",
+			"length": 20
+		},
+		{
+			"name": "p2",
+			"parent": "p1",
+			"length": 20,
+			"x": 20
+		},
+		{
+			"name": "p3",
+			"parent": "p2",
+			"length": 20,
+			"x": 20
+		}
+	],
+	"slots": [
+		{
+			"name": "path",
+			"bone": "root",
+			"attachment": "path"
+		}
+	],
+	"skins": [
+		{
+			"name": "default",
+			"attachments": {
+				"path": {
+					"path": {
+						"type": "path",
+						"closed": false,
+						"lengths": [
+							100
+						],
+						"vertexCount": 6,
+						"vertices": [
+							-10,
+							0,
+							0,
+							0,
+							10,
+							0,
+							90,
+							0,
+							100,
+							0,
+							110,
+							0
+						]
+					}
+				}
+			}
+		}
+	],
+	"path": [
+		{
+			"name": "follow-path",
+			"order": 0,
+			"bones": [
+				"p1",
+				"p2",
+				"p3"
+			],
+			"target": "path",
+			"spacingMode": "length",
+			"rotateMode": "chain",
+			"position": 0.1
+		}
+	],
+	"animations": {
+		"slide": {
+			"path": {
+				"follow-path": {
+					"position": [
+						{
+							"value": 0
+						},
+						{
+							"time": 2,
+							"value": 0.6
+						}
+					]
+				}
+			}
+		}
+	}
+}

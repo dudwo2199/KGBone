@@ -1,0 +1,59 @@
+{
+	"skeleton": {
+		"hash": "kgbone-sample",
+		"spine": "4.3.00",
+		"x": -100,
+		"y": 0,
+		"width": 200,
+		"height": 300,
+		"images": "../images/",
+		"audio": ""
+	},
+	"bones": [
+		{
+			"name": "root"
+		}
+	],
+	"events": {
+		"footstep": {
+			"int": 1,
+			"float": 0.5,
+			"string": "왼발",
+			"audio": "step.wav",
+			"volume": 0.8,
+			"balance": -0.2
+		},
+		"hit": {}
+	},
+	"animations": {
+		"walk": {
+			"events": [
+				{
+					"time": 0.25,
+					"name": "footstep"
+				},
+				{
+					"time": 0.75,
+					"name": "footstep",
+					"string": "오른발",
+					"int": 2
+				},
+				{
+					"time": 1,
+					"name": "hit"
+				}
+			],
+			"x-custom": {
+				"keep": [
+					1,
+					2.50,
+					3
+				]
+			}
+		}
+	},
+	"x-custom-root": {
+		"note": "모르는 필드는 내보낼 때 그대로 남아야 한다",
+		"value": 1.250
+	}
+}

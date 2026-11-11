@@ -1,0 +1,81 @@
+{
+	"skeleton": {
+		"hash": "kgbone-sample",
+		"spine": "4.3.00",
+		"x": -100,
+		"y": 0,
+		"width": 200,
+		"height": 300,
+		"images": "../images/",
+		"audio": ""
+	},
+	"bones": [
+		{
+			"name": "root"
+		},
+		{
+			"name": "src",
+			"parent": "root",
+			"x": 20,
+			"y": 30,
+			"rotation": 45
+		},
+		{
+			"name": "follow",
+			"parent": "root",
+			"x": -20
+		},
+		{
+			"name": "follow-local",
+			"parent": "root",
+			"x": -40
+		}
+	],
+	"transform": [
+		{
+			"name": "tc-world",
+			"order": 0,
+			"bones": [
+				"follow"
+			],
+			"target": "src",
+			"rotation": 10,
+			"x": 5,
+			"mixRotate": 1,
+			"mixX": 0.5,
+			"mixScaleX": 0,
+			"mixShearY": 0
+		},
+		{
+			"name": "tc-local",
+			"order": 1,
+			"bones": [
+				"follow-local"
+			],
+			"target": "src",
+			"local": true,
+			"relative": true,
+			"mixRotate": 0.5,
+			"mixX": 0,
+			"mixY": 0,
+			"mixScaleX": 0,
+			"mixShearY": 0
+		}
+	],
+	"animations": {
+		"mixing": {
+			"transform": {
+				"tc-world": [
+					{
+						"mixRotate": 1
+					},
+					{
+						"time": 1,
+						"mixRotate": 0,
+						"mixX": 0
+					}
+				]
+			}
+		}
+	}
+}

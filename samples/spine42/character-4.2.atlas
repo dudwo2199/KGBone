@@ -1,0 +1,14 @@
+character-4.2.png
+size:256,256
+filter:Linear,Linear
+pma:true
+arm
+bounds:2,2,64,20
+body
+bounds:68,2,48,96
+head
+bounds:118,2,64,64
+offsets:0,0,64,64
+leg
+bounds:2,24,24,72
+rotate:90

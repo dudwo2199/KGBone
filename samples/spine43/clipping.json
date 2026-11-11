@@ -1,0 +1,72 @@
+{
+	"skeleton": {
+		"hash": "kgbone-sample",
+		"spine": "4.3.00",
+		"x": -100,
+		"y": 0,
+		"width": 200,
+		"height": 300,
+		"images": "../images/",
+		"audio": ""
+	},
+	"bones": [
+		{
+			"name": "root"
+		}
+	],
+	"slots": [
+		{
+			"name": "clip",
+			"bone": "root",
+			"attachment": "clip"
+		},
+		{
+			"name": "body",
+			"bone": "root",
+			"attachment": "body"
+		},
+		{
+			"name": "after",
+			"bone": "root",
+			"attachment": "gem"
+		}
+	],
+	"skins": [
+		{
+			"name": "default",
+			"attachments": {
+				"clip": {
+					"clip": {
+						"type": "clipping",
+						"end": "body",
+						"vertexCount": 4,
+						"vertices": [
+							-20,
+							-20,
+							20,
+							-20,
+							20,
+							20,
+							-20,
+							20
+						],
+						"color": "ce3a3aff"
+					}
+				},
+				"body": {
+					"body": {
+						"width": 48,
+						"height": 96
+					}
+				},
+				"after": {
+					"gem": {
+						"x": 40,
+						"width": 32,
+						"height": 32
+					}
+				}
+			}
+		}
+	]
+}

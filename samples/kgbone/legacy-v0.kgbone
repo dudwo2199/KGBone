@@ -1,0 +1,49 @@
+{
+	"imagesPath": "../images",
+	"skeleton": {
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "a",
+				"parent": "root",
+				"length": 30
+			},
+			{
+				"name": "b",
+				"parent": "a",
+				"length": 30,
+				"x": 30
+			},
+			{
+				"name": "t",
+				"parent": "root",
+				"x": 40,
+				"y": 20
+			}
+		],
+		"ik": [
+			{
+				"name": "ik2",
+				"order": 1,
+				"bones": [
+					"a",
+					"b"
+				],
+				"target": "t"
+			}
+		],
+		"transform": [
+			{
+				"name": "tc",
+				"order": 0,
+				"bones": [
+					"t"
+				],
+				"source": "root",
+				"mixRotate": 0
+			}
+		]
+	}
+}

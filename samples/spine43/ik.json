@@ -1,0 +1,88 @@
+{
+	"skeleton": {
+		"hash": "kgbone-sample",
+		"spine": "4.3.00",
+		"x": -100,
+		"y": 0,
+		"width": 200,
+		"height": 300,
+		"images": "../images/",
+		"audio": ""
+	},
+	"bones": [
+		{
+			"name": "root"
+		},
+		{
+			"name": "thigh",
+			"parent": "root",
+			"length": 50,
+			"rotation": -90
+		},
+		{
+			"name": "shin",
+			"parent": "thigh",
+			"length": 50,
+			"x": 50
+		},
+		{
+			"name": "target",
+			"parent": "root",
+			"x": 30,
+			"y": -60,
+			"color": "ff3f00ff"
+		},
+		{
+			"name": "single",
+			"parent": "root",
+			"length": 40,
+			"x": -50
+		},
+		{
+			"name": "aim",
+			"parent": "root",
+			"x": -50,
+			"y": 40
+		}
+	],
+	"ik": [
+		{
+			"name": "leg-ik",
+			"order": 0,
+			"bones": [
+				"thigh",
+				"shin"
+			],
+			"target": "target",
+			"bendPositive": false
+		},
+		{
+			"name": "aim-ik",
+			"order": 1,
+			"bones": [
+				"single"
+			],
+			"target": "aim",
+			"mix": 0.5,
+			"compress": true,
+			"stretch": true
+		}
+	],
+	"animations": {
+		"reach": {
+			"ik": {
+				"leg-ik": [
+					{
+						"mix": 1
+					},
+					{
+						"time": 1,
+						"mix": 0,
+						"softness": 5,
+						"bendPositive": false
+					}
+				]
+			}
+		}
+	}
+}

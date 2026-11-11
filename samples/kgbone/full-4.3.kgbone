@@ -1,0 +1,320 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone sample",
+	"imagesPath": "../images",
+	"skeleton": {
+		"fps": 30,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "몸통",
+				"parent": "root",
+				"length": 80,
+				"y": 100,
+				"rotation": 90,
+				"color": "00ff00ff"
+			},
+			{
+				"name": "꼬리1",
+				"parent": "root",
+				"length": 64,
+				"x": -20,
+				"y": 80,
+				"rotation": 180
+			},
+			{
+				"name": "꼬리2",
+				"parent": "꼬리1",
+				"length": 64,
+				"x": 64
+			},
+			{
+				"name": "목표",
+				"parent": "root",
+				"x": 60,
+				"y": 40
+			},
+			{
+				"name": "팔",
+				"parent": "몸통",
+				"length": 40,
+				"x": 60,
+				"rotation": -60
+			},
+			{
+				"name": "손",
+				"parent": "팔",
+				"length": 30,
+				"x": 40
+			},
+			{
+				"name": "다이얼",
+				"parent": "root",
+				"x": 100,
+				"y": 100,
+				"inherit": "onlyTranslation"
+			},
+			{
+				"name": "보석본",
+				"parent": "몸통",
+				"x": 80
+			}
+		],
+		"slots": [
+			{
+				"name": "꼬리",
+				"bone": "꼬리1",
+				"attachment": "tail"
+			},
+			{
+				"name": "몸",
+				"bone": "몸통",
+				"attachment": "body",
+				"dark": "101010"
+			},
+			{
+				"name": "보석",
+				"bone": "보석본",
+				"attachment": "gem",
+				"blend": "additive"
+			}
+		],
+		"constraints": [
+			{
+				"type": "ik",
+				"name": "팔IK",
+				"bones": [
+					"팔",
+					"손"
+				],
+				"target": "목표",
+				"bendPositive": false,
+				"volume": true
+			},
+			{
+				"type": "transform",
+				"name": "보석회전",
+				"bones": [
+					"보석본"
+				],
+				"source": "다이얼",
+				"localSource": true,
+				"localTarget": true,
+				"clamp": true,
+				"mixX": 0,
+				"mixY": 0,
+				"mixScaleX": 0,
+				"mixScaleY": 0,
+				"mixShearY": 0,
+				"properties": [
+					{
+						"from": "x",
+						"offset": 0,
+						"to": [
+							{
+								"property": "rotate",
+								"offset": 0,
+								"max": 90,
+								"scale": 2
+							}
+						]
+					}
+				]
+			},
+			{
+				"type": "physics",
+				"name": "꼬리물리",
+				"bone": "꼬리2",
+				"rotate": 1,
+				"strength": 80,
+				"damping": 0.8,
+				"gravity": 30,
+				"volume": true
+			},
+			{
+				"type": "slider",
+				"name": "흔들기",
+				"animation": "꼬리흔들기",
+				"time": 0.5,
+				"mix": 0.75,
+				"bone": "다이얼",
+				"property": "y",
+				"propertyFrom": 0,
+				"propertyTo": 100
+			}
+		],
+		"skins": [
+			{
+				"name": "default",
+				"attachments": {
+					"꼬리": {
+						"tail": {
+							"type": "mesh",
+							"width": 128,
+							"height": 32,
+							"uvs": [
+								0,
+								1,
+								1,
+								1,
+								1,
+								0,
+								0,
+								0
+							],
+							"triangles": [
+								0,
+								1,
+								2,
+								0,
+								2,
+								3
+							],
+							"vertices": [
+								0,
+								-16,
+								128,
+								-16,
+								128,
+								16,
+								0,
+								16
+							],
+							"hull": 4
+						}
+					},
+					"몸": {
+						"body": {
+							"type": "region",
+							"x": 40,
+							"rotation": -90,
+							"width": 48,
+							"height": 96
+						}
+					},
+					"보석": {
+						"gem": {
+							"type": "region",
+							"width": 32,
+							"height": 32
+						},
+						"점": {
+							"type": "point",
+							"x": 5,
+							"y": 5,
+							"rotation": 30
+						}
+					}
+				}
+			}
+		],
+		"events": [
+			{
+				"name": "발소리",
+				"string": "쿵"
+			}
+		],
+		"animations": [
+			{
+				"name": "꼬리흔들기",
+				"bones": {
+					"꼬리1": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								],
+								"curve": [
+									0.3,
+									0,
+									0.7,
+									20
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									20
+								]
+							}
+						]
+					}
+				},
+				"constraints": {
+					"보석회전": {
+						"transform": [
+							{
+								"time": 0,
+								"v": [
+									1,
+									0,
+									0,
+									0,
+									0,
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0.5,
+									0,
+									0,
+									0,
+									0,
+									0
+								]
+							}
+						]
+					}
+				},
+				"deform": {
+					"default": {
+						"꼬리": {
+							"tail": [
+								{
+									"time": 0
+								},
+								{
+									"time": 0.5,
+									"offset": 2,
+									"v": [
+										0,
+										5,
+										0,
+										5
+									]
+								},
+								{
+									"time": 1
+								}
+							]
+						}
+					}
+				},
+				"events": [
+					{
+						"time": 0.5,
+						"name": "발소리"
+					}
+				]
+			}
+		]
+	},
+	"editor": {
+		"mode": "animate",
+		"view": {
+			"x": 10,
+			"y": -20,
+			"zoom": 1.5
+		},
+		"activeAnimation": "꼬리흔들기",
+		"treeExpanded": [
+			"bone:root",
+			"bone:몸통"
+		]
+	}
+}

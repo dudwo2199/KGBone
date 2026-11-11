@@ -1,0 +1,252 @@
+{
+	"skeleton": {
+		"hash": "kgbone-sample",
+		"spine": "4.2.43",
+		"x": -100,
+		"y": 0,
+		"width": 200,
+		"height": 300,
+		"images": "../images/",
+		"audio": ""
+	},
+	"bones": [
+		{
+			"name": "root"
+		},
+		{
+			"name": "hip",
+			"parent": "root",
+			"y": 120
+		},
+		{
+			"name": "torso",
+			"parent": "hip",
+			"length": 80,
+			"rotation": 90
+		},
+		{
+			"name": "head",
+			"parent": "torso",
+			"length": 40,
+			"x": 90,
+			"rotation": -90
+		},
+		{
+			"name": "arm-l",
+			"parent": "torso",
+			"length": 60,
+			"x": 70,
+			"rotation": 150
+		},
+		{
+			"name": "leg-l",
+			"parent": "hip",
+			"length": 60,
+			"rotation": -100
+		},
+		{
+			"name": "foot-target",
+			"parent": "root",
+			"x": -10,
+			"y": 10
+		},
+		{
+			"name": "leg-l2",
+			"parent": "leg-l",
+			"length": 50,
+			"x": 60
+		}
+	],
+	"slots": [
+		{
+			"name": "leg",
+			"bone": "leg-l",
+			"attachment": "leg"
+		},
+		{
+			"name": "body",
+			"bone": "torso",
+			"attachment": "body"
+		},
+		{
+			"name": "arm",
+			"bone": "arm-l",
+			"attachment": "arm"
+		},
+		{
+			"name": "head",
+			"bone": "head",
+			"attachment": "head"
+		}
+	],
+	"ik": [
+		{
+			"name": "foot",
+			"order": 1,
+			"bones": [
+				"leg-l",
+				"leg-l2"
+			],
+			"target": "foot-target"
+		}
+	],
+	"transform": [
+		{
+			"name": "arm-follow",
+			"order": 2,
+			"bones": [
+				"arm-l"
+			],
+			"target": "head",
+			"mixRotate": 0.3,
+			"mixX": 0,
+			"mixScaleX": 0,
+			"mixShearY": 0
+		}
+	],
+	"skins": [
+		{
+			"name": "default",
+			"attachments": {
+				"leg": {
+					"leg": {
+						"x": 30,
+						"rotation": 0,
+						"width": 72,
+						"height": 24
+					}
+				},
+				"body": {
+					"body": {
+						"x": 40,
+						"rotation": -90,
+						"width": 48,
+						"height": 96
+					}
+				},
+				"arm": {
+					"arm": {
+						"x": 30,
+						"width": 64,
+						"height": 20
+					}
+				},
+				"head": {
+					"head": {
+						"y": 20,
+						"width": 64,
+						"height": 64
+					}
+				}
+			}
+		}
+	],
+	"events": {
+		"step": {
+			"int": 3
+		}
+	},
+	"animations": {
+		"idle": {
+			"bones": {
+				"torso": {
+					"rotate": [
+						{
+							"value": 0,
+							"curve": "stepped"
+						},
+						{
+							"time": 0.5,
+							"value": 5
+						},
+						{
+							"time": 1,
+							"value": 0
+						}
+					],
+					"scale": [
+						{
+							"x": 1,
+							"y": 1
+						},
+						{
+							"time": 1,
+							"x": 1.1
+						}
+					],
+					"translatex": [
+						{
+							"value": 0
+						},
+						{
+							"time": 1,
+							"value": 3
+						}
+					]
+				},
+				"head": {
+					"shear": [
+						{
+							"time": 0.2,
+							"x": 3,
+							"y": 0
+						}
+					],
+					"inherit": [
+						{
+							"time": 0.5,
+							"inherit": "noRotationOrReflection"
+						}
+					]
+				}
+			},
+			"slots": {
+				"head": {
+					"rgba": [
+						{
+							"color": "ffffffff"
+						},
+						{
+							"time": 1,
+							"color": "ff8080ff"
+						}
+					],
+					"attachment": [
+						{
+							"time": 0.9,
+							"name": null
+						}
+					]
+				},
+				"body": {
+					"alpha": [
+						{
+							"value": 1
+						},
+						{
+							"time": 1,
+							"value": 0.5
+						}
+					]
+				}
+			},
+			"drawOrder": [
+				{
+					"time": 0.5,
+					"offsets": [
+						{
+							"slot": "arm",
+							"offset": -2
+						}
+					]
+				}
+			],
+			"events": [
+				{
+					"time": 0.5,
+					"name": "step"
+				}
+			]
+		}
+	}
+}
