@@ -2,6 +2,10 @@
 //! 이미지 파일 읽기·쓰기는 호출하는 쪽(앱 본체)이 하고, 여기서는 픽셀 데이터만 다룬다.
 pub mod base64;
 mod bundle;
+mod checksum;
+mod deflate;
+mod deflate_tables;
+mod inflate;
 mod pack;
 mod png_io;
 mod raster;
