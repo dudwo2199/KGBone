@@ -1,0 +1,10 @@
+커밋: a5d3adb0f2063bb64eb4eca715e4b4c484ade7f9
+시각(UTC): 2026-11-11 12:38:11
+결과: 성공
+실행 파일: 있음 (KGBone.exe)
+Rust 핵심 테스트(WASI): success
+화면 빌드: success
+앱 본체 단위 테스트: success
+실행 파일 빌드: success
+작업 상태: success
+실행 기록: https://github.com/dudwo2199/KGBone/actions/runs/43020302850
