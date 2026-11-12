@@ -14,7 +14,8 @@
     "test": "npm run test:rust && npm run test:ui && npm run test:e2e",
     "samples": "node tools/gen-samples.mjs",
     "tauri": "tauri",
-    "build:exe": "tauri build --no-bundle"
+    "build:exe": "tauri build --no-bundle",
+    "app": "npm run build && node tools/serve-app.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",
