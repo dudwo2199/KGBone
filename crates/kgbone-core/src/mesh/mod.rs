@@ -5,4 +5,5 @@ mod weights;
 
 pub use generate::{generate_from_alpha, AlphaMask, GeneratedMesh};
 pub use triangulate::triangulate;
+pub(crate) use weights::read_weights;
 pub use weights::{auto_weights, bind_vertices, paint_weights, unbind_vertices, BoneInfo, PaintMode, VertexWeights};

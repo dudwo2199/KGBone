@@ -112,6 +112,36 @@ pub fn compute_world(skel: &Skeleton, locals: &[Transform], inherits: &[Inherit]
     out
 }
 
+/// 본마다 부모 본 번호(부모가 자기보다 앞에 있을 때만).
+pub(crate) fn parent_indices(skel: &Skeleton) -> Vec<Option<usize>> {
+    skel.bones
+        .iter()
+        .enumerate()
+        .map(|(i, b)| b.parent.as_deref().and_then(|n| skel.bone_index(n)).filter(|&pi| pi < i))
+        .collect()
+}
+
+/// `from`번 본부터 끝까지 `pose.locals`·`pose.inherits`로 월드 값을 다시 계산한다.
+/// 부모가 앞에 있으므로 `from` 앞의 본은 그대로 두어도 된다. 제약이 로컬 값을 바꾼 뒤 부른다.
+pub(crate) fn update_world(skel: &Skeleton, parents: &[Option<usize>], pose: &mut super::SkeletonPose, from: usize) {
+    let _ = skel;
+    for i in from..pose.locals.len() {
+        let parent = parents.get(i).copied().flatten().map(|p| pose.world[p]);
+        pose.world[i] = world_of(&pose.locals[i], pose.inherits[i], parent.as_ref());
+    }
+}
+
+/// 본 `i`의 부모 월드(없으면 None).
+pub(crate) fn parent_world(parents: &[Option<usize>], world: &[WorldBone], i: usize) -> Option<WorldBone> {
+    parents.get(i).copied().flatten().map(|p| world[p])
+}
+
+/// 본 `i`의 월드를 `w`로 바꾸고 싶을 때의 로컬 값(현재 상속 종류 기준). 그 뒤 `update_world`를 불러야 한다.
+pub(crate) fn set_world(parents: &[Option<usize>], pose: &mut super::SkeletonPose, i: usize, w: &WorldBone) {
+    let parent = parent_world(parents, &pose.world, i);
+    pose.locals[i] = world_to_local_transform(w, parent.as_ref(), pose.inherits[i]);
+}
+
 /// 월드 변환 `w`를 부모 `parent` 아래 로컬 값으로 되돌린다(상속 normal 기준, 기울기는 shearY로 표현).
 pub fn world_to_local_transform(w: &WorldBone, parent: Option<&WorldBone>, inherit: Inherit) -> Transform {
     let (pm, (x, y)) = match parent {
