@@ -1,5 +1,5 @@
-커밋: 80e322f2253768e48f3ac055b70b31bddfc0bdf4
-시각(UTC): 2026-11-12 10:02:42
+커밋: e4da6466d90cac53b3cc514b630bc79da024f503
+시각(UTC): 2026-11-12 10:08:49
 결과: 성공
 실행 파일: 있음 (KGBone.exe)
 Rust 핵심 테스트(WASI): success
@@ -7,4 +7,4 @@ Rust 핵심 테스트(WASI): success
 앱 본체 단위 테스트: success
 실행 파일 빌드: success
 작업 상태: success
-실행 기록: https://github.com/dudwo2199/KGBone/actions/runs/43196014842
+실행 기록: https://github.com/dudwo2199/KGBone/actions/runs/43196298917
