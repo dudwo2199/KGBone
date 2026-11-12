@@ -6,7 +6,9 @@ mod animation;
 mod args;
 mod attachment;
 mod bone;
+mod bone_order;
 mod constraint;
+mod draw_order;
 mod editor;
 mod event;
 mod images;
@@ -14,8 +16,11 @@ mod item;
 mod key;
 mod keying;
 mod mesh;
+mod refs;
 mod skin;
 mod slot;
+#[cfg(test)]
+mod test_util;
 
 pub use args::Args;
 pub use images::{ImageInfo, ImageStore};
