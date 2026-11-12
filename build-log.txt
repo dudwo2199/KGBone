@@ -1,4 +1,4 @@
-KGBone 빌드 로그 75d0b52c2e7ed938d3dd92fd7afe037631eb6dcb
+KGBone 빌드 로그 e74c2224fd57df1f2216ec04602db74e24648330
 
 ===== 00-toolchain.txt =====
 rustc 1.99.1 (58cf8f9c3 2026-10-13)
@@ -7,7 +7,7 @@ v24.22.2
 
 ===== 01-npm-ci.txt =====
 
-added 146 packages in 7s
+added 146 packages in 8s
 npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:
 npm warn install-scripts   esbuild@0.28.2 (postinstall: node install.js)
 npm warn install-scripts
@@ -19,22 +19,12 @@ npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install
 > cargo test -p kgbone-core --target wasm32-wasip1
 
    Compiling kgbone-core v0.1.0 (D:\a\KGBone\KGBone\crates\kgbone-core)
-warning: function `migrate` is never used
- --> crates\kgbone-core\src\format\migrate.rs:6:15
-  |
-6 | pub(crate) fn migrate(tree: JValue) -> Result<(JValue, Vec<Warning>)> {
-  |               ^^^^^^^
-  |
-  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
-
-warning: `kgbone-core` (lib) generated 1 warning
-warning: `kgbone-core` (lib test) generated 1 warning (1 duplicate)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 21.67s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 21.28s
      Running unittests src\lib.rs (target\wasm32-wasip1\debug\deps\kgbone_core-092dd96f10b09265.wasm)
-(node:4644) ExperimentalWarning: WASI is an experimental feature and might change at any time
+(node:1280) ExperimentalWarning: WASI is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
 
-running 89 tests
+running 116 tests
 test api::tests::project_and_state ... ok
 test api::tests::unknown_method_is_error_text ... ok
 test commands::animation::tests::f_g01_animation_create_delete_rename_undo ... ok
@@ -111,6 +101,33 @@ test export::raster::tests::k02_raster_solid_quad_fills_its_area ... ok
 test export::raster::tests::k02_raster_texture_orientation_and_tint ... ok
 test export::sequence::tests::k02_sequence_frame_count ... ok
 test expr::tests::f_i01_expressions ... ok
+test format::preserve::merge::tests::dict_drops_and_renames_in_place ... ok
+test format::preserve::merge::tests::duplicate_names_pair_in_order_and_rename_by_position ... ok
+test format::preserve::merge::tests::null_stays_null ... ok
+test format::preserve::splice::tests::appends_keys_and_elements ... ok
+test format::preserve::splice::tests::removed_key_rewrites_that_object_only ... ok
+test format::preserve::splice::tests::replaces_only_changed_value ... ok
+test format::preserve::splice::tests::unchanged_is_identical ... ok
+test format::tests::atlas::f_j06_old_notation_and_extras ... ok
+test format::tests::atlas::f_j06_sample_atlas_roundtrip ... ok
+test format::tests::kgbone::deleted_timeline_is_removed_not_preserved ... ok
+test format::tests::kgbone::f_b06_bone_color_length_roundtrip ... ok
+test format::tests::kgbone::f_b07_korean_names_roundtrip ... ok
+test format::tests::kgbone::f_f06_f07_slider_and_order_roundtrip ... ok
+test format::tests::kgbone::f_h01_event_roundtrip_with_korean ... ok
+test format::tests::kgbone::f_j01_open_save_reopen_same_model ... ok
+test format::tests::kgbone::f_j02_unedited_save_is_byte_identical ... ok
+test format::tests::kgbone::f_j03_rename_changes_only_that_line ... ok
+test format::tests::kgbone::f_j07_legacy_v0_migrates_to_v1 ... ok
+test format::tests::spine::f_c02_c04_slot_color_dark_blend_roundtrip ... ok
+test format::tests::spine::f_d08_d13_linkedmesh_sequence_roundtrip ... ok
+test format::tests::spine::f_j04_mapping_details ... ok
+test format::tests::spine::f_j04_reads_all_samples ... ok
+test format::tests::spine::f_j05_edit_then_export_keeps_unknown_and_notation ... ok
+test format::tests::spine::f_j05_export_right_after_import_preserves_everything ... ok
+test format::tests::spine::f_j05_export_without_original_roundtrips ... ok
+test format::tests::spine::f_k03_unconfirmed_43_features_warn ... ok
+test format::tests::spine::version_string_follows_target ... ok
 test history::tests::f_i03_group_is_one_undo ... ok
 test history::tests::unchanged_is_not_recorded ... ok
 test json::merge::tests::changed_value_and_removed_and_added ... ok
@@ -125,7 +142,7 @@ test model::color::tests::hex_roundtrip ... ok
 test pose::bone_transform::tests::f_b04_parent_child_world_position ... ok
 test pose::bone_transform::tests::world_local_roundtrip ... ok
 
-test result: ok. 89 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+test result: ok. 116 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.62s
 
    Doc-tests kgbone_core
 
@@ -145,17 +162,8 @@ test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; fini
 > node tools/build-wasm.mjs
 
    Compiling kgbone-core v0.1.0 (D:\a\KGBone\KGBone\crates\kgbone-core)
-warning: function `migrate` is never used
- --> crates\kgbone-core\src\format\migrate.rs:6:15
-  |
-6 | pub(crate) fn migrate(tree: JValue) -> Result<(JValue, Vec<Warning>)> {
-  |               ^^^^^^^
-  |
-  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
-
-warning: `kgbone-core` (lib) generated 1 warning
    Compiling kgbone-wasm v0.1.0 (D:\a\KGBone\KGBone\crates\kgbone-wasm)
-    Finished `release` profile [optimized] target(s) in 20.21s
+    Finished `release` profile [optimized] target(s) in 24.34s
 app/public/kgbone.wasm 갱신
 [36mvite v7.3.8 [32mbuilding client environment for production...[36m[39m
 transforming...
@@ -164,33 +172,24 @@ rendering chunks...
 computing gzip size...
 [2mdist/[22m[32mindex.html                [39m[1m[2m  0.32 kB[22m[1m[22m[2m │ gzip:  0.23 kB[22m
 [2mdist/[22m[36massets/index-D4wvqs9v.js  [39m[1m[2m222.49 kB[22m[1m[22m[2m │ gzip: 69.28 kB[22m
-[32m✓ built in 1.27s[39m
+[32m✓ built in 1.33s[39m
 
 ===== 04-test-app.txt =====
     Updating crates.io index
    Compiling kgbone-app v0.1.0 (D:\a\KGBone\KGBone\src-tauri)
    Compiling kgbone-core v0.1.0 (D:\a\KGBone\KGBone\crates\kgbone-core)
-warning: function `migrate` is never used
- --> D:\a\KGBone\KGBone\crates\kgbone-core\src\format\migrate.rs:6:15
-  |
-6 | pub(crate) fn migrate(tree: JValue) -> Result<(JValue, Vec<Warning>)> {
-  |               ^^^^^^^
-  |
-  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
-
-warning: `kgbone-core` (lib) generated 1 warning
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 45.03s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 47.78s
      Running unittests src\lib.rs (target\debug\deps\kgbone_app_lib-a4d67b9795644881.exe)
 
 running 9 tests
 test commands::assoc::tests::f_j09_association_entries ... ok
-test commands::images::tests::f_j08_image_name_relative_without_extension ... ok
 test commands::fs::tests::f_j01_write_creates_parent_folders ... ok
-test commands::launch::tests::f_j09_exe_itself_is_skipped ... ok
+test commands::images::tests::f_j08_image_name_relative_without_extension ... ok
 test commands::images::tests::f_j08_scan_pngs_recursive_png_only ... ok
+test commands::launch::tests::f_j09_exe_itself_is_skipped ... ok
+test commands::launch::tests::f_j09_first_existing_file_wins ... ok
 test commands::launch::tests::f_j09_folder_is_not_a_file ... ok
 test commands::launch::tests::f_j09_no_args_gives_none ... ok
-test commands::launch::tests::f_j09_first_existing_file_wins ... ok
 test commands::launch::tests::f_j09_quoted_path_with_spaces ... ok
 
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
@@ -219,15 +218,6 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 > kgbone@0.1.0 wasm
 > node tools/build-wasm.mjs
 
-warning: function `migrate` is never used
- --> crates\kgbone-core\src\format\migrate.rs:6:15
-  |
-6 | pub(crate) fn migrate(tree: JValue) -> Result<(JValue, Vec<Warning>)> {
-  |               ^^^^^^^
-  |
-  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
-
-warning: `kgbone-core` (lib) generated 1 warning
     Finished `release` profile [optimized] target(s) in 0.03s
 app/public/kgbone.wasm 갱신
 [36mvite v7.3.8 [32mbuilding client environment for production...[36m[39m
@@ -237,23 +227,14 @@ rendering chunks...
 computing gzip size...
 [2mdist/[22m[32mindex.html                [39m[1m[2m  0.32 kB[22m[1m[22m[2m │ gzip:  0.23 kB[22m
 [2mdist/[22m[36massets/index-D4wvqs9v.js  [39m[1m[2m222.49 kB[22m[1m[22m[2m │ gzip: 69.28 kB[22m
-[32m✓ built in 1.35s[39m
+[32m✓ built in 1.40s[39m
    Compiling kgbone-app v0.1.0 (D:\a\KGBone\KGBone\src-tauri)
    Compiling kgbone-core v0.1.0 (D:\a\KGBone\KGBone\crates\kgbone-core)
-warning: function `migrate` is never used
- --> D:\a\KGBone\KGBone\crates\kgbone-core\src\format\migrate.rs:6:15
-  |
-6 | pub(crate) fn migrate(tree: JValue) -> Result<(JValue, Vec<Warning>)> {
-  |               ^^^^^^^
-  |
-  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
-
-warning: `kgbone-core` (lib) generated 1 warning
-    Finished `release` profile [optimized] target(s) in 2m 10s
+    Finished `release` profile [optimized] target(s) in 2m 17s
        Built application at: D:\a\KGBone\KGBone\src-tauri\target\release\KGBone.exe
 
 Name        Length
 ----        ------
-KGBone.exe 4864000
+KGBone.exe 4947456
 
 
