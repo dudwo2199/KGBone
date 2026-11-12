@@ -8,6 +8,7 @@
 | 3단계 | 화면 명세(UI_SPEC) | 2026-11-11 20:35 |
 | 4단계 | 구조 설계: 공통 데이터 모델, 명령 목록(interface/commands.json), Rust↔화면 연결 인터페이스 확정 | 2026-11-11 21:06 |
 | 5단계 | 규칙집(CLAUDE.md) | 2026-11-11 21:09 |
+| 6단계 | 병렬 구현·통합(파일 형식, 편집 명령, 뼈대 계산, 내보내기, 앱 본체, 화면) | 2026-11-12 18:57 |
 
 ## 환경 메모
 - 2026-11-11 20:50: 이 PC는 Windows **스마트 앱 컨트롤**(VerifiedAndReputablePolicyState=1)이 켜져 있어, 새로 빌드한 서명 없는 실행 파일(Rust 테스트 .exe, 빌드 스크립트)이 "애플리케이션 제어 정책에서 이 파일을 차단했습니다(os error 4551)"로 막힌다. 보안 설정은 바꾸지 않았다.
@@ -15,3 +16,4 @@
   - 화면용 WebAssembly는 wasm-bindgen 없이 C ABI로 내보낸다(kgbone-wasm).
   - Tauri 앱(.exe)은 빌드 스크립트가 필요해 이 PC에서 빌드할 수 없다 → GitHub Actions(Windows)에서 빌드한다(9단계).
 - esotericsoftware.com 접속 불가(ECONNRESET) → 검색 요약으로 근거 확인(SOURCES.md).
+- 2026-11-11 22:3x~: 서브에이전트 작업 중 사용 한도(5시간)와 연결 끊김으로 멈춤 → 한도 해제 후 이어서 진행.
