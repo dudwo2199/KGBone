@@ -1,4 +1,4 @@
-KGBone 빌드 로그 d375ff84419614e2b8ba56ec0760de54de845fb7
+KGBone 빌드 로그 80e322f2253768e48f3ac055b70b31bddfc0bdf4
 
 ===== 00-toolchain.txt =====
 rustc 1.99.1 (58cf8f9c3 2026-10-13)
@@ -7,7 +7,7 @@ v24.22.2
 
 ===== 01-npm-ci.txt =====
 
-added 146 packages in 8s
+added 146 packages in 12s
 npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:
 npm warn install-scripts   esbuild@0.28.2 (postinstall: node install.js)
 npm warn install-scripts
@@ -19,9 +19,9 @@ npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install
 > cargo test -p kgbone-core --target wasm32-wasip1
 
    Compiling kgbone-core v0.1.0 (D:\a\KGBone\KGBone\crates\kgbone-core)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 26.12s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 20.33s
      Running unittests src\lib.rs (target\wasm32-wasip1\debug\deps\kgbone_core-092dd96f10b09265.wasm)
-(node:4800) ExperimentalWarning: WASI is an experimental feature and might change at any time
+(node:1800) ExperimentalWarning: WASI is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
 
 running 153 tests
@@ -179,7 +179,7 @@ test pose::tests::full_sample_computes ... ok
 test pose::transform::tests::f_f03_mix_and_additive_and_default_mapping ... ok
 test pose::transform::tests::f_f03_translate_x_to_rotate ... ok
 
-test result: ok. 153 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.51s
+test result: ok. 153 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.13s
 
    Doc-tests kgbone_core
 
@@ -200,38 +200,40 @@ test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; fini
 
    Compiling kgbone-core v0.1.0 (D:\a\KGBone\KGBone\crates\kgbone-core)
    Compiling kgbone-wasm v0.1.0 (D:\a\KGBone\KGBone\crates\kgbone-wasm)
-    Finished `release` profile [optimized] target(s) in 33.02s
+    Finished `release` profile [optimized] target(s) in 23.83s
 app/public/kgbone.wasm 갱신
 [36mvite v7.3.8 [32mbuilding client environment for production...[36m[39m
 transforming...
-[32m✓[39m 26 modules transformed.
+[32m✓[39m 127 modules transformed.
 rendering chunks...
 computing gzip size...
-[2mdist/[22m[32mindex.html                [39m[1m[2m  0.32 kB[22m[1m[22m[2m │ gzip:  0.23 kB[22m
-[2mdist/[22m[36massets/index-D4wvqs9v.js  [39m[1m[2m222.49 kB[22m[1m[22m[2m │ gzip: 69.28 kB[22m
-[32m✓ built in 1.42s[39m
+[2mdist/[22m[32mindex.html                 [39m[1m[2m  0.39 kB[22m[1m[22m[2m │ gzip:   0.26 kB[22m
+[2mdist/[22m[35massets/index-DmnWrrFe.css  [39m[1m[2m  9.76 kB[22m[1m[22m[2m │ gzip:   2.77 kB[22m
+[2mdist/[22m[36massets/tauri-Dk-gqupO.js   [39m[1m[2m 17.36 kB[22m[1m[22m[2m │ gzip:   4.69 kB[22m
+[2mdist/[22m[36massets/index-D52SrZBV.js   [39m[1m[2m393.24 kB[22m[1m[22m[2m │ gzip: 120.94 kB[22m
+[32m✓ built in 1.60s[39m
 
 ===== 04-test-app.txt =====
     Updating crates.io index
    Compiling kgbone-app v0.1.0 (D:\a\KGBone\KGBone\src-tauri)
    Compiling kgbone-core v0.1.0 (D:\a\KGBone\KGBone\crates\kgbone-core)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 52.58s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 48.22s
      Running unittests src\lib.rs (target\debug\deps\kgbone_app_lib-a4d67b9795644881.exe)
+     Running unittests src\main.rs (target\debug\deps\kgbone_app-ad0a1670378e99c3.exe)
 
 running 9 tests
 test commands::assoc::tests::f_j09_association_entries ... ok
 test commands::fs::tests::f_j01_write_creates_parent_folders ... ok
 test commands::images::tests::f_j08_image_name_relative_without_extension ... ok
 test commands::images::tests::f_j08_scan_pngs_recursive_png_only ... ok
-test commands::launch::tests::f_j09_exe_itself_is_skipped ... ok
 test commands::launch::tests::f_j09_first_existing_file_wins ... ok
 test commands::launch::tests::f_j09_folder_is_not_a_file ... ok
+test commands::launch::tests::f_j09_exe_itself_is_skipped ... ok
 test commands::launch::tests::f_j09_no_args_gives_none ... ok
 test commands::launch::tests::f_j09_quoted_path_with_spaces ... ok
 
-test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src\main.rs (target\debug\deps\kgbone_app-ad0a1670378e99c3.exe)
 
 running 0 tests
 
@@ -255,23 +257,25 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 > kgbone@0.1.0 wasm
 > node tools/build-wasm.mjs
 
-    Finished `release` profile [optimized] target(s) in 0.04s
+    Finished `release` profile [optimized] target(s) in 0.02s
 app/public/kgbone.wasm 갱신
 [36mvite v7.3.8 [32mbuilding client environment for production...[36m[39m
 transforming...
-[32m✓[39m 26 modules transformed.
+[32m✓[39m 127 modules transformed.
 rendering chunks...
 computing gzip size...
-[2mdist/[22m[32mindex.html                [39m[1m[2m  0.32 kB[22m[1m[22m[2m │ gzip:  0.23 kB[22m
-[2mdist/[22m[36massets/index-D4wvqs9v.js  [39m[1m[2m222.49 kB[22m[1m[22m[2m │ gzip: 69.28 kB[22m
-[32m✓ built in 1.42s[39m
+[2mdist/[22m[32mindex.html                 [39m[1m[2m  0.39 kB[22m[1m[22m[2m │ gzip:   0.26 kB[22m
+[2mdist/[22m[35massets/index-DmnWrrFe.css  [39m[1m[2m  9.76 kB[22m[1m[22m[2m │ gzip:   2.77 kB[22m
+[2mdist/[22m[36massets/tauri-Dk-gqupO.js   [39m[1m[2m 17.36 kB[22m[1m[22m[2m │ gzip:   4.69 kB[22m
+[2mdist/[22m[36massets/index-D52SrZBV.js   [39m[1m[2m393.24 kB[22m[1m[22m[2m │ gzip: 120.94 kB[22m
+[32m✓ built in 1.60s[39m
    Compiling kgbone-app v0.1.0 (D:\a\KGBone\KGBone\src-tauri)
    Compiling kgbone-core v0.1.0 (D:\a\KGBone\KGBone\crates\kgbone-core)
-    Finished `release` profile [optimized] target(s) in 2m 23s
+    Finished `release` profile [optimized] target(s) in 1m 57s
        Built application at: D:\a\KGBone\KGBone\src-tauri\target\release\KGBone.exe
 
 Name        Length
 ----        ------
-KGBone.exe 5002752
+KGBone.exe 5057024
 
 
