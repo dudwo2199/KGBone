@@ -1,5 +1,6 @@
 //! 파일 형식 테스트(샘플은 `include_bytes!`로 넣는다: WASI에서는 파일 읽기가 불편하다).
 mod atlas;
+mod attachments;
 mod kgbone;
 mod spine;
 
