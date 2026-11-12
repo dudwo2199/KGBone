@@ -1,7 +1,13 @@
 //! Spine JSON 호환 가져오기·내보내기(공개 JSON 형식 문서 기준, docs/SOURCES.md S1).
 //! 4.3을 우선 지원하고 4.2(및 그 이전 4.x) 읽기를 지원한다.
 mod read;
+mod read_anim;
+mod read_skin;
+mod schema;
+mod value;
 mod write;
+mod write_anim;
+mod write_skin;
 
 use super::{Original, ReadResult, SkeletonFormat, WriteResult};
 use crate::model::Project;

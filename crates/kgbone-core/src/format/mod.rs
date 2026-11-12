@@ -2,7 +2,10 @@
 pub mod atlas;
 pub mod kgbone;
 mod migrate;
+mod preserve;
 pub mod spine_json;
+#[cfg(test)]
+mod tests;
 
 use crate::json::JValue;
 use crate::model::Project;

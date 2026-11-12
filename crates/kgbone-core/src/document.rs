@@ -56,8 +56,10 @@ impl Document {
     /// .kgbone 바이트로 연다.
     pub fn open_kgbone(bytes: &[u8]) -> Result<(Self, Vec<Warning>)> {
         let r = KgboneFormat.read(bytes)?;
+        // 구버전을 변환해 열었으면 원래 바이트로 저장하면 안 되므로 바이트를 비운다.
+        let bytes = if crate::format::kgbone::was_migrated(&r) { Vec::new() } else { bytes.to_vec() };
         let mut doc = Document::from_project(r.project.clone());
-        doc.kgbone_original = Some(Original { bytes: bytes.to_vec(), raw: r.raw, project: r.project });
+        doc.kgbone_original = Some(Original { bytes, raw: r.raw, project: r.project });
         Ok((doc, r.warnings))
     }
 
