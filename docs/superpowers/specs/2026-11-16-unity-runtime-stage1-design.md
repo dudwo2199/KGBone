@@ -145,7 +145,7 @@ KGBone 핵심의 해당 모듈을 같은 순서·같은 규칙으로 옮긴다. 
 - UV: 묶은 텍스처 안 사각형으로 옮기고, KGBone의 v(아래로 증가)를 유니티의 v(위로 증가)로 뒤집는다.
 - 색: 정점 색 = 그리기 항목 색. 어두운 색은 두 번째 정점 데이터(예: UV 채널)로 넘긴다.
 - 셰이더 `KGBone/Unlit` (URP, 투명 큐, 깊이 쓰기 끔, 양면): 텍스처 × 정점 색, 어두운 색이 있으면 tint black 공식. 블렌드 함수는 머티리얼 속성으로 4종(normal, additive, multiply, screen).
-- 1단계에서 정확히 어떤 tint black·블렌드 공식을 쓸지는 KGBone 화면 렌더러(`app/src/render/blend.ts`, 셰이더)와 같게 맞춘다.
+- 1단계에서 정확히 어떤 tint black·블렌드 공식을 쓸지는 KGBone 화면 렌더러(`app/src/render/blend.ts`의 블렌드 함수, `app/src/render/gl.ts`의 셰이더)와 같게 맞춘다.
 
 ### 5.6 정답 비교 테스트
 
