@@ -13,6 +13,10 @@ export interface Gizmo {
   brush?: { x: number; y: number; r: number };
   /** 회전·크기·기울기 도구 표시 원(본 원점) */
   ring?: { x: number; y: number };
+  /** 변환 축 표시(본 원점, 축 틀 단위 벡터) */
+  axes?: { x: number; y: number; ux: number; uy: number; vx: number; vy: number };
+  /** 메시 정점 편집: 정점 월드 좌표와 고른 정점 번호 */
+  vertices?: { points: number[]; selected: number[]; hull: number };
 }
 
 export interface FrameInput {
@@ -34,8 +38,8 @@ export interface FrameInput {
 const BG: Rgba = [0.16, 0.16, 0.17, 1];
 const GRID: Rgba = [1, 1, 1, 0.05];
 const GRID_MAJOR: Rgba = [1, 1, 1, 0.1];
-const AXIS_X: Rgba = [0.85, 0.3, 0.3, 0.7];
-const AXIS_Y: Rgba = [0.3, 0.8, 0.35, 0.7];
+const AXIS_X: Rgba = [0.9, 0.3, 0.3, 0.8];
+const AXIS_Y: Rgba = [0.3, 0.85, 0.35, 0.8];
 const SELECT: Rgba = [0.25, 0.85, 1, 1];
 const HOVER: Rgba = [1, 1, 1, 0.9];
 const GIZMO: Rgba = [1, 0.75, 0.2, 0.9];
@@ -116,6 +120,26 @@ export class Renderer {
     }
     if (g.brush) this.shapes.circle(g.brush.x, g.brush.y, g.brush.r, GIZMO, 1.5);
     if (g.ring) this.shapes.circle(g.ring.x, g.ring.y, 40, [GIZMO[0], GIZMO[1], GIZMO[2], 0.5], 1);
+    if (g.axes) {
+      const L = 36 * px;
+      const a = g.axes;
+      this.shapes.line(a.x, a.y, a.x + a.ux * L, a.y + a.uy * L, AXIS_X, 2);
+      this.shapes.line(a.x, a.y, a.x + a.vx * L, a.y + a.vy * L, AXIS_Y, 2);
+    }
+    if (g.vertices) {
+      const v = g.vertices;
+      const n = v.points.length / 2;
+      const h = v.hull >= 3 && v.hull <= n ? v.hull : n;
+      const hullPts = v.points.slice(0, h * 2);
+      this.shapes.polyline(hullPts, true, [1, 1, 1, 0.8], 1.5);
+      const sel = new Set(v.selected);
+      for (let i = 0; i < n; i++) {
+        const x = v.points[i * 2];
+        const y = v.points[i * 2 + 1];
+        this.shapes.disc(x, y, sel.has(i) ? 5 : 4, [0, 0, 0, 0.8], 10);
+        this.shapes.disc(x, y, sel.has(i) ? 3.5 : 2.5, sel.has(i) ? GIZMO : [1, 1, 1, 1], 10);
+      }
+    }
     this.flush(xf);
   }
 

@@ -17,8 +17,11 @@ import {
   createSlot,
   deleteSelection,
   primary,
+  setOnion,
+  setPlayback,
   setTime,
 } from './actions';
+import { deleteSelectedVertices } from '../tools/meshEditSession';
 import { CommandRegistry, type Args } from './registry';
 
 function activeAnimation(s: Services) {
@@ -62,6 +65,7 @@ export function buildRegistry(): CommandRegistry<Services> {
 
   // ---------- 편집 ----------
   r.register('edit.delete', (s) => {
+    if (s.ui.get().meshEdit && deleteSelectedVertices(s)) return;
     const keys = s.ui.get().selectedKeys;
     if (keys.length && s.doc.get().project.editor.mode === 'animate' && document.activeElement?.closest?.('[data-panel="bottom"]')) {
       if (s.doc.run('key.delete', { keys }).ok) s.ui.set({ selectedKeys: [] });
@@ -108,6 +112,10 @@ export function buildRegistry(): CommandRegistry<Services> {
   r.register('slot.moveUp', slotMove('slot.moveUp'));
   r.register('slot.moveDown', slotMove('slot.moveDown'));
   r.register('select.none', (s) => {
+    if (s.ui.get().meshEdit) {
+      s.ui.set({ meshEdit: false, selectedVertices: [] });
+      return;
+    }
     if (s.ui.get().pickParent) {
       s.ui.set({ pickParent: false });
       return;
@@ -126,7 +134,7 @@ export function buildRegistry(): CommandRegistry<Services> {
   });
   r.register('view.toggleBones', (s) => s.ui.set({ showBones: !s.ui.get().showBones }));
   r.register('view.toggleImages', (s) => s.ui.set({ showImages: !s.ui.get().showImages }));
-  r.register('view.toggleOnion', (s) => s.ui.set({ onion: !s.ui.get().onion }));
+  r.register('view.toggleOnion', (s) => setOnion(s, !s.ui.get().onion));
   r.register('view.showDopesheet', (s) => s.ui.set({ bottomTab: 'dopesheet' }));
   r.register('view.showGraph', (s) => s.ui.set({ bottomTab: 'graph' }));
 
@@ -158,7 +166,7 @@ export function buildRegistry(): CommandRegistry<Services> {
   });
   r.register('play.toggle', (s) => s.player.toggle(false));
   r.register('play.reverse', (s) => s.player.toggle(true));
-  r.register('play.toggleLoop', (s) => s.ui.set({ loop: !s.ui.get().loop }));
+  r.register('play.toggleLoop', (s) => setPlayback(s, { loop: !s.ui.get().loop }));
   const step = (dir: number) => (s: Services) => {
     const t = s.pose.currentTime();
     const f = fps(s);

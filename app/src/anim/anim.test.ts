@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { Key } from '../core/types';
+import type { Animation, Key } from '../core/types';
 import { onionTimes } from '../render/onion';
 import { defaultBezier, fitGraph, graphToScreen, moveHandle, screenToGraph, segmentPoints, type GraphView } from './graph';
 import { advancePlayback } from './playback';
+import { pickGraphRow, timelineRows } from './timeline';
 
 const k = (time: number, v: number[], curve: Key['curve'] = null): Key => ({ time, v, s: null, offset: 0, curve });
 
@@ -87,5 +88,30 @@ describe('G10 그래프 좌표 변환', () => {
 
   it('u_g10_stepped_segment', () => {
     expect(segmentPoints(k(0, [1]), k(1, [5]), 0, 'stepped').map((p) => p.v)).toEqual([1, 1, 5]);
+  });
+});
+
+describe('G10 그래프 대상 줄 자동 고르기', () => {
+  const anim = {
+    name: 'a',
+    bones: { 팔: { attachment: [], rotate: [k(0, [0]), k(1, [90])] }, 다리: { translate: [k(0, [0, 0])] } },
+    slots: { 몸: { attachment: [{ time: 0, v: [], s: 'x', offset: 0, curve: null }] } },
+    constraints: {},
+    deform: {},
+    sequence: {},
+    drawOrder: [],
+    events: [],
+  } as unknown as Animation;
+  const rows = timelineRows(anim);
+
+  it('u_g10_graph_row_follows_selection_when_none_chosen', () => {
+    // 고른 줄이 없고 본 '팔'을 골랐으면, 값이 있는 첫 타임라인(rotate)
+    expect(pickGraphRow(rows, null, [{ kind: 'bone', name: '팔' }])?.id).toBe(rows.find((r) => r.target.name === '팔' && r.timeline === 'rotate')!.id);
+    expect(pickGraphRow(rows, null, [{ kind: 'bone', name: '다리' }])?.timeline).toBe('translate');
+    // 도프시트에서 고른 줄이 있으면 그 줄
+    const chosen = rows.find((r) => r.target.name === '다리')!.id;
+    expect(pickGraphRow(rows, chosen, [{ kind: 'bone', name: '팔' }])?.id).toBe(chosen);
+    // 선택이 없으면 값이 있는 첫 줄
+    expect(pickGraphRow(rows, null, [])?.timeline).toBe('rotate');
   });
 });

@@ -1,6 +1,6 @@
 // 재생 막대: 처음·거꾸로·재생/정지·끝·반복·속도·시점·애니메이션 고르기·오니언 스킨.
 import { clampSpeed } from '../../anim/playback';
-import { setTime } from '../../commands/actions';
+import { setPlayback, setTime } from '../../commands/actions';
 import { useServices } from '../../services';
 import { useStore } from '../../state/store';
 import { NumberField } from '../fields/NumberField';
@@ -48,7 +48,7 @@ export function PlaybackBar() {
       </button>
       <label className="playbar-speed">
         속도
-        <select aria-label="속도" value={String(speed)} onChange={(e) => s.ui.set({ speed: clampSpeed(Number(e.target.value)) })}>
+        <select aria-label="속도" value={String(speed)} onChange={(e) => setPlayback(s, { speed: clampSpeed(Number(e.target.value)) })}>
           {[0.1, 0.25, 0.5, 1, 1.5, 2, 3, 4].map((v) => (
             <option key={v} value={v}>
               {v}배

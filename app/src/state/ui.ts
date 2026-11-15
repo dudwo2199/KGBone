@@ -47,6 +47,9 @@ export interface UiState {
   /** 이름 바꾸기 중인 트리 노드 키 */
   renaming: string | null;
   treeFilter: string;
+  /** 메시 정점 편집 모드 */
+  meshEdit: boolean;
+  selectedVertices: number[];
   ready: boolean;
 }
 
@@ -76,6 +79,8 @@ export function initialUi(): UiState {
     status: null,
     renaming: null,
     treeFilter: '',
+    meshEdit: false,
+    selectedVertices: [],
     ready: false,
   };
 }

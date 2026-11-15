@@ -194,27 +194,44 @@ export function Tree() {
   const images = useStore(s.images, (i) => i.entries);
   const filter = useStore(s.ui, (u) => u.treeFilter);
   const selection = useStore(s.ui, (u) => u.selection);
-  const [manual, setManual] = useState<Record<string, boolean>>({ 'skeleton:': true, 'folder:draworder': false, 'folder:images': false });
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
+  const saved = project.editor.treeExpanded;
   const root = useMemo(() => buildTree(project, images), [project, images]);
   const shown = useMemo(() => filterTree(root, filter), [root, filter]);
 
-  // 펼침: 직접 접고 편 것 우선, 기본은 뼈대·본·슬롯·폴더 펼침, 검색 중이면 모두 펼침
-  const expanded = useMemo(() => {
+  // 펼침: 문서의 editor.treeExpanded(저장·복원)가 있으면 그것, 없으면 기본(뼈대·본·슬롯·폴더). 고른 항목의 조상은 늘 펼친다
+  const base = useMemo(() => {
     const set = new Set<string>();
+    const savedSet = saved.length ? new Set(saved) : null;
     const selKeys = new Set(selection.map(selKey));
     const walk = (n: TreeNode, ancestors: string[]) => {
-      const m = manual[n.key];
       const def = n.key === 'skeleton:' || n.sel?.kind === 'bone' || (n.sel?.kind === 'slot' && n.drawOrderIndex === undefined) || (n.folder && n.key !== 'folder:images' && n.key !== 'folder:draworder');
-      if (filter.trim() || m === true || (m === undefined && def)) set.add(n.key);
+      // 뼈대(맨 위) 노드는 늘 펼친다: 저장된 펼침 목록이 다른 형식이거나 비어 있어도 트리가 통째로 접히지 않게
+      if (n.key === 'skeleton:' || (savedSet ? savedSet.has(n.key) : def)) set.add(n.key);
       if (n.sel && selKeys.has(selKey(n.sel)) && n.drawOrderIndex === undefined) ancestors.forEach((a) => set.add(a));
       n.children.forEach((c) => walk(c, [...ancestors, n.key]));
     };
     walk(root, []);
     return set;
-  }, [root, manual, filter, selection]);
+  }, [root, saved, selection]);
+  // 검색 중이면 모두 펼침
+  const expanded = useMemo(() => {
+    if (!filter.trim()) return base;
+    const all = new Set<string>();
+    const walk = (n: TreeNode) => {
+      all.add(n.key);
+      n.children.forEach(walk);
+    };
+    walk(root);
+    return all;
+  }, [base, filter, root]);
 
-  const toggle = (key: string) => setManual((m) => ({ ...m, [key]: !expanded.has(key) }));
+  const toggle = (key: string) => {
+    const next = new Set(base);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    s.doc.run('editor.set', { patch: { treeExpanded: [...next] } }, { quiet: true });
+  };
 
   return (
     <div className="tree-panel panel">

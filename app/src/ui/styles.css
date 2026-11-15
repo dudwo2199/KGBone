@@ -759,3 +759,28 @@ select:focus {
 .pre {
   white-space: pre-wrap;
 }
+
+.viewport-banner {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(40, 40, 44, 0.9);
+  border: 1px solid var(--anim);
+  color: var(--text);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.viewport.mesh-edit {
+  cursor: crosshair;
+}
+
+.graph-grid line {
+  stroke: #2e2e33;
+}
+.graph-grid text {
+  fill: #77777f;
+  font-size: 10px;
+}

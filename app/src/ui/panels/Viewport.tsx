@@ -10,7 +10,11 @@ import type { Rgba } from '../../render/shapes';
 import { useServices, type Services } from '../../services';
 import { namesOf, sameSel, type Sel } from '../../state/selection';
 import { useStore } from '../../state/store';
+import { axisFrame } from '../../tools/axis';
+import { IDENTITY } from '../../tools/affine';
 import { createDragTool, type DragTool } from '../../tools/dragTools';
+import { hitVertex } from '../../tools/meshEdit';
+import { addVertexAt, meshEditTarget, VertexDrag } from '../../tools/meshEditSession';
 
 const BEFORE_TINT: Rgba = [1, 0.4, 0.4, 0.28];
 const AFTER_TINT: Rgba = [0.4, 0.7, 1, 0.28];
@@ -27,6 +31,27 @@ function onionPoses(s: Services, time: number): FrameInput['onion'] {
   return out;
 }
 
+/** 변환 축 표시, 메시 정점 편집 점 */
+function extraGizmo(s: Services, pose: PoseOutput): FrameInput['gizmo'] {
+  const u = s.ui.get();
+  const g: FrameInput['gizmo'] = {};
+  if (u.meshEdit) {
+    const t = meshEditTarget(s);
+    if (t) g.vertices = { points: t.world, selected: u.selectedVertices, hull: t.mesh.hull };
+    return g;
+  }
+  if (!['rotate', 'translate', 'scale', 'shear'].includes(u.tool)) return g;
+  const bones = s.doc.get().project.skeleton.bones;
+  const name = namesOf(u.selection, 'bone').at(-1);
+  const i = bones.findIndex((b) => b.name === name);
+  const m = pose.bones[i];
+  if (!m) return g;
+  const pi = bones.findIndex((b) => b.name === bones[i].parent);
+  const f = axisFrame(u.axis, m, pose.bones[pi] ?? IDENTITY);
+  g.axes = { x: m.x, y: m.y, ...f };
+  return g;
+}
+
 export function Viewport() {
   const s = useServices();
   const wrap = useRef<HTMLDivElement>(null);
@@ -36,6 +61,7 @@ export function Viewport() {
   const mode = useStore(s.doc, (d) => d.project.editor.mode);
   const pick = useStore(s.ui, (u) => u.pickParent);
   const tool = useStore(s.ui, (u) => u.tool);
+  const meshEdit = useStore(s.ui, (u) => u.meshEdit);
   const frame = useRef(0);
   const livePose = useRef<PoseOutput | null>(null);
   const drag = useRef<DragTool | null>(null);
@@ -74,7 +100,7 @@ export function Viewport() {
         selectedSlots: new Set([...namesOf(sel, 'slot'), ...sel.filter((x) => x.kind === 'attachment').map((x) => x.slot ?? '')]),
         hoverBone: hover.current,
         imageUrl: (name) => imgs.byName(name)?.url ?? null,
-        gizmo: drag.current?.gizmo() ?? {},
+        gizmo: { ...(drag.current?.gizmo() ?? {}), ...extraGizmo(s, pose) },
       });
     };
     const request = () => {
@@ -156,6 +182,30 @@ export function Viewport() {
     const p = s.doc.get().project;
     const pose = s.pose.pose();
     const tol = 8 / u.view.zoom;
+
+    // 메시 정점 편집: 정점 클릭·끌기, 빈 곳 클릭 = 정점 추가
+    if (u.meshEdit) {
+      const t = meshEditTarget(s);
+      if (!t) {
+        s.ui.set({ meshEdit: false, selectedVertices: [] });
+        s.ui.notify('warn', '정점 편집: 보이는 메시 첨부물을 고르세요');
+        return;
+      }
+      const vi = hitVertex(t.world, w.x, w.y, tol);
+      if (vi < 0) {
+        addVertexAt(s, t, w);
+        return;
+      }
+      let sel = u.selectedVertices;
+      if (e.shiftKey || e.ctrlKey) sel = sel.includes(vi) ? sel.filter((x) => x !== vi) : [...sel, vi];
+      else if (!sel.includes(vi)) sel = [vi];
+      s.ui.set({ selectedVertices: sel });
+      if (!sel.includes(vi)) return;
+      drag.current = new VertexDrag(s, t, sel);
+      drag.current.begin(w, e);
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      return;
+    }
     const bone = u.showBones ? hitBone(pose, p.skeleton.bones, w.x, w.y, tol) : null;
 
     if (u.pickParent) {
@@ -222,7 +272,7 @@ export function Viewport() {
 
   return (
     <div
-      className={'viewport' + (mode === 'animate' ? ' animate' : '') + (pick ? ' picking' : '') + ` tool-${tool}`}
+      className={'viewport' + (mode === 'animate' ? ' animate' : '') + (pick ? ' picking' : '') + (meshEdit ? ' mesh-edit' : '') + ` tool-${tool}`}
       ref={wrap}
       tabIndex={-1}
       data-testid="viewport"
@@ -242,6 +292,11 @@ export function Viewport() {
     >
       <canvas ref={canvas} />
       {noGl && <div className="viewport-msg">WebGL2를 쓸 수 없습니다</div>}
+      {meshEdit && (
+        <div className="viewport-banner" data-testid="mesh-edit-banner">
+          정점 편집: 점 끌기 = 옮기기 · 빈 곳 클릭 = 정점 추가 · Delete = 고른 정점 삭제 · Esc = 끝내기
+        </div>
+      )}
     </div>
   );
 }

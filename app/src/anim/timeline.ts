@@ -116,3 +116,19 @@ export function hasKeyAt(a: Animation | null | undefined, kind: 'bone' | 'slot' 
   if (!tls) return false;
   return Object.values(tls).some((keys) => keys.some((k) => Math.abs(k.time - t) < 1e-4));
 }
+
+/**
+ * 그래프에 보일 줄: 도프시트에서 고른 줄, 없으면 선택한 본·슬롯·제약의 첫 타임라인(값이 있는 것 우선), 그것도 없으면 첫 줄.
+ */
+export function pickGraphRow(rows: TimelineRow[], chosen: string | null, selection: { kind: string; name: string }[]): TimelineRow | null {
+  const hit = chosen ? rows.find((r) => r.id === chosen) : undefined;
+  if (hit) return hit;
+  const numeric = (r: TimelineRow) => r.keys.some((k) => (k.key?.v.length ?? 0) > 0);
+  for (const sel of [...selection].reverse()) {
+    if (sel.kind !== 'bone' && sel.kind !== 'slot' && sel.kind !== 'constraint') continue;
+    const mine = rows.filter((r) => r.target.kind === sel.kind && r.target.name === sel.name);
+    const r = mine.find(numeric) ?? mine[0];
+    if (r) return r;
+  }
+  return rows.find(numeric) ?? null;
+}

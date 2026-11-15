@@ -19,6 +19,8 @@ export interface FileFlowDeps {
   notify(level: 'info' | 'warn' | 'error', text: string): void;
   /** 문서가 통째로 바뀐 뒤(선택·뷰 초기화) */
   onDocumentReplaced(): void;
+  /** 저장 직전(뷰 등 작업 상태를 문서에 넣기) */
+  beforeSave?(): void;
 }
 
 function warningLines(ws: Warning[]): string[] {
@@ -94,6 +96,7 @@ export class FileFlow {
 
   private async writeTo(path: string): Promise<boolean> {
     try {
+      this.d.beforeSave?.();
       const text = this.d.core.saveKgbone();
       await this.d.platform.writeText(path, text);
       const before = this.d.doc.get().baseDir;

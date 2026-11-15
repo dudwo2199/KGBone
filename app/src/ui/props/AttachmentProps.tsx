@@ -75,6 +75,7 @@ export function AttachmentProps({ sel, att }: { sel: Sel; att: Attachment }) {
   const s = useServices();
   const sk = useStore(s.doc, (d) => d.project.skeleton);
   const selection = useStore(s.ui, (u) => u.selection);
+  const meshEdit = useStore(s.ui, (u) => u.meshEdit);
   const base = { slot: sel.slot, name: sel.name, ...(sel.skin && sel.skin !== 'default' ? { skin: sel.skin } : {}) };
   const set = (key: string, v: unknown) => s.doc.run('attachment.set', { ...base, props: { [key]: v } });
   const value: Record<string, unknown> = { ...att };
@@ -87,6 +88,15 @@ export function AttachmentProps({ sel, att }: { sel: Sel; att: Attachment }) {
       <FieldList label="첨부물" fields={fieldsFor(att, sk.slots.map((x) => x.name), sk.skins.map((x) => x.name))} value={value} onChange={set} />
       {att.type === 'mesh' && (
         <div className="props-buttons">
+          <button
+            className={meshEdit ? 'on' : ''}
+            aria-pressed={meshEdit}
+            data-testid="mesh-edit-toggle"
+            title="뷰포트에서 정점 끌기·추가·삭제"
+            onClick={() => s.ui.set({ meshEdit: !meshEdit, selectedVertices: [] })}
+          >
+            정점 편집
+          </button>
           <button onClick={() => s.doc.run('mesh.generate', { ...base, detail: 0.5 })}>자동 생성</button>
           <button onClick={() => s.doc.run('mesh.setTriangles', base)}>삼각형 다시 나누기</button>
           <button

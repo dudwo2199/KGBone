@@ -59,6 +59,13 @@ export function createServices(core: Core, platform: Platform, dialogs: DialogSe
     images,
     dialogs,
     notify,
+    beforeSave: () => {
+      const v = ui.get().view;
+      const cur = doc.get().project.editor.view;
+      // 바뀌지 않았으면 건드리지 않는다(무편집 저장 = 바이트 동일)
+      if (Math.abs(cur.x - v.x) < 0.01 && Math.abs(cur.y - v.y) < 0.01 && Math.abs(cur.zoom - v.zoom) < 0.001) return;
+      doc.run('editor.set', { patch: { view: { x: Math.round(v.x * 100) / 100, y: Math.round(v.y * 100) / 100, zoom: Math.round(v.zoom * 1000) / 1000 } } }, { quiet: true });
+    },
     onDocumentReplaced: () => {
       player.stop();
       const ed = doc.get().project.editor;
@@ -70,6 +77,13 @@ export function createServices(core: Core, platform: Platform, dialogs: DialogSe
     const sel = ui.get().selection;
     const next = pruneSelection(sel, doc.get().project);
     if (next.length !== sel.length) ui.set({ selection: next });
+  });
+  // 정점 편집은 메시 첨부물을 고른 동안만
+  ui.subscribe(() => {
+    const u = ui.get();
+    if (!u.meshEdit) return;
+    const last = u.selection.at(-1);
+    if (last?.kind !== 'attachment') ui.set({ meshEdit: false, selectedVertices: [] });
   });
   return s;
 }

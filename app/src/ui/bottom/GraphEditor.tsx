@@ -1,9 +1,10 @@
 // 그래프(곡선) 편집기: 고른 타임라인의 값 곡선, 베지어 손잡이 끌기(key.setCurve), 선형/계단/베지어 버튼.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fitGraph, graphToScreen, moveHandle, screenToGraph, segmentPoints } from '../../anim/graph';
-import { timelineRows } from '../../anim/timeline';
+import { pickGraphRow, timelineRows } from '../../anim/timeline';
 import type { Key } from '../../core/types';
 import { useServices } from '../../services';
+import { formatNumber } from '../fields/numberInput';
 import { useStore } from '../../state/store';
 
 const CHANNEL_COLORS = ['#e8913a', '#5fb3f0', '#7fd36a', '#d36ab8', '#e0d050', '#aaaaaa', '#ff7070'];
@@ -12,6 +13,8 @@ export function GraphEditor() {
   const s = useServices();
   const anim = useStore(s.doc, (d) => d.project.skeleton.animations.find((a) => a.name === d.project.editor.activeAnimation) ?? null);
   const graphRow = useStore(s.ui, (u) => u.graphRow);
+  const fps = useStore(s.doc, (d) => d.project.skeleton.fps || 30);
+  const selection = useStore(s.ui, (u) => u.selection);
   const wrap = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 600, h: 200 });
   const [channel, setChannel] = useState(0);
@@ -26,7 +29,7 @@ export function GraphEditor() {
     return () => ro.disconnect();
   }, []);
 
-  const row = useMemo(() => (anim ? timelineRows(anim).find((r) => r.id === graphRow) ?? null : null), [anim, graphRow]);
+  const row = useMemo(() => (anim ? pickGraphRow(timelineRows(anim), graphRow, selection) : null), [anim, graphRow, selection]);
   const keys: Key[] = (row?.keys.map((k) => k.key).filter(Boolean) as Key[]) ?? [];
   const channels = Math.max(1, ...keys.map((k) => k.v.length));
   const ch = Math.min(channel, channels - 1);
@@ -48,7 +51,7 @@ export function GraphEditor() {
           ))}
         </select>
       )}
-      <span className="graph-title">{row ? `${row.group} › ${row.label}` : '도프시트에서 타임라인 줄을 고르세요'}</span>
+      <span className="graph-title" data-testid="graph-title">{row ? `${row.group} › ${row.label}` : anim ? '이 애니메이션에는 아직 키가 없습니다 (K로 키 지정)' : '애니메이션을 고르세요'}</span>
     </div>
   );
 
@@ -81,6 +84,24 @@ export function GraphEditor() {
             setDragCurve(null);
           }}
         >
+          {Array.from({ length: 5 }, (_, i) => {
+            const v = view.v0 + ((view.v1 - view.v0) * i) / 4;
+            const t = view.t0 + ((view.t1 - view.t0) * i) / 4;
+            const ph = graphToScreen(view, view.t0, v);
+            const pv = graphToScreen(view, t, view.v0);
+            return (
+              <g key={`grid${i}`} className="graph-grid">
+                <line x1={0} y1={ph.y} x2={size.w} y2={ph.y} />
+                <line x1={pv.x} y1={0} x2={pv.x} y2={size.h} />
+                <text x={4} y={ph.y - 2}>
+                  {formatNumber(v, 2)}
+                </text>
+                <text x={pv.x + 2} y={size.h - 4}>
+                  {formatNumber(t * fps, 1)}f
+                </text>
+              </g>
+            );
+          })}
           {row &&
             keys.map((k, i) => {
               const next = keys[i + 1];
@@ -124,7 +145,7 @@ export function GraphEditor() {
           {row &&
             keys.map((k, i) => {
               const p = graphToScreen(view, k.time, k.v[ch] ?? 0);
-              return <rect key={`k${i}`} x={p.x - 4} y={p.y - 4} width={8} height={8} transform={`rotate(45 ${p.x} ${p.y})`} className="graph-key" />;
+              return <rect key={`k${i}`} x={p.x - 4} y={p.y - 4} width={8} height={8} transform={`rotate(45 ${p.x} ${p.y})`} className="graph-key" data-testid="graph-key" />;
             })}
         </svg>
       </div>

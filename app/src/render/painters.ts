@@ -59,7 +59,8 @@ class PointOverlay implements OverlayPainter {
     const [x, y] = o.points;
     if (x === undefined) return;
     s.disc(x, y, hi ? 5 : 4, col(o));
-    if (o.points.length >= 4) s.line(x, y, o.points[2], o.points[3], col(o), 1.5);
+    // points = [x, y, 방향 x, 방향 y(단위 벡터)]
+    if (o.points.length >= 4) s.line(x, y, x + o.points[2] * 18 * s.px, y + o.points[3] * 18 * s.px, col(o), 1.5);
   }
 }
 

@@ -4,6 +4,7 @@ import type { Services } from '../services';
 import { namesOf } from '../state/selection';
 import type { ToolId } from '../state/ui';
 import { angleDeg, apply, applyLinear, decompose, det, IDENTITY, invert, multiply, normalizeDeg } from './affine';
+import { axisFrame, lockToFrame, scaleRatios, snapRotation, toFrame } from './axis';
 
 export interface Point {
   x: number;
@@ -94,48 +95,41 @@ class BoneDrag implements DragTool {
   private compute(t: BoneDrag['targets'][number], p: Point, shift: boolean): Partial<Local> {
     const o = { x: t.world.x, y: t.world.y };
     const flip = det(t.parent) < 0 ? -1 : 1;
+    const axis = this.s.ui.get().axis;
+    const frame = axisFrame(axis, t.world, t.parent);
     switch (this.tool) {
       case 'rotate':
       case 'shear': {
-        let d = normalizeDeg(angleDeg(o.x, o.y, p.x, p.y) - angleDeg(o.x, o.y, this.start.x, this.start.y)) * flip;
-        if (shift) d = Math.round(d / 15) * 15;
-        return this.tool === 'rotate' ? { rotation: round(t.local.rotation + d) } : { shearY: round(t.local.shearY + d) };
+        const d = normalizeDeg(angleDeg(o.x, o.y, p.x, p.y) - angleDeg(o.x, o.y, this.start.x, this.start.y)) * flip;
+        if (this.tool === 'shear') return { shearY: round(t.local.shearY + (shift ? Math.round(d / 15) * 15 : d)) };
+        if (!shift) return { rotation: round(t.local.rotation + d) };
+        const parentAngle = Math.atan2(t.parent.c, t.parent.a) * (180 / Math.PI);
+        return { rotation: round(snapRotation(axis, t.local.rotation, d, parentAngle, flip)) };
       }
       case 'pose': {
         // 본이 커서를 향하게: 부모 공간에서 커서 방향 각도
-        const inv = invert(t.parent);
-        const lp = apply(inv, p.x, p.y);
+        const lp = apply(invert(t.parent), p.x, p.y);
         const ang = Math.atan2(lp.y - t.local.y, lp.x - t.local.x) * (180 / Math.PI);
         return { rotation: round(ang - t.local.shearX) };
       }
       case 'translate': {
         let dx = p.x - this.start.x;
         let dy = p.y - this.start.y;
-        if (shift) Math.abs(dx) > Math.abs(dy) ? (dy = 0) : (dx = 0);
-        const axis = this.s.ui.get().axis;
+        // Shift: 고른 축(로컬/부모/월드)의 한 방향으로만
+        if (shift) ({ dx, dy } = lockToFrame(frame, dx, dy));
         const d = applyLinear(invert(t.parent), dx, dy);
-        if (axis === 'local' && shift) {
-          // 로컬 축 고정 이동: 본의 x축 방향으로만
-          const ux = t.world.a;
-          const uy = t.world.c;
-          const len = Math.hypot(ux, uy) || 1;
-          const along = (dx * ux + dy * uy) / len;
-          const dd = applyLinear(invert(t.parent), (ux / len) * along, (uy / len) * along);
-          return { x: round(t.local.x + dd.x), y: round(t.local.y + dd.y) };
-        }
         return { x: round(t.local.x + d.x), y: round(t.local.y + d.y) };
       }
       case 'scale': {
-        const inv = invert(t.world);
-        const a = apply(inv, this.start.x, this.start.y);
-        const b = apply(inv, p.x, p.y);
-        const rx = Math.abs(a.x) > 1e-3 ? b.x / a.x : 1;
-        const ry = Math.abs(a.y) > 1e-3 ? b.y / a.y : 1;
+        // 고른 축 틀에서 본 원점 기준 비율
+        const a = toFrame(frame, o.x, o.y, this.start.x, this.start.y);
+        const b = toFrame(frame, o.x, o.y, p.x, p.y);
         if (shift) {
           const r = Math.hypot(b.x, b.y) / (Math.hypot(a.x, a.y) || 1);
           return { scaleX: round(t.local.scaleX * r), scaleY: round(t.local.scaleY * r) };
         }
-        return { scaleX: round(t.local.scaleX * rx), scaleY: round(t.local.scaleY * ry) };
+        const { sx, sy } = scaleRatios(frame, t.world, a, b);
+        return { scaleX: round(t.local.scaleX * sx), scaleY: round(t.local.scaleY * sy) };
       }
       default:
         return {};

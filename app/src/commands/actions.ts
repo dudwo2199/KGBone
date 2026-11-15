@@ -209,3 +209,16 @@ export function setTime(s: Services, t: number): void {
   if (s.ui.get().playing) s.ui.set({ playTime: time });
   else s.doc.run('time.set', { time });
 }
+
+/** 재생 속도·반복을 화면에 반영하고 문서(editor.playback)에도 저장한다 */
+export function setPlayback(s: Services, patch: { speed?: number; loop?: boolean }): void {
+  s.ui.set(patch);
+  const u = s.ui.get();
+  s.doc.run('editor.set', { patch: { playback: { speed: u.speed, loop: u.loop } } }, { quiet: true });
+}
+
+/** 오니언 스킨 켜기/끄기(editor.onion.enabled에도 저장) */
+export function setOnion(s: Services, enabled: boolean): void {
+  s.ui.set({ onion: enabled });
+  s.doc.run('editor.set', { patch: { onion: { enabled } } }, { quiet: true });
+}
