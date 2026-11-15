@@ -2,7 +2,7 @@
 // app/public/kgbone.wasm이 있어야 한다(npm run wasm 또는 npm run wasm:fetch).
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -178,4 +178,45 @@ test("mcp_registered_in_project_mcp_json", () => {
   const cfg = JSON.parse(readFileSync(join(repo, ".mcp.json"), "utf8"));
   assert.equal(cfg.mcpServers.kgbone.command, "node");
   assert.deepEqual(cfg.mcpServers.kgbone.args, ["tools/mcp/server.mjs"]);
+});
+
+test("mcp_server_loads_wasm_later_without_reconnect", async () => {
+  // wasm이 없는 저장소 사본: tools/mcp + interface/commands.json만
+  const fake = join(tmp, "fake-repo");
+  mkdirSync(join(fake, "tools", "mcp"), { recursive: true });
+  mkdirSync(join(fake, "interface"), { recursive: true });
+  for (const f of readdirSync(join(repo, "tools", "mcp"))) {
+    if (f.endsWith(".mjs")) copyFileSync(join(repo, "tools", "mcp", f), join(fake, "tools", "mcp", f));
+  }
+  copyFileSync(join(repo, "interface", "commands.json"), join(fake, "interface", "commands.json"));
+
+  const child = spawn(process.execPath, [join(fake, "tools", "mcp", "server.mjs")], { cwd: fake, stdio: ["pipe", "pipe", "inherit"], env: { ...process.env, KGBONE_WASM: "" } });
+  const replies = [];
+  let buf = "";
+  child.stdout.on("data", (d) => {
+    buf += d;
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      replies.push(JSON.parse(buf.slice(0, i)));
+      buf = buf.slice(i + 1);
+    }
+  });
+  const ask = async (id) => {
+    child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id, method: "tools/call", params: { name: "doc_inspect", arguments: {} } })}\n`);
+    while (!replies.some((r) => r.id === id)) await new Promise((r) => setTimeout(r, 20));
+    return replies.find((r) => r.id === id).result;
+  };
+  try {
+    const before = await ask(1);
+    assert.equal(before.isError, true);
+    assert.match(before.content[0].text, /kgbone\.wasm/);
+    mkdirSync(join(fake, "app", "public"), { recursive: true });
+    copyFileSync(join(repo, "app", "public", "kgbone.wasm"), join(fake, "app", "public", "kgbone.wasm"));
+    const later = await ask(2);
+    assert.ok(!later.isError, later.content[0].text);
+    assert.equal(JSON.parse(later.content[0].text).bones[0].name, "root");
+  } finally {
+    child.stdin.end();
+    await new Promise((resolve) => child.on("close", resolve));
+  }
 });

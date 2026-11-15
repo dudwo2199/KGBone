@@ -48,20 +48,26 @@ export async function createSession(wasmPath) {
 }
 
 async function main() {
-  // wasm을 못 찾아도 서버는 뜨고, 도구를 부를 때 이유를 알려 준다
+  // wasm을 못 찾아도 서버는 뜬다. 도구를 부를 때마다 다시 찾아보므로, 나중에 wasm을 넣으면 다시 연결하지 않아도 된다
   let session = null;
   let startError = null;
-  try {
-    session = await createSession();
-  } catch (e) {
-    startError = e instanceof Error ? e.message : String(e);
-  }
+  const ensureSession = async () => {
+    if (session) return;
+    try {
+      session = await createSession();
+      startError = null;
+    } catch (e) {
+      startError = e instanceof Error ? e.message : String(e);
+    }
+  };
+  await ensureSession();
   const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
   for await (const line of lines) {
     if (!line.trim()) continue;
     let out;
     try {
       const msg = JSON.parse(line);
+      if (msg.method === "tools/call") await ensureSession();
       out =
         !session && msg.method === "tools/call" && msg.id !== undefined
           ? { jsonrpc: "2.0", id: msg.id, result: { content: [{ type: "text", text: startError }], isError: true } }
