@@ -8,7 +8,7 @@
 | 0~8단계 | 끝남 (docs/LOG.md에 단계별 끝난 시각) |
 | 9단계 마무리 | **남음**: 최신 커밋의 실행 파일 받기, LOG 기록, 최종 보고(시간·파일 수·코드 줄 수·테스트 수 표, 3분 시연 순서, exe 경로) |
 
-- 테스트: Rust 165개(핵심 156 + 앱 본체 9, 앱 본체는 CI에서만 실행), 화면 단위 51개, 화면 흐름(Playwright) 5개 — 모두 통과.
+- 테스트: Rust 165개(핵심 156 + 앱 본체 9, 앱 본체는 CI에서만 실행), 화면 단위 51개, MCP 서버 11개, 화면 흐름(Playwright) 5개 — 모두 통과.
 - 코드: Rust 약 17,600줄 / TypeScript 약 8,700줄, 저장소 파일 약 270개.
 - 아직 안 되는 것·미확인 표기: `docs/GAPS.md`.
 
@@ -33,7 +33,9 @@ npm run dev         # 개발 서버 http://localhost:1420 (주소 끝에 ?mem=1 
 npm run app         # 브라우저 판 실행: 빌드 후 Edge 앱 창으로 열기 (KGBone 실행.cmd 와 같음)
 npm run test:rust   # Rust 테스트(WASI, Node로 실행)
 npm run test:ui     # 화면 단위 테스트
+npm run test:mcp    # MCP 서버 테스트
 npm run test:e2e    # 화면 흐름 테스트(설치된 Edge 사용)
+npm run wasm:fetch  # Rust가 없는 PC: 배포된 kgbone.wasm 받기(4-2장)
 npm run icons       # 아이콘 다시 만들기(tools/icon.png, app/public/icons)
 npm run build:exe   # Tauri 실행 파일(src-tauri/target/release/KGBone.exe) — 아래 4장 참고
 ```
@@ -60,6 +62,13 @@ npm run build:exe   # Tauri 실행 파일(src-tauri/target/release/KGBone.exe) �
   - 설치하면 `.kgbone` 더블클릭으로 열 수 있다(처음 열 때 허용 여부를 묻는다).
   - 한 번 열어 두면 인터넷이 없어도 열린다(서비스 워커 `app/public/sw.js`, 목록은 빌드 때 `tools/vite-precache.mjs`가 채운다). 온라인이면 항상 최신 판을 쓴다.
 - 화면 빌드는 상대 경로(`base: './'`)라서 Pages(/KGBone/ 아래), 내 PC 서버(`npm run app`), Tauri 모두 같은 빌드로 돈다.
+
+## 4-2. MCP 서버(Claude가 직접 편집하기)
+- `tools/mcp/server.mjs`: 창 없이 `kgbone.wasm`을 Node로 돌리는 MCP 서버. 저장소 루트의 `.mcp.json`에 등록돼 있어 이 폴더에서 Claude Code를 열면 승인 후 붙는다.
+- 도구: `doc_new`·`doc_open`·`doc_save`(파일), `doc_inspect`(구조 읽기), `command_list`·`command_run`·`command_batch`(`interface/commands.json`의 core 명령), `pose`(본 월드 값), `render`(PNG 그림), `images_reload`, `export_spine`, `export_png_sequence`.
+- 파일은 서버를 띄운 폴더 안에서만 읽고 쓴다. 다른 폴더를 더 허용하려면 환경 변수 `KGBONE_MCP_ROOTS`(`;`로 구분).
+- `app/public/kgbone.wasm`이 필요하다. Rust가 있으면 `npm run wasm`, 없으면 `npm run wasm:fetch`(GitHub Pages에 올라간 origin main 빌드를 받는다 — Rust 핵심을 이 PC에서 고쳤다면 쓰면 안 된다).
+- Rust 없이 화면 흐름 테스트를 돌리려면: `npm run wasm:fetch` 후 `npx vite --config app/vite.config.ts`를 띄워 두고 `npx playwright test`.
 
 ## 5. 구조 요약
 - `crates/kgbone-core`: 계산 로직 전부(모델, .kgbone/Spine JSON/atlas, 뼈대 계산·제약·물리, 명령, 되돌리기, 내보내기). `api.rs`가 JSON 요청 처리기.

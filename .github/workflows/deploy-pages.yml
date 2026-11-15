@@ -46,6 +46,9 @@ jobs:
       - name: 화면 빌드(WebAssembly 포함)
         run: npm run build
 
+      - name: MCP 서버 테스트
+        run: npm run test:mcp
+
       - name: Pages 묶음 올리기
         uses: actions/upload-pages-artifact@v3
         with:

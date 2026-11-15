@@ -38,6 +38,7 @@ docs/                 SPEC, UI_SPEC, FORMAT, SOURCES, GAPS, LOG
 samples/              직접 만든 시험 파일(tools/gen-samples.mjs)
 e2e/                  Playwright 화면 흐름 테스트
 tools/                생성기·빌드·테스트 실행 도우미
+  mcp/                MCP 서버(창 없음): kgbone.wasm을 Node로 돌려 편집 명령을 도구로 내보낸다. 등록은 루트 .mcp.json
 ```
 
 ## 3. 코드 구성
@@ -62,10 +63,12 @@ tools/                생성기·빌드·테스트 실행 도우미
 npm install                      # 화면 의존성
 npm run samples                  # 시험 파일 다시 만들기
 npm run wasm                     # Rust 핵심 → app/public/kgbone.wasm
+npm run wasm:fetch               # Rust가 없는 PC: 배포된 최신 빌드(origin main)의 kgbone.wasm 받기
 npm run dev                      # 브라우저 개발 서버 http://localhost:1420 (WebPlatform)
 npm run build                    # 화면 배포 빌드(app/dist)
 npm run test:rust                # Rust 테스트(WASI) = cargo test -p kgbone-core --target wasm32-wasip1
 npm run test:ui                  # 화면 단위 테스트(vitest)
+npm run test:mcp                 # MCP 서버 테스트(node --test, kgbone.wasm 필요)
 npm run test:e2e                 # 화면 흐름 테스트(Playwright, 설치된 Edge 사용)
 npm test                         # 전부
 npm run icons                    # 아이콘 다시 만들기(tools/icon.png, app/public/icons)
@@ -76,7 +79,7 @@ PATH에 cargo가 없으면 `%USERPROFILE%\.cargo\bin`을 앞에 붙인다.
 
 ## 6. '완료'의 정의
 - docs/SPEC.md의 해당 기능 '완료 기준'을 확인하는 자동 테스트가 있고 통과한다(테스트 이름에 기능 번호, 예: `f_b01_...`).
-- `npm run test:rust`, `npm run test:ui`, `npm run test:e2e`가 모두 통과한다. 같은 실패를 3번 고쳐도 안 되면 원인과 함께 docs/GAPS.md에 적는다.
+- `npm run test:rust`, `npm run test:ui`, `npm run test:mcp`, `npm run test:e2e`가 모두 통과한다. 같은 실패를 3번 고쳐도 안 되면 원인과 함께 docs/GAPS.md에 적는다.
 - 화면 글자는 한국어이고, 메뉴·단축키·버튼은 `interface/commands.json`의 같은 명령 id를 부른다.
 - 아직 안 되는 것은 docs/GAPS.md에 적혀 있다.
 

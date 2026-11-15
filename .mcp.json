@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "kgbone": {
+      "command": "node",
+      "args": ["tools/mcp/server.mjs"]
+    }
+  }
+}
