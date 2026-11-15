@@ -1,0 +1,69 @@
+# 이어서 작업하기 (다른 PC용 인수인계)
+
+마지막 갱신: 2026-11-15. 작업 명세 원본은 저장소 밖의 `KGBone 제작 프롬프트.txt`(0~9단계)이고, 규칙은 `CLAUDE.md`에 모두 옮겨 두었다.
+
+## 1. 지금 어디까지 했나
+| 단계 | 상태 |
+|---|---|
+| 0~8단계 | 끝남 (docs/LOG.md에 단계별 끝난 시각) |
+| 9단계 마무리 | **남음**: 최신 커밋의 실행 파일 받기, LOG 기록, 최종 보고(시간·파일 수·코드 줄 수·테스트 수 표, 3분 시연 순서, exe 경로) |
+
+- 테스트: Rust 165개(핵심 156 + 앱 본체 9, 앱 본체는 CI에서만 실행), 화면 단위 42개, 화면 흐름(Playwright) 5개 — 모두 통과.
+- 코드: Rust 약 17,600줄 / TypeScript 약 8,700줄, 저장소 파일 약 270개.
+- 아직 안 되는 것·미확인 표기: `docs/GAPS.md`.
+
+## 2. 새 PC 준비
+1. **Node.js 24** 설치.
+2. **Rust**(rustup) 설치 후 타깃 추가:
+   ```bash
+   rustup target add wasm32-unknown-unknown wasm32-wasip1
+   ```
+3. Windows에서 Tauri 실행 파일까지 직접 만들려면 **Visual Studio C++ 빌드 도구**와 WebView2(Windows 11 기본 포함)가 필요하다.
+4. 저장소 받기와 의존성 설치:
+   ```bash
+   git clone https://github.com/dudwo2199/KGBone.git
+   cd KGBone
+   npm install
+   ```
+
+## 3. 자주 쓰는 명령
+```bash
+npm run wasm        # Rust 핵심 → app/public/kgbone.wasm
+npm run dev         # 개발 서버 http://localhost:1420 (주소 끝에 ?mem=1 이면 메모리 파일 판)
+npm run app         # 브라우저 판 실행: 빌드 후 Edge 앱 창으로 열기 (KGBone 실행.cmd 와 같음)
+npm run test:rust   # Rust 테스트(WASI, Node로 실행)
+npm run test:ui     # 화면 단위 테스트
+npm run test:e2e    # 화면 흐름 테스트(설치된 Edge 사용)
+npm run build:exe   # Tauri 실행 파일(src-tauri/target/release/KGBone.exe) — 아래 4장 참고
+```
+
+## 4. 실행 파일(.exe)
+- 원래 PC는 Windows **스마트 앱 컨트롤**이 켜져 있어 서명 없는 exe의 빌드(빌드 스크립트)와 실행이 막혔다. 그래서:
+  - `kgbone-core`·`kgbone-wasm`은 외부 크레이트 0개로 만들었고, Rust 테스트는 wasm32-wasip1 + Node로 돈다.
+  - exe는 **GitHub Actions**(`.github/workflows/build-windows.yml`)가 main에 push할 때마다 빌드해 `build-output` 브랜치에 올린다.
+- 받는 법:
+  ```bash
+  git fetch origin build-output
+  git show origin/build-output:build-info.txt
+  git restore --source origin/build-output --worktree -- KGBone.exe   # 또는: git show origin/build-output:KGBone.exe > dist-exe/KGBone.exe
+  ```
+  (`build-info.txt`의 커밋 해시가 원하는 커밋인지 확인)
+- 스마트 앱 컨트롤이 꺼진(또는 없는) PC라면 `npm run build:exe`로 직접 빌드해도 된다. 그 경우 네이티브 `cargo test`도 돈다(`cd src-tauri && cargo test`).
+- 서명이 없으므로 처음 실행 때 Windows 보안 경고(SmartScreen)가 뜰 수 있다.
+
+## 5. 구조 요약
+- `crates/kgbone-core`: 계산 로직 전부(모델, .kgbone/Spine JSON/atlas, 뼈대 계산·제약·물리, 명령, 되돌리기, 내보내기). `api.rs`가 JSON 요청 처리기.
+- `crates/kgbone-wasm`: C ABI로 핵심을 화면에 내보냄(wasm-bindgen 없음).
+- `src-tauri`: 앱 본체(별도 워크스페이스). 명령 목록은 `interface/tauri-commands.md`.
+- `app`: React 화면. 플랫폼 3종(`platform/tauri.ts`, `browser-fs.ts`(File System Access), `web.ts`(메모리, 테스트용)).
+- 명령 원본: `interface/commands.json` (메뉴·단축키·버튼 공용, Rust 테스트가 등록 누락을 잡음).
+
+## 6. 9단계에서 할 일 (체크리스트)
+- [ ] `build-output`에서 최신 커밋(9c2e837 이후) 빌드 결과 확인, `KGBone.exe` 받기(`dist-exe/`는 .gitignore에 추가하거나 커밋하지 않기)
+- [ ] `docs/LOG.md`에 9단계 끝난 시각 기록
+- [ ] 최종 보고: 걸린 시간(LOG 기준), 파일 수, Rust/TS 줄 수, 테스트 수, 3분 시연 순서, exe 경로, 서명 없음 경고 안내
+- [ ] 커밋(`[ADD]/[CHG]/[DEL]/[FIX]` + 한국어, 공동 작업자 줄 금지) 후 `git push origin main` (`--force` 금지)
+
+## 7. 참고
+- 루트의 `AGENTS.md`는 이 작업에서 만든 파일이 아니다(누가 만들었는지 확인 전이라 커밋하지 않음).
+- esotericsoftware.com은 원래 PC에서 접속이 끊겨 검색 요약으로만 근거를 확인했다(GAPS G-01). 접속되는 PC라면 `docs/SOURCES.md`의 URL을 다시 확인할 것.
