@@ -3,6 +3,7 @@
 // 프로젝트 파일이 등록한 폴더 안에 있어야 imagesPath 상대 경로가 풀리므로, 폴더 밖 파일을 열면 그 폴더를 고르도록 묻는다.
 import type { FileFilter, ImageEntry, Platform } from './platform';
 import { HandleTable, isFsaPath, type DirLike, type FileLike } from './fsaTable';
+import { firstLaunchFile, type LaunchQueueLike } from './launchQueue';
 
 /** 브라우저 판 대화상자(화면 쪽 구현): 사용자가 버튼을 눌러야 폴더 고르기 창을 띄울 수 있다 */
 export interface BrowserFsDialogs {
@@ -200,10 +201,13 @@ export class BrowserFsPlatform implements Platform {
   }
 
   async registerAssociation(): Promise<string> {
-    return '브라우저 판에서는 지원하지 않습니다';
+    return 'Edge에서 "앱으로 설치"하면 .kgbone 파일 연결이 함께 등록됩니다';
   }
+  /** 설치한 웹 앱에서 .kgbone을 더블클릭해 열었을 때 받은 파일 */
   async launchFile(): Promise<string | null> {
-    return null;
+    const queue = (window as unknown as { launchQueue?: LaunchQueueLike<FileSystemFileHandle> }).launchQueue;
+    const h = await firstLaunchFile(queue);
+    return h ? this.pathOf(h as Fil) : null;
   }
   onCloseRequested(): void {
     // 브라우저는 닫기 전에 비동기로 물을 수 없으므로, 저장 안 한 변경이 있으면 브라우저 기본 확인창을 띄운다

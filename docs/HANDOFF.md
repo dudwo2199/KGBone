@@ -8,7 +8,7 @@
 | 0~8단계 | 끝남 (docs/LOG.md에 단계별 끝난 시각) |
 | 9단계 마무리 | **남음**: 최신 커밋의 실행 파일 받기, LOG 기록, 최종 보고(시간·파일 수·코드 줄 수·테스트 수 표, 3분 시연 순서, exe 경로) |
 
-- 테스트: Rust 165개(핵심 156 + 앱 본체 9, 앱 본체는 CI에서만 실행), 화면 단위 42개, 화면 흐름(Playwright) 5개 — 모두 통과.
+- 테스트: Rust 165개(핵심 156 + 앱 본체 9, 앱 본체는 CI에서만 실행), 화면 단위 51개, 화면 흐름(Playwright) 5개 — 모두 통과.
 - 코드: Rust 약 17,600줄 / TypeScript 약 8,700줄, 저장소 파일 약 270개.
 - 아직 안 되는 것·미확인 표기: `docs/GAPS.md`.
 
@@ -34,6 +34,7 @@ npm run app         # 브라우저 판 실행: 빌드 후 Edge 앱 창으로 열
 npm run test:rust   # Rust 테스트(WASI, Node로 실행)
 npm run test:ui     # 화면 단위 테스트
 npm run test:e2e    # 화면 흐름 테스트(설치된 Edge 사용)
+npm run icons       # 아이콘 다시 만들기(tools/icon.png, app/public/icons)
 npm run build:exe   # Tauri 실행 파일(src-tauri/target/release/KGBone.exe) — 아래 4장 참고
 ```
 
@@ -50,6 +51,15 @@ npm run build:exe   # Tauri 실행 파일(src-tauri/target/release/KGBone.exe) �
   (`build-info.txt`의 커밋 해시가 원하는 커밋인지 확인)
 - 스마트 앱 컨트롤이 꺼진(또는 없는) PC라면 `npm run build:exe`로 직접 빌드해도 된다. 그 경우 네이티브 `cargo test`도 돈다(`cd src-tauri && cargo test`).
 - 서명이 없으므로 처음 실행 때 Windows 보안 경고(SmartScreen)가 뜰 수 있다.
+
+## 4-1. 웹 판(설치형 웹 앱, exe 없이 쓰기)
+- 스마트 앱 컨트롤이 켜진 PC는 CI가 만든 exe도 실행이 막힌다. 그런 PC는 웹 판을 쓴다.
+- `.github/workflows/deploy-pages.yml`이 main에 push할 때마다 화면을 빌드해 GitHub Pages에 올린다: https://dudwo2199.github.io/KGBone/
+  - 처음 한 번은 저장소 Settings → Pages → Source를 **GitHub Actions**로 바꿔야 한다.
+- Edge로 위 주소를 열고 주소창 오른쪽의 "앱 설치"(또는 ⋯ → 앱 → 이 사이트를 앱으로 설치)를 누르면 시작 메뉴에 KGBone이 생기고 독립 창으로 열린다.
+  - 설치하면 `.kgbone` 더블클릭으로 열 수 있다(처음 열 때 허용 여부를 묻는다).
+  - 한 번 열어 두면 인터넷이 없어도 열린다(서비스 워커 `app/public/sw.js`, 목록은 빌드 때 `tools/vite-precache.mjs`가 채운다). 온라인이면 항상 최신 판을 쓴다.
+- 화면 빌드는 상대 경로(`base: './'`)라서 Pages(/KGBone/ 아래), 내 PC 서버(`npm run app`), Tauri 모두 같은 빌드로 돈다.
 
 ## 5. 구조 요약
 - `crates/kgbone-core`: 계산 로직 전부(모델, .kgbone/Spine JSON/atlas, 뼈대 계산·제약·물리, 명령, 되돌리기, 내보내기). `api.rs`가 JSON 요청 처리기.

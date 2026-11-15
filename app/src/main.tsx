@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { loadCore } from './core/wasm';
 import { createPlatform } from './platform';
+import { registerServiceWorker } from './pwa';
 import { createServices, ServicesContext } from './services';
 import { App } from './ui/App';
 import { DialogService } from './ui/dialogs/service';
@@ -12,7 +13,7 @@ async function start() {
   const root = createRoot(document.getElementById('root')!);
   let core;
   try {
-    core = await loadCore('/kgbone.wasm');
+    core = await loadCore(`${import.meta.env.BASE_URL}kgbone.wasm`);
     core.newDocument();
   } catch (e) {
     root.render(<div className="fatal">핵심 모듈(kgbone.wasm)을 불러오지 못했습니다: {e instanceof Error ? e.message : String(e)}</div>);
@@ -42,4 +43,5 @@ async function start() {
   (window as unknown as { __kgbone?: unknown }).__kgbone = s;
 }
 
+registerServiceWorker();
 void start();

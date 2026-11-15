@@ -1,14 +1,14 @@
 // KGBone 앱 아이콘 생성기(독자 디자인). 1024×1024 PNG를 코드로 그린다(Node 내장 zlib만 사용).
 // 디자인: 둥근 사각 바탕(남색→보라 세로 그라데이션) + 관절 세 개로 이어진 두 마디 뼈 + 아래쪽 "KG" 글자.
-// 실행: node tools/gen-icon.mjs  →  tools/icon.png
+// 실행: node tools/gen-icon.mjs  →  tools/icon.png(1024), app/public/icons/icon-192.png·icon-512.png(설치형 웹 앱용)
 // 아이콘 세트: npx tauri icon tools/icon.png -o src-tauri/icons
-import { writeFileSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 import { deflateSync } from "node:zlib";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const out = join(dirname(fileURLToPath(import.meta.url)), "icon.png");
-const N = 1024;
+const here = dirname(fileURLToPath(import.meta.url));
+const N = 1024; // 도형 좌표의 기준 크기
 
 // ---------- PNG 쓰기 (tools/gen-samples.mjs와 같은 방식) ----------
 const crcTable = new Uint32Array(256).map((_, n) => {
@@ -77,7 +77,8 @@ function sdArc(px, py, cx, cy, R, w, a0, a1) {
   const e1 = sdCircle(px, py, cx + R * Math.cos(a1), cy + R * Math.sin(a1), w);
   return Math.min(e0, e1);
 }
-const cover = (d) => Math.max(0, Math.min(1, 0.5 - d));
+/** 덮임 정도. k = 출력 한 픽셀이 기준 좌표로 몇 픽셀인지 */
+const cover = (d, k = 1) => Math.max(0, Math.min(1, 0.5 - d / k));
 
 // ---------- 도형 배치 ----------
 const BG_TOP = [30, 42, 78], BG_BOTTOM = [86, 58, 150];
@@ -116,31 +117,41 @@ function letters(x, y) {
 }
 
 // ---------- 그리기 ----------
-const rgba = Buffer.alloc(N * N * 4);
-for (let y = 0; y < N; y++) {
-  for (let x = 0; x < N; x++) {
-    const px = x + 0.5, py = y + 0.5;
-    // 바탕
-    const bgA = cover(sdRoundRect(px, py, N / 2, N / 2, 448, 448, 200));
-    const t = py / N;
-    let c = BG_TOP.map((v, i) => v + (BG_BOTTOM[i] - v) * t);
-    let a = bgA;
-    // 위에 덮기(곱해지지 않은 알파, 바탕 안에서만)
-    const over = (col, cov) => {
-      c = c.map((v, i) => v + (col[i] - v) * cov);
-    };
-    if (bgA > 0) {
-      // 뼈 그림자(살짝 아래로)
-      over([18, 22, 48], cover(Math.min(boneShape(px, py - 14), jointRing(px, py - 14))) * 0.35);
-      over(BONE, cover(boneShape(px, py)));
-      over(BONE, cover(jointRing(px, py)));
-      over(JOINT, cover(jointCore(px, py)));
-      over(TEXT, cover(letters(px, py)));
+/** size×size로 그린 PNG. 도형은 기준 크기(N) 좌표로 두고 픽셀 중심만 옮겨 잰다 */
+function render(size) {
+  const k = N / size;
+  const rgba = Buffer.alloc(size * size * 4);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const px = (x + 0.5) * k, py = (y + 0.5) * k;
+      // 바탕
+      const bgA = cover(sdRoundRect(px, py, N / 2, N / 2, 448, 448, 200), k);
+      const t = py / N;
+      let c = BG_TOP.map((v, i) => v + (BG_BOTTOM[i] - v) * t);
+      // 위에 덮기(곱해지지 않은 알파, 바탕 안에서만)
+      const over = (col, cov) => {
+        c = c.map((v, i) => v + (col[i] - v) * cov);
+      };
+      if (bgA > 0) {
+        // 뼈 그림자(살짝 아래로)
+        over([18, 22, 48], cover(Math.min(boneShape(px, py - 14), jointRing(px, py - 14)), k) * 0.35);
+        over(BONE, cover(boneShape(px, py), k));
+        over(BONE, cover(jointRing(px, py), k));
+        over(JOINT, cover(jointCore(px, py), k));
+        over(TEXT, cover(letters(px, py), k));
+      }
+      const o = (y * size + x) * 4;
+      rgba[o] = Math.round(c[0]); rgba[o + 1] = Math.round(c[1]); rgba[o + 2] = Math.round(c[2]);
+      rgba[o + 3] = Math.round(bgA * 255);
     }
-    const o = (y * N + x) * 4;
-    rgba[o] = Math.round(c[0]); rgba[o + 1] = Math.round(c[1]); rgba[o + 2] = Math.round(c[2]);
-    rgba[o + 3] = Math.round(a * 255);
   }
+  return encodePng(size, size, rgba);
 }
-writeFileSync(out, encodePng(N, N, rgba));
-console.log(`아이콘을 만들었습니다: ${out}`);
+
+const webDir = join(here, "..", "app", "public", "icons");
+mkdirSync(webDir, { recursive: true });
+const outputs = [[join(here, "icon.png"), N], [join(webDir, "icon-192.png"), 192], [join(webDir, "icon-512.png"), 512]];
+for (const [file, size] of outputs) {
+  writeFileSync(file, render(size));
+  console.log(`아이콘을 만들었습니다: ${file}`);
+}

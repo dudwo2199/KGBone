@@ -1,0 +1,63 @@
+# KGBone 웹 판(설치형 웹 앱)을 GitHub Pages에 올린다.
+# 서명 없는 exe가 막히는 PC(스마트 앱 컨트롤)에서도 Edge로 열어 "앱으로 설치"하면 쓸 수 있다.
+# 처음 한 번은 저장소 Settings → Pages → Source를 "GitHub Actions"로 바꿔야 한다.
+name: 웹 판 배포(GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포는 한 번에 하나씩, 새 push가 오면 앞의 것을 그만둔다
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 받기
+        uses: actions/checkout@v4
+
+      - name: Node 준비
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Rust 준비
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
+
+      - name: 화면 의존성 설치
+        run: npm ci --no-audit --no-fund
+
+      - name: 화면 단위 테스트
+        run: npm run test:ui
+
+      - name: 화면 빌드(WebAssembly 포함)
+        run: npm run build
+
+      - name: Pages 묶음 올리기
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Pages에 배포
+        id: deployment
+        uses: actions/deploy-pages@v4

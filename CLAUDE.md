@@ -55,6 +55,7 @@ tools/                생성기·빌드·테스트 실행 도우미
 - 그래서 `kgbone-core`·`kgbone-wasm`은 **외부 크레이트 0개**(빌드 스크립트·proc-macro 없음). 직렬화는 `json_object!` 매크로로 한다.
 - Rust 테스트는 `wasm32-wasip1`로 빌드해 Node WASI로 돌린다(`.cargo/config.toml`의 runner = `tools/wasi-run.mjs`). panic=abort이므로 실패한 테스트에서 실행이 멈춘다.
 - Tauri 앱은 이 PC에서 빌드할 수 없으므로 GitHub Actions(`.github/workflows/build-windows.yml`)에서 빌드한다.
+- CI가 만든 exe도 서명이 없어 이 PC에서는 실행이 막힌다. 이 PC에서는 웹 판(GitHub Pages에 올린 설치형 웹 앱, 또는 `npm run app`)으로 쓴다.
 
 ## 5. 빌드·실행·테스트 명령
 ```bash
@@ -67,8 +68,10 @@ npm run test:rust                # Rust 테스트(WASI) = cargo test -p kgbone-c
 npm run test:ui                  # 화면 단위 테스트(vitest)
 npm run test:e2e                 # 화면 흐름 테스트(Playwright, 설치된 Edge 사용)
 npm test                         # 전부
+npm run icons                    # 아이콘 다시 만들기(tools/icon.png, app/public/icons)
 npx tauri build                  # 실행 파일(이 PC에서는 막힘 → GitHub Actions)
 ```
+웹 판(설치형 웹 앱)은 main에 push하면 `.github/workflows/deploy-pages.yml`이 GitHub Pages에 올린다. 화면 빌드는 상대 경로(`base: './'`)를 쓰므로 화면 코드에서 `/`로 시작하는 절대 경로로 파일을 부르지 않는다.
 PATH에 cargo가 없으면 `%USERPROFILE%\.cargo\bin`을 앞에 붙인다.
 
 ## 6. '완료'의 정의
