@@ -12,7 +12,7 @@
     "test:rust": "cargo test -p kgbone-core --target wasm32-wasip1",
     "test:ui": "vitest run --config app/vite.config.ts",
     "test:e2e": "playwright test",
-    "test:mcp": "node --test tools/mcp/",
+    "test:mcp": "node --test tools/mcp/server.test.mjs",
     "test": "npm run test:rust && npm run test:ui && npm run test:mcp && npm run test:e2e",
     "mcp": "node tools/mcp/server.mjs",
     "samples": "node tools/gen-samples.mjs",
