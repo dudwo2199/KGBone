@@ -12,6 +12,7 @@ import { namesOf, sameSel, type Sel } from '../../state/selection';
 import { useStore } from '../../state/store';
 import { axisFrame } from '../../tools/axis';
 import { IDENTITY } from '../../tools/affine';
+import { AttachmentDrag } from '../../tools/attachmentDrag';
 import { createDragTool, type DragTool } from '../../tools/dragTools';
 import { hitVertex } from '../../tools/meshEdit';
 import { addVertexAt, meshEditTarget, VertexDrag } from '../../tools/meshEditSession';
@@ -219,9 +220,10 @@ export function Viewport() {
     }
 
     let target: Sel | null = bone ? { kind: 'bone', name: bone } : null;
+    let image: { slot: string; attachment: string } | null = null;
     if (!target && u.tool !== 'create' && u.tool !== 'weights') {
-      const hs = u.showImages ? hitSlot(pose, w.x, w.y) : null;
-      if (hs) target = { kind: 'slot', name: hs.slot };
+      image = u.showImages ? hitSlot(pose, w.x, w.y) : null;
+      if (image) target = { kind: 'slot', name: image.slot };
     }
     if (target) {
       const already = u.selection.some((x) => sameSel(x, target!));
@@ -234,6 +236,13 @@ export function Viewport() {
       }
     } else if (u.tool !== 'create' && u.tool !== 'weights' && !e.ctrlKey) {
       s.ui.select([]);
+    }
+    // 이동 도구로 그림을 잡으면 그 첨부물을 옮긴다(D14). Ctrl/Shift+클릭은 선택만
+    if (u.tool === 'translate' && image && !e.ctrlKey && !e.shiftKey) {
+      drag.current = new AttachmentDrag(s, image.slot, image.attachment);
+      drag.current.begin(w, e);
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      return;
     }
     const needsBone = u.tool !== 'create' && u.tool !== 'weights';
     if (needsBone && target?.kind !== 'bone') return;
