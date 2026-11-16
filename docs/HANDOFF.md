@@ -16,7 +16,7 @@
 
 ### 1-1. 유니티 런타임 1단계 (끝남, 배포 전)
 - 설계 `docs/superpowers/specs/2026-11-16-unity-runtime-stage1-design.md`, 계획 `docs/superpowers/plans/2026-11-16-unity-runtime-stage1.md`, 명세 SPEC.md M절.
-- 패키지 `unity/com.kgbone.runtime/`: 계산부(C#)가 KGBone 핵심과 같은지 정답 64개로 비교(`npm run unity:test`, CI 워크플로 `unity-core.yml`). 유니티 EditMode 94개(`npm run unity:editmode`).
+- 패키지 `unity/com.kgbone.runtime/`: 계산부(C#)가 KGBone 핵심과 같은지 정답 64개로 비교(`npm run unity:test`, CI 워크플로 `unity-core.yml`). 유니티 EditMode 101개(`npm run unity:editmode`).
 - 확인용 프로젝트 `unity/KGBoneSandbox/`: `npm run unity:sandbox -- <폴더>`로 파일을 넣고, 메뉴 KGBone > 화면 찍기(또는 배치 모드 `-executeMethod KGBoneSandbox.SandboxTools.CaptureBatch`)로 `Logs/capture-*.png`를 만든다.
 - 이 PC: Unity 6000.3.17f1, .NET SDK 10. `dotnet test`는 스마트 앱 컨트롤에 막히지 않는다.
 - 다음 단계 후보: 2단계(제약), 3단계(클리핑·시퀀스·섞기·스킨 바꾸기·본 덮어쓰기). 미확인 사항은 GAPS G-26~G-28.

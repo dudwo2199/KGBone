@@ -64,6 +64,16 @@ namespace KGBone
             return false;
         }
 
+        // 다시 가져오거나 인스펙터에서 바뀌면 캐시를 버린다
+        void OnEnable() => ClearCache();
+        void OnValidate() => ClearCache();
+
+        void ClearCache()
+        {
+            model = null;
+            imageIndex = null;
+        }
+
         /// <summary>가져오기 도구가 채운다.</summary>
         internal void Initialize(string json, Texture2D tex, Material[] mats, ImageEntry[] entries, float ppu, string[] warns)
         {

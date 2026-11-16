@@ -53,6 +53,16 @@ namespace KGBone.Core
             }
         }
 
+        /// <summary>
+        /// 키 시간이 정확히 time인 이벤트. 핵심의 구간 규칙([last, time), 끝 제외)으로는 반복하지 않는 애니메이션의
+        /// 끝 시간 키와 길이 0 애니메이션의 키가 나지 않으므로, 재생 컴포넌트가 끝에 도달한 프레임에 이것으로 보탠다.
+        /// </summary>
+        public static void KeysAt(SkeletonModel m, AnimationData a, float time, List<FiredEvent> output)
+        {
+            for (int i = 0; i < a.Events.Count; i++)
+                if (a.Events[i].Time == time) output.Add(Make(m, a.Events[i]));
+        }
+
         static FiredEvent Make(SkeletonModel m, EventKey k)
         {
             var def = m.FindEvent(k.Name);

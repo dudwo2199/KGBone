@@ -33,7 +33,8 @@ namespace KGBone.Editor
         /// </summary>
         public static Texture2D Pack(IList<Texture2D> sources, int maxSize, out Rect[] rects, out bool shrunk)
         {
-            var atlas = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            // linear: true = 원래 값 그대로(sRGB로 풀지 않음). 화면과 같은 감마 공간 계산은 셰이더가 하고, 선형 프로젝트면 마지막에 바꾼다
+            var atlas = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
             var arr = new Texture2D[sources.Count];
             sources.CopyTo(arr, 0);
             rects = atlas.PackTextures(arr, Padding, maxSize, false);

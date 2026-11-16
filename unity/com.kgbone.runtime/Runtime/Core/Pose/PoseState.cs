@@ -13,8 +13,32 @@ namespace KGBone.Core
         public readonly ColorF?[] SlotDarks;
         public readonly string[] SlotAttachments;
         public readonly int[] DrawOrder;
-        /// <summary>(슬롯, 첨부물) → 셋업 정점에 더할 변형 값.</summary>
+        /// <summary>(슬롯, 첨부물) → 셋업 정점에 더할 변형 값(이번 계산에서 키가 있는 것만).</summary>
         public readonly Dictionary<(string slot, string attachment), float[]> Deform = new Dictionary<(string, string), float[]>();
+
+        // 매 프레임 할당하지 않도록 다시 쓰는 임시 버퍼
+        readonly Dictionary<(string, string), float[]> deformPool = new Dictionary<(string, string), float[]>();
+        float[] deformScratch = new float[0];
+        internal readonly int[] DrawOrderPlaced;
+        internal readonly bool[] DrawOrderMoved;
+
+        /// <summary>(슬롯, 첨부물)의 변형 배열(길이 len). 계산마다 같은 배열을 다시 쓴다.</summary>
+        internal float[] DeformBuffer((string, string) key, int len)
+        {
+            if (!deformPool.TryGetValue(key, out var a) || a.Length != len)
+            {
+                a = new float[len];
+                deformPool[key] = a;
+            }
+            return a;
+        }
+
+        /// <summary>길이 len 이상인 임시 배열.</summary>
+        internal float[] DeformScratch(int len)
+        {
+            if (deformScratch.Length < len) deformScratch = new float[len];
+            return deformScratch;
+        }
 
         public PoseState(SkeletonModel m)
         {
@@ -26,6 +50,8 @@ namespace KGBone.Core
             SlotDarks = new ColorF?[m.Slots.Count];
             SlotAttachments = new string[m.Slots.Count];
             DrawOrder = new int[m.Slots.Count];
+            DrawOrderPlaced = new int[m.Slots.Count];
+            DrawOrderMoved = new bool[m.Slots.Count];
             ResetToSetup(m);
         }
 

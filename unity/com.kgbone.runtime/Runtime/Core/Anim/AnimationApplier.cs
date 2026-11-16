@@ -103,19 +103,20 @@ namespace KGBone.Core
             int k = 0;
             for (int i = a.DrawOrder.Count - 1; i >= 0; i--)
                 if (a.DrawOrder[i].Time <= t) { k = i; break; }
-            DrawOrderOf(m, a.DrawOrder[k], pose.DrawOrder);
+            DrawOrderOf(m, a.DrawOrder[k], pose);
         }
 
         /// <summary>
         /// 키 하나의 그리기 순서: 이름이 적힌 슬롯은 셋업 자리 + offset으로 옮기고 나머지는 셋업 순서대로 빈 자리를 채운다.
         /// 범위를 벗어나거나 자리가 겹치는 항목은 무시(핵심 anim/slot_keys.rs의 draw_order_of — commands/draw_order.rs의 decode가 아니다).
         /// </summary>
-        static void DrawOrderOf(SkeletonModel m, DrawOrderKey key, int[] output)
+        static void DrawOrderOf(SkeletonModel m, DrawOrderKey key, PoseState pose)
         {
             int n = m.Slots.Count;
-            var placed = new int[n];
-            var moved = new bool[n];
-            for (int i = 0; i < n; i++) placed[i] = -1;
+            var output = pose.DrawOrder;
+            var placed = pose.DrawOrderPlaced;
+            var moved = pose.DrawOrderMoved;
+            for (int i = 0; i < n; i++) { placed[i] = -1; moved[i] = false; }
             foreach (var (slot, offset) in key.Offsets)
             {
                 int i = m.SlotIndex(slot);
@@ -146,26 +147,28 @@ namespace KGBone.Core
                 if (mesh == null) continue;
                 int len = MeshVertices.DeformLength(mesh.Weighted, mesh.Vertices);
                 if (!Curve.RatioAt(tl.Keys, t, out int i, out float r)) continue;
-                var target = Expand(tl.Keys[i], len);
+                var key = (tl.Slot, tl.Attachment);
+                var target = pose.DeformBuffer(key, len);
+                Expand(tl.Keys[i], target, len);
                 if (r > 0f && i + 1 < tl.Keys.Length)
                 {
-                    var b = Expand(tl.Keys[i + 1], len);
+                    var b = pose.DeformScratch(len);
+                    Expand(tl.Keys[i + 1], b, len);
                     for (int j = 0; j < len; j++) target[j] += (b[j] - target[j]) * r;
                 }
-                pose.Deform[(tl.Slot, tl.Attachment)] = target;
+                pose.Deform[key] = target;
             }
         }
 
-        /// <summary>키 하나를 길이 len의 전체 변형 배열로 편다(offset 위치부터 v).</summary>
-        static float[] Expand(Key k, int len)
+        /// <summary>키 하나를 길이 len의 전체 변형 배열로 편다(offset 위치부터 v, 나머지 0).</summary>
+        static void Expand(Key k, float[] output, int len)
         {
-            var output = new float[len];
+            System.Array.Clear(output, 0, len);
             for (int j = 0; j < k.V.Length; j++)
             {
                 int at = k.Offset + j;
                 if (at >= 0 && at < len) output[at] = k.V[j];
             }
-            return output;
         }
     }
 }

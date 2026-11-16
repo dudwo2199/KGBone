@@ -328,5 +328,25 @@ namespace KGBone.Tests
             CollectionAssert.AreEqual(new[] { 0, 1, 2, 2, 3, 0 }, d.Indices);
             Assert.AreEqual("img", d.Image);
         }
+
+        // ---------- 최종 검토 I3: 매 프레임 할당 ----------
+        [Test]
+        public void m07_compute_does_not_allocate_after_warmup()
+        {
+#if UNITY_EDITOR
+            Assert.Ignore("할당량 측정은 dotnet test에서만 한다");
+#else
+            var m = KGBoneLoader.Load(System.IO.File.ReadAllText(System.IO.Path.Combine(GoldenFile.GoldenDir(), "unity-stage1.kgbone")));
+            var poser = new SkeletonPoser(m);
+            var req = new PoseRequest { Animation = "걷기", Skin = "빨강", Looping = true };
+            // 예열: 같은 시점들을 한 번 돌려 목록·버퍼가 최대 크기까지 자라게 한다(처음 한 번만 할당)
+            void Run() { for (int i = 0; i < 20; i++) { req.Time = 0.05f * i; req.LastTime = req.Time - 0.05f; poser.Compute(req); } }
+            Run();
+            long before = System.GC.GetAllocatedBytesForCurrentThread();
+            Run();
+            long allocated = System.GC.GetAllocatedBytesForCurrentThread() - before;
+            Assert.AreEqual(0, allocated, "포즈 계산 20번에 할당한 바이트");
+#endif
+        }
     }
 }

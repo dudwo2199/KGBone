@@ -142,6 +142,100 @@ namespace KGBone.Tests
             Assert.IsFalse(a.TryGetBone("없는본", out _, out _, out _));
         }
 
+        // ---------- 최종 검토 지적 ----------
+        [Test]
+        public void m11_play_inside_event_handler_does_not_throw()
+        {
+            // 검토 C1: 이벤트 처리기에서 Play를 부르면 반복 중인 이벤트 목록이 바뀌어 예외가 나던 문제
+            var a = Make(ImporterTests.ImportStage1());
+            var got = new List<string>();
+            a.EventFired += e =>
+            {
+                got.Add(e.Name);
+                if (e.Name == "발" && a.CurrentAnimation == "걷기") a.Play("정지", true);
+            };
+            a.Play("걷기", true);
+            Assert.DoesNotThrow(() => a.Advance(0.25f));
+            CollectionAssert.AreEqual(new[] { "발" }, got);
+            Assert.AreEqual("정지", a.CurrentAnimation);
+        }
+
+        [Test]
+        public void m11_non_loop_fires_end_key_and_zero_length_keys_once()
+        {
+            // 검토 I1: 반복하지 않으면 끝 시간의 키(숨@1)와 길이 0 애니메이션의 0초 키가 빠지던 문제
+            var a = Make(ImporterTests.ImportStage1());
+            var got = new List<string>();
+            a.EventFired += e => got.Add($"{e.Name}@{e.Time}");
+            a.Play("걷기", false);
+            a.Advance(0.6f);
+            a.Advance(0.6f);
+            a.Advance(0.6f);
+            CollectionAssert.AreEqual(new[] { "발@0", "발@0.5", "숨@1" }, got);
+            got.Clear();
+            a.Play("정지", false);
+            a.Advance(0.1f);
+            a.Advance(0.1f);
+            CollectionAssert.AreEqual(new[] { "숨@0" }, got);
+        }
+
+        [Test]
+        public void m11_negative_time_scale_fires_no_events()
+        {
+            // 검토 I2: 시간을 거꾸로 돌리면 거의 모든 이벤트가 매 프레임 나던 문제
+            var a = Make(ImporterTests.ImportStage1());
+            int count = 0;
+            a.EventFired += e => count++;
+            a.Play("걷기", true);
+            a.Time = 0.9f;
+            a.timeScale = -1;
+            a.Advance(0.1f);
+            a.Advance(0.1f);
+            Assert.AreEqual(0, count);
+            Assert.AreEqual(0.7f, a.Time, 1e-5f);
+        }
+
+        static int KGBoneMeshCount()
+        {
+            int n = 0;
+            foreach (var m in Resources.FindObjectsOfTypeAll<Mesh>()) if (m.name == "KGBone") n++;
+            return n;
+        }
+
+        [Test]
+        public void m11_domain_reload_does_not_leak_mesh()
+        {
+            // 검토 I5: 스크립트를 다시 컴파일하면(도메인 다시 불러오기) 컴포넌트가 메시 참조를 잃는데, DontSave 메시는 남아 쌓이던 문제.
+            // 다시 불러오기 순서를 흉내 낸다: 꺼짐(OnDisable) → 관리 필드 사라짐 → 켜짐(OnEnable)
+            var a = Make(ImporterTests.ImportStage1());
+            a.Stop(); // 데이터를 넣은 뒤 한 번 그려 메시를 만든다
+            int before = KGBoneMeshCount();
+            Assert.Greater(before, 0);
+            var meshField = typeof(KGBoneAnimation).GetField("mesh", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            for (int i = 0; i < 3; i++)
+            {
+                a.enabled = false;
+                meshField.SetValue(a, null);
+                a.enabled = true;
+            }
+            Assert.AreEqual(before, KGBoneMeshCount());
+            Assert.Greater(VertexCount(a), 0);
+        }
+
+        [Test]
+        public void m11_reimported_data_refreshes_pose()
+        {
+            // 검토 I6: .kgbone을 다시 가져와 같은 데이터 에셋의 내용이 바뀌어도 예전 뼈대를 그리던 문제
+            var data = ImporterTests.ImportStage1();
+            var a = Make(data);
+            a.Stop();
+            Assert.AreEqual(13, a.LastPose.Bones.Length);
+            data.Initialize(@"{""skeleton"":{""bones"":[{""name"":""root""},{""name"":""a"",""parent"":""root""}]}}",
+                data.Texture, new Material[4], new ImageEntry[0], 100, new string[0]);
+            a.Advance(0);
+            Assert.AreEqual(2, a.LastPose.Bones.Length);
+        }
+
         [Test]
         public void m12_follower_tracks_bone()
         {

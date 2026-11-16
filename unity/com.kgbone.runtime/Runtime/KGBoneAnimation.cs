@@ -41,6 +41,7 @@ namespace KGBone
         readonly MeshBuilder builder = new MeshBuilder();
         readonly List<Material> materials = new List<Material>();
         readonly PoseRequest request = new PoseRequest();
+        readonly List<FiredEvent> pending = new List<FiredEvent>();
         Material[] materialArray = new Material[0];
 
         void Awake()
@@ -51,6 +52,10 @@ namespace KGBone
         }
 
         void OnEnable() => Refresh();
+
+        // 꺼질 때(도메인 다시 불러오기·스크립트 컴파일 포함) 메시를 지운다. OnDestroy는 도메인 다시 불러오기 때 불리지 않아
+        // DontSave 메시가 참조를 잃고 쌓이기 때문이다. 켜지면 OnEnable에서 다시 만든다.
+        void OnDisable() => DestroyMesh();
 
         void OnValidate()
         {
@@ -64,13 +69,16 @@ namespace KGBone
             if (Application.isPlaying) Advance(UnityEngine.Time.deltaTime);
         }
 
-        void OnDestroy()
+        void OnDestroy() => DestroyMesh();
+
+        void DestroyMesh()
         {
-            if (mesh != null)
-            {
-                if (Application.isPlaying) Destroy(mesh);
-                else DestroyImmediate(mesh);
-            }
+            if (mesh == null) return;
+            var filter = GetComponent<MeshFilter>();
+            if (filter != null && filter.sharedMesh == mesh) filter.sharedMesh = null;
+            if (Application.isPlaying) Destroy(mesh);
+            else DestroyImmediate(mesh);
+            mesh = null;
         }
 
         /// <summary>애니메이션을 처음부터 재생한다. null이면 Stop(). 없는 이름이면 경고만 하고 지금 상태를 유지한다.</summary>
@@ -113,22 +121,41 @@ namespace KGBone
                 return;
             }
             float last = Time;
-            bool fireEvents = IsPlaying;
+            float delta = dt * timeScale;
+            // 시간을 거꾸로 돌릴 때는 이벤트를 내지 않는다(구간 규칙이 앞으로 가는 시간만 전제한다)
+            bool fireEvents = IsPlaying && delta >= 0;
             bool reachedEnd = false;
+            AnimationData anim = null;
             if (IsPlaying)
             {
-                Time += dt * timeScale;
-                var anim = p.Model.FindAnimation(CurrentAnimation);
-                if (!loop && anim != null && Time >= anim.Duration)
+                Time += delta;
+                anim = p.Model.FindAnimation(CurrentAnimation);
+                if (!loop && anim != null)
                 {
-                    Time = anim.Duration;
-                    IsPlaying = false;
-                    reachedEnd = true;
+                    if (Time >= anim.Duration)
+                    {
+                        Time = anim.Duration;
+                        IsPlaying = false;
+                        reachedEnd = true;
+                    }
+                    else if (Time < 0) Time = 0;
                 }
             }
             Compute(fireEvents ? last : (float?)null);
-            if (fireEvents && EventFired != null)
-                foreach (var e in LastPose.Events) EventFired(new KGBoneEvent(e.Name, e.Time, e.Int, e.Float, e.String, e.Volume, e.Balance));
+
+            // 처리기가 Play·Stop을 불러 포즈가 다시 계산돼도 안전하도록 이벤트를 따로 담아 두고 내보낸다
+            pending.Clear();
+            if (fireEvents)
+            {
+                pending.AddRange(LastPose.Events);
+                // 반복하지 않는 애니메이션의 끝 시간 키(길이 0이면 0초 키)는 [이전, 지금) 구간에 들지 않으므로 끝에 도달할 때 보탠다
+                if (reachedEnd) EventFinder.KeysAt(p.Model, anim, anim.Duration, pending);
+            }
+            for (int i = 0; i < pending.Count && EventFired != null; i++)
+            {
+                var e = pending[i];
+                EventFired(new KGBoneEvent(e.Name, e.Time, e.Int, e.Float, e.String, e.Volume, e.Balance));
+            }
             if (reachedEnd) Completed?.Invoke();
         }
 
@@ -162,7 +189,8 @@ namespace KGBone
                 LastPose = null;
                 return null;
             }
-            if (poser == null || poserData != skeletonData)
+            // 같은 데이터 에셋이라도 다시 가져오면 모델이 바뀐다(객체는 그대로일 수 있음)
+            if (poser == null || poserData != skeletonData || poser.Model != skeletonData.Model)
             {
                 poser = new SkeletonPoser(skeletonData.Model);
                 poserData = skeletonData;

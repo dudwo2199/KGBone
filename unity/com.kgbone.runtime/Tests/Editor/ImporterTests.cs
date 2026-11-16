@@ -65,6 +65,15 @@ namespace KGBone.Tests
         }
 
         [Test]
+        public void m10_atlas_holds_raw_values_for_color_space_conversion_in_shader()
+        {
+            // 검토 I4: 선형 색 공간 프로젝트에서 텍스처가 sRGB로 풀려 화면(감마 공간 계산)과 색이 달라지던 문제.
+            // 텍스처는 원래 값 그대로(선형 표시) 두고, 셰이더가 화면과 같은 계산을 한 뒤 색 공간에 맞게 바꾼다
+            var data = ImportStage1();
+            Assert.IsFalse(data.Texture.isDataSRGB);
+        }
+
+        [Test]
         public void m10_missing_and_korean_subfolder_images()
         {
             string dir = Path.Combine(Tmp, "k2");
