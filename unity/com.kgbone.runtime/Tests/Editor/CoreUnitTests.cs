@@ -206,5 +206,106 @@ namespace KGBone.Tests
             ActiveBones.Compute(m, "빨강", active);
             CollectionAssert.AreEqual(new[] { true, true, true }, active);
         }
+
+        // ---------- M05·M06 키 적용 ----------
+        static SkeletonModel Model(string skeletonJson) => KGBoneLoader.Load("{\"skeleton\":" + skeletonJson + "}");
+
+        [Test]
+        public void m05_bone_keys_relative_to_setup()
+        {
+            var m = Model(@"{""bones"":[{""name"":""root"",""rotation"":30,""scaleX"":2,""x"":1}],
+                ""animations"":[{""name"":""a"",""bones"":{""root"":{
+                    ""rotate"":[{""time"":0,""v"":[10]}],""scale"":[{""time"":0,""v"":[1.5,1]}],""translatex"":[{""time"":0,""v"":[4]}]}}}]}");
+            var pose = new PoseState(m);
+            AnimationApplier.Apply(m, m.FindAnimation("a"), 0, null, pose);
+            Assert.AreEqual(40f, pose.Locals[0].Rotation, 1e-5f);
+            Assert.AreEqual(3f, pose.Locals[0].ScaleX, 1e-5f);
+            Assert.AreEqual(5f, pose.Locals[0].X, 1e-5f);
+        }
+
+        [Test]
+        public void m06_draw_order_key_moves_slot()
+        {
+            var m = Model(@"{""bones"":[{""name"":""root""}],
+                ""slots"":[{""name"":""a"",""bone"":""root""},{""name"":""b"",""bone"":""root""},{""name"":""c"",""bone"":""root""}],
+                ""animations"":[{""name"":""d"",""drawOrder"":[{""time"":0.5,""offsets"":[{""slot"":""a"",""offset"":2}]}]}]}");
+            var pose = new PoseState(m);
+            AnimationApplier.Apply(m, m.FindAnimation("d"), 1, null, pose);
+            CollectionAssert.AreEqual(new[] { 1, 2, 0 }, pose.DrawOrder);
+        }
+
+        [Test]
+        public void m06_attachment_key_without_s_clears()
+        {
+            var m = Model(@"{""bones"":[{""name"":""root""}],""slots"":[{""name"":""s"",""bone"":""root"",""attachment"":""x""}],
+                ""animations"":[{""name"":""a"",""slots"":{""s"":{""attachment"":[{""time"":0,""s"":""y""},{""time"":1}]}}}]}");
+            var pose = new PoseState(m);
+            AnimationApplier.Apply(m, m.FindAnimation("a"), 0.5f, null, pose);
+            Assert.AreEqual("y", pose.SlotAttachments[0]);
+            pose.ResetToSetup(m);
+            AnimationApplier.Apply(m, m.FindAnimation("a"), 1.5f, null, pose);
+            Assert.IsNull(pose.SlotAttachments[0]);
+        }
+
+        [Test]
+        public void m06_rgb2_on_slot_without_dark_starts_from_black()
+        {
+            var m = Model(@"{""bones"":[{""name"":""root""}],""slots"":[{""name"":""s"",""bone"":""root""}],
+                ""animations"":[{""name"":""a"",""slots"":{""s"":{""rgb2"":[{""time"":0,""v"":[1,1,1,0,0,0]},{""time"":1,""v"":[0.5,0.5,1,0.2,0.2,0.4]}]}}}]}");
+            var pose = new PoseState(m);
+            AnimationApplier.Apply(m, m.FindAnimation("a"), 0.5f, null, pose);
+            Assert.IsTrue(pose.SlotDarks[0].HasValue);
+            Assert.AreEqual(0.2f, pose.SlotDarks[0].Value.B, 1e-5f);
+            Assert.AreEqual(0.75f, pose.SlotColors[0].R, 1e-5f);
+        }
+
+        // ---------- M09 이벤트·반복 시점 ----------
+        static SkeletonModel EventModel(string keys, float extraKeyTime) => Model(
+            @"{""bones"":[{""name"":""root""}],""events"":[{""name"":""step"",""int"":7}],""animations"":[{""name"":""w"",
+                ""bones"":{""root"":{""rotate"":[{""time"":" + extraKeyTime.ToString(System.Globalization.CultureInfo.InvariantCulture) + @",""v"":[0]}]}},
+                ""events"":[" + keys + "]}]}");
+
+        static float[] Fire(SkeletonModel m, float last, float time, bool looping)
+        {
+            var list = new System.Collections.Generic.List<FiredEvent>();
+            EventFinder.Fired(m, m.FindAnimation("w"), last, time, looping, list);
+            var r = new float[list.Count];
+            for (int i = 0; i < r.Length; i++) r[i] = list[i].Time;
+            return r;
+        }
+
+        [Test]
+        public void m09_events_half_open_and_looping()
+        {
+            var m = EventModel(@"{""time"":0,""name"":""step"",""float"":0},{""time"":0.5,""name"":""step"",""float"":0.5},{""time"":1,""name"":""step"",""float"":1}", 0);
+            CollectionAssert.AreEqual(new[] { 0f }, Fire(m, 0, 0.5f, false));
+            CollectionAssert.AreEqual(new[] { 0.5f }, Fire(m, 0.5f, 1, false));
+            Assert.AreEqual(0, Fire(m, 0.2f, 0.4f, false).Length);
+            Assert.AreEqual(2, Fire(m, 0.9f, 1.2f, true).Length);
+            CollectionAssert.AreEqual(new[] { 1f, 0f }, Fire(m, 0.9f, 0.1f, true));
+            var list = new System.Collections.Generic.List<FiredEvent>();
+            EventFinder.Fired(m, m.FindAnimation("w"), 0, 0.1f, false, list);
+            Assert.AreEqual(7, list[0].Int); // 키에 없는 값은 정의 기본값
+            Assert.AreEqual(1f, list[0].Volume);
+        }
+
+        [Test]
+        public void m09_large_dt_crossing_two_loops_fires_each_lap()
+        {
+            // 길이 1(본 키가 1초), 이벤트 0·0.5. 실제 시간 [0.25, 2.75) → 0.5, 1.0, 1.5, 2.0, 2.5
+            var m = EventModel(@"{""time"":0,""name"":""step""},{""time"":0.5,""name"":""step""}", 1);
+            CollectionAssert.AreEqual(new[] { 0.5f, 1f, 1.5f, 2f, 2.5f }, Fire(m, 0.25f, 2.75f, true));
+        }
+
+        [Test]
+        public void m09_zero_duration_loop_is_time_zero()
+        {
+            Assert.AreEqual(0f, AnimationApplier.AnimationTime(0, 3.7f, true));
+            Assert.AreEqual(0.5f, AnimationApplier.AnimationTime(1, 2.5f, true), 1e-6f);
+            Assert.AreEqual(0.75f, AnimationApplier.AnimationTime(1, -0.25f, true), 1e-6f);
+            Assert.AreEqual(2.5f, AnimationApplier.AnimationTime(1, 2.5f, false));
+            var m = EventModel(@"{""time"":0,""name"":""step""}", 0);
+            CollectionAssert.AreEqual(new[] { 0f }, Fire(m, 0, 3.7f, true));
+        }
     }
 }
