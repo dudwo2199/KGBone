@@ -180,6 +180,12 @@ namespace KGBone
             return true;
         }
 
+        /// <summary>데이터 에셋을 다시 가져왔을 때 가져오기 도구(에디터)가 부른다. 에디터 모드에서는 Update가 계산하지 않기 때문이다.</summary>
+        internal void OnDataReimported()
+        {
+            if (isActiveAndEnabled) Refresh();
+        }
+
         SkeletonPoser EnsurePoser()
         {
             if (skeletonData == null)

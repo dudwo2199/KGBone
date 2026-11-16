@@ -27,6 +27,7 @@ https://github.com/dudwo2199/KGBone.git?path=/unity/com.kgbone.runtime#main
 
 인스펙터(.kgbone 파일 선택): **Pixels Per Unit**(기본 100), **Max Texture Size**, **Filter Mode**.
 1단계에서 지원하지 않는 기능(제약, 클리핑, 시퀀스)이나 없는 이미지는 경고로 알려 준다.
+KGBone에서 고쳐 저장한 `.kgbone`으로 덮어쓰면 다시 가져오고, 씬의 캐릭터도 재생하지 않은 상태에서 바로 새 내용으로 그려진다.
 
 ## 재생: KGBoneAnimation
 

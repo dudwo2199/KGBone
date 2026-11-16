@@ -237,6 +237,22 @@ namespace KGBone.Tests
         }
 
         [Test]
+        public void m11_reimport_redraws_scene_without_advance()
+        {
+            // 에디터에서 .kgbone을 고쳐 저장하고 유니티로 옮기면(다시 가져오기) 재생하지 않아도 씬의 캐릭터가 새 내용으로 다시 그려져야 한다.
+            // 에디터 모드에서는 Update가 계산하지 않으므로, 다시 가져오기를 알려 주지 않으면 예전 그림이 남던 문제
+            var data = ImporterTests.ImportStage1();
+            var a = Make(data);
+            a.Stop();
+            Assert.AreEqual(13, a.LastPose.Bones.Length);
+            string path = AssetDatabase.GetAssetPath(data);
+            File.WriteAllText(path, @"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},{""name"":""a"",""parent"":""root""}]}}");
+            ImporterTests.Import(path);
+            Assert.AreEqual(2, a.LastPose.Bones.Length);
+            Assert.AreEqual(0, VertexCount(a));
+        }
+
+        [Test]
         public void m12_follower_tracks_bone()
         {
             var a = Make(ImporterTests.ImportStage1());
