@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace KGBone.Core
 {
-    /// <summary>발생한 이벤트. 키에 없는 값은 이벤트 정의의 기본값.</summary>
+    /// <summary>발생한 이벤트. Time은 키에 적힌 시간(애니메이션 안의 시간). 키에 없는 값은 이벤트 정의의 기본값.</summary>
     public struct FiredEvent
     {
         public string Name;
@@ -35,31 +35,31 @@ namespace KGBone.Core
                         {
                             float at = keys[i].Time + k * d;
                             // 길이와 같은 시간의 키는 다음 바퀴의 0초 키와 같은 순간에 함께 날 수 있다
-                            if (at >= last && at < time) output.Add(Make(m, keys[i], at));
+                            if (at >= last && at < time) output.Add(Make(m, keys[i]));
                         }
                 }
                 else
                 {
                     for (int i = 0; i < keys.Count; i++)
-                        if (keys[i].Time >= last && keys[i].Time <= d) output.Add(Make(m, keys[i], keys[i].Time));
+                        if (keys[i].Time >= last && keys[i].Time <= d) output.Add(Make(m, keys[i]));
                     for (int i = 0; i < keys.Count; i++)
-                        if (keys[i].Time < time) output.Add(Make(m, keys[i], keys[i].Time));
+                        if (keys[i].Time < time) output.Add(Make(m, keys[i]));
                 }
             }
             else
             {
                 for (int i = 0; i < keys.Count; i++)
-                    if (keys[i].Time >= last && keys[i].Time < time) output.Add(Make(m, keys[i], keys[i].Time));
+                    if (keys[i].Time >= last && keys[i].Time < time) output.Add(Make(m, keys[i]));
             }
         }
 
-        static FiredEvent Make(SkeletonModel m, EventKey k, float at)
+        static FiredEvent Make(SkeletonModel m, EventKey k)
         {
             var def = m.FindEvent(k.Name);
             return new FiredEvent
             {
                 Name = k.Name,
-                Time = at,
+                Time = k.Time, // 핵심처럼 키에 적힌 시간(반복 바퀴를 더한 실제 시간이 아님)
                 Int = k.Int ?? def?.Int ?? 0,
                 Float = k.Float ?? def?.Float ?? 0f,
                 String = k.String ?? def?.String ?? "",

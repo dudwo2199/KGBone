@@ -292,9 +292,10 @@ namespace KGBone.Tests
         [Test]
         public void m09_large_dt_crossing_two_loops_fires_each_lap()
         {
-            // 길이 1(본 키가 1초), 이벤트 0·0.5. 실제 시간 [0.25, 2.75) → 0.5, 1.0, 1.5, 2.0, 2.5
+            // 길이 1(본 키가 1초), 이벤트 0·0.5. 실제 시간 [0.25, 2.75) → 실제 0.5, 1.0, 1.5, 2.0, 2.5에 5번 난다.
+            // 이벤트 시간은 핵심처럼 키에 적힌 시간(애니메이션 안의 시간)이다: 0.5, 0, 0.5, 0, 0.5
             var m = EventModel(@"{""time"":0,""name"":""step""},{""time"":0.5,""name"":""step""}", 1);
-            CollectionAssert.AreEqual(new[] { 0.5f, 1f, 1.5f, 2f, 2.5f }, Fire(m, 0.25f, 2.75f, true));
+            CollectionAssert.AreEqual(new[] { 0.5f, 0f, 0.5f, 0f, 0.5f }, Fire(m, 0.25f, 2.75f, true));
         }
 
         [Test]
@@ -306,6 +307,26 @@ namespace KGBone.Tests
             Assert.AreEqual(2.5f, AnimationApplier.AnimationTime(1, 2.5f, false));
             var m = EventModel(@"{""time"":0,""name"":""step""}", 0);
             CollectionAssert.AreEqual(new[] { 0f }, Fire(m, 0, 3.7f, true));
+        }
+
+        // ---------- M07 그리기 목록(손 계산) ----------
+        [Test]
+        public void m07_region_corners_hand_computed()
+        {
+            // 핵심 pose/draw.rs의 f_d01_region_corners_world와 같은 값.
+            // region: 본 기준 (5, 0), scaleX 2, 폭 10 높이 4 → 로컬 모서리 (−5,−2) (15,−2) (15,2) (−5,2)
+            // 본(회전 90°, (10, 20)): (x, y) → (10 − y, 20 + x) → (12,15) (12,35) (8,35) (8,15)
+            var m = Model(@"{""bones"":[{""name"":""root""},{""name"":""b"",""parent"":""root"",""x"":10,""y"":20,""rotation"":90}],
+                ""slots"":[{""name"":""s"",""bone"":""b"",""attachment"":""img""}],
+                ""skins"":[{""name"":""default"",""attachments"":{""s"":{""img"":{""x"":5,""scaleX"":2,""width"":10,""height"":4}}}}]}");
+            var r = new SkeletonPoser(m).Compute(new PoseRequest());
+            Assert.AreEqual(1, r.Draw.Count);
+            var d = r.Draw[0];
+            var want = new[] { 12f, 15f, 12f, 35f, 8f, 35f, 8f, 15f };
+            for (int i = 0; i < want.Length; i++) Assert.AreEqual(want[i], d.Positions[i], 1e-3f, "positions[" + i + "]");
+            CollectionAssert.AreEqual(new[] { 0f, 1f, 1f, 1f, 1f, 0f, 0f, 0f }, d.Uvs);
+            CollectionAssert.AreEqual(new[] { 0, 1, 2, 2, 3, 0 }, d.Indices);
+            Assert.AreEqual("img", d.Image);
         }
     }
 }
