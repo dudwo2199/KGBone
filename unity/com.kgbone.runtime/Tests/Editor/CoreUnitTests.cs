@@ -157,5 +157,54 @@ namespace KGBone.Tests
             Assert.AreEqual(1, Curve.StepIndex(keys, 5f));
             Assert.AreEqual(-1, Curve.StepIndex(new Key[0], 0f));
         }
+
+        // ---------- M03 본 월드 계산(상속 5종) ----------
+        static WorldBone Child(WorldBone parent, Inherit inherit) =>
+            BoneTransform.WorldOf(new LocalTransform { X = 5, ScaleX = 1, ScaleY = 1 }, inherit, parent);
+
+        [Test]
+        public void m03_inherit_modes_hand_computed()
+        {
+            // 부모: 회전 90, scaleX 2, 위치 (10, 20) → 행렬 [a=0, b=−1, c=2, d=0]
+            var p = BoneTransform.WorldOf(new LocalTransform { X = 10, Y = 20, Rotation = 90, ScaleX = 2, ScaleY = 1 }, Inherit.Normal, null);
+            Assert.AreEqual(0f, p.A, 1e-5f); Assert.AreEqual(-1f, p.B, 1e-5f); Assert.AreEqual(2f, p.C, 1e-5f); Assert.AreEqual(0f, p.D, 1e-5f);
+
+            var n = Child(p, Inherit.Normal);
+            Assert.AreEqual(10f, n.X, 1e-4f); Assert.AreEqual(30f, n.Y, 1e-4f);
+            Assert.AreEqual(0f, n.A, 1e-5f); Assert.AreEqual(2f, n.C, 1e-5f);
+
+            var t = Child(p, Inherit.OnlyTranslation);
+            Assert.AreEqual(10f, t.X, 1e-4f); Assert.AreEqual(30f, t.Y, 1e-4f);
+            Assert.AreEqual(1f, t.A, 1e-5f); Assert.AreEqual(0f, t.C, 1e-5f); Assert.AreEqual(1f, t.D, 1e-5f);
+
+            var ns = Child(p, Inherit.NoScale); // 회전만: [0, −1; 1, 0]
+            Assert.AreEqual(0f, ns.A, 1e-5f); Assert.AreEqual(1f, ns.C, 1e-5f); Assert.AreEqual(-1f, ns.B, 1e-5f);
+
+            var nr = Child(p, Inherit.NoRotationOrReflection); // R(−90)·P = [2, 0; 0, 1]
+            Assert.AreEqual(2f, nr.A, 1e-5f); Assert.AreEqual(0f, nr.C, 1e-5f); Assert.AreEqual(1f, nr.D, 1e-5f);
+        }
+
+        [Test]
+        public void m03_reflected_parent_no_scale_keeps_reflection_only_when_asked()
+        {
+            // 부모 scaleX −1(반사): noScale은 반사를 물려받고(d = 1), noScaleOrReflection은 회전만(d = −1)
+            var p = BoneTransform.WorldOf(new LocalTransform { ScaleX = -1, ScaleY = 1 }, Inherit.Normal, null);
+            Assert.AreEqual(1f, Child(p, Inherit.NoScale).D, 1e-5f);
+            Assert.AreEqual(-1f, Child(p, Inherit.NoScaleOrReflection).D, 1e-5f);
+        }
+
+        // ---------- M08 스킨 전용 본 ----------
+        [Test]
+        public void m08_skin_required_bone_inactive_without_skin()
+        {
+            var m = KGBoneLoader.Load(@"{""skeleton"":{
+                ""bones"":[{""name"":""root""},{""name"":""s"",""parent"":""root"",""skinRequired"":true},{""name"":""c"",""parent"":""s""}],
+                ""skins"":[{""name"":""default""},{""name"":""빨강"",""bones"":[""s""]}]}}");
+            var active = new bool[3];
+            ActiveBones.Compute(m, null, active);
+            CollectionAssert.AreEqual(new[] { true, false, false }, active);
+            ActiveBones.Compute(m, "빨강", active);
+            CollectionAssert.AreEqual(new[] { true, true, true }, active);
+        }
     }
 }
