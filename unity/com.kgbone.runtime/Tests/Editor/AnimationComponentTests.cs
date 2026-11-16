@@ -141,5 +141,29 @@ namespace KGBone.Tests
             Assert.AreEqual(p1.y, p2.y, 1e-4f);
             Assert.IsFalse(a.TryGetBone("없는본", out _, out _, out _));
         }
+
+        [Test]
+        public void m12_follower_tracks_bone()
+        {
+            var a = Make(ImporterTests.ImportStage1());
+            a.transform.position = new Vector3(1, 2, 0);
+            a.Play("걷기", true);
+            a.Advance(0.3f);
+            var go = new GameObject("따라가기");
+            made.Add(go);
+            var f = go.AddComponent<KGBoneBoneFollower>();
+            f.target = a;
+            f.boneName = "팔-보통";
+            f.followRotation = true;
+            f.Apply();
+            Assert.IsTrue(a.TryGetBone("팔-보통", out Vector3 p, out float r, out _));
+            Assert.Less((go.transform.position - p).magnitude, 1e-4f);
+            Assert.AreEqual(Mathf.DeltaAngle(0, r), Mathf.DeltaAngle(0, go.transform.eulerAngles.z), 1e-3f);
+            // 위치만 따라가기면 회전은 그대로
+            f.followRotation = false;
+            go.transform.rotation = Quaternion.identity;
+            f.Apply();
+            Assert.AreEqual(0f, go.transform.eulerAngles.z, 1e-4f);
+        }
     }
 }

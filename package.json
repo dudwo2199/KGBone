@@ -22,7 +22,8 @@
     "app": "npm run build && node tools/serve-app.mjs",
     "unity:test": "dotnet test unity/tests/KGBone.Core.Tests",
     "unity:golden": "node tools/unity-golden.mjs",
-    "unity:editmode": "node tools/unity-test.mjs"
+    "unity:editmode": "node tools/unity-test.mjs",
+    "unity:sandbox": "node tools/unity-sandbox.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",
