@@ -21,7 +21,8 @@
     "build:exe": "tauri build --no-bundle",
     "app": "npm run build && node tools/serve-app.mjs",
     "unity:test": "dotnet test unity/tests/KGBone.Core.Tests",
-    "unity:golden": "node tools/unity-golden.mjs"
+    "unity:golden": "node tools/unity-golden.mjs",
+    "unity:editmode": "node tools/unity-test.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",

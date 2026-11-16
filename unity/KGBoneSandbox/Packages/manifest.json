@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "com.kgbone.runtime": "file:../../com.kgbone.runtime",
+    "com.unity.render-pipelines.universal": "17.3.0",
+    "com.unity.test-framework": "1.6.0",
+    "com.unity.ugui": "2.0.0"
+  },
+  "testables": ["com.kgbone.runtime"]
+}
