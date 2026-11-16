@@ -28,6 +28,10 @@ describe('설치형 웹 앱 구성', () => {
     const exts = manifest.file_handlers.flatMap((h: { accept: Record<string, string[]> }) => Object.values(h.accept).flat());
     expect(exts).toContain('.kgbone');
     expect(manifest.file_handlers[0].action).toBe('./');
+    // Chrome은 file_handlers에 아이콘이 없으면 탐색기의 파일 아이콘을 비워 둔다(Edge는 앱 아이콘을 대신 씀)
+    const icons = manifest.file_handlers[0].icons as { src: string; sizes: string }[];
+    expect(icons.map((i) => i.sizes)).toEqual(expect.arrayContaining(['192x192', '512x512']));
+    for (const icon of icons) expect(iconFiles).toContain(icon.src);
   });
 
   it('pwa_index_links_manifest', () => {
