@@ -109,5 +109,53 @@ namespace KGBone.Tests
             Assert.AreEqual("e", a.Events[0].Name);
             Assert.IsFalse(a.Events[0].Int.HasValue);
         }
+
+        // ---------- M04 곡선 ----------
+        static Key K(float t, float[] v, CurveType c = CurveType.Linear, float[] bez = null) =>
+            new Key { Time = t, V = v, Curve = c, Bezier = bez };
+
+        [Test]
+        public void m04_curve_linear_stepped_bezier()
+        {
+            var lin = new[] { K(0, new[] { 0f }), K(1, new[] { 10f }) };
+            Assert.AreEqual(2.5f, Curve.ValueAt(lin, 0, 0.25f), 1e-5f);
+            Assert.AreEqual(0f, Curve.ValueAt(lin, 0, -1f));
+            Assert.AreEqual(10f, Curve.ValueAt(lin, 0, 2f));
+            var step = new[] { K(0, new[] { 0f }, CurveType.Stepped), K(1, new[] { 10f }) };
+            Assert.AreEqual(0f, Curve.ValueAt(step, 0, 0.99f));
+            Assert.AreEqual(10f, Curve.ValueAt(step, 0, 1f));
+            // 대칭 베지어: 가운데 시점에서 가운데 값
+            var bez = new[] { K(0, new[] { 0f, 0f }, CurveType.Bezier, new[] { 0.3f, 0f, 0.7f, 20f }), K(1, new[] { 20f, 4f }) };
+            Assert.AreEqual(10f, Curve.ValueAt(bez, 0, 0.5f), 1e-3f);
+            // 채널 1에는 곡선이 없으므로 선형
+            Assert.AreEqual(2f, Curve.ValueAt(bez, 1, 0.5f), 1e-5f);
+            // 비대칭: 처음이 느림(ease-in) → 0.25에서 선형 값(5)보다 작다
+            var easeIn = new[] { K(0, new[] { 0f }, CurveType.Bezier, new[] { 0.5f, 0f, 1f, 20f }), K(1, new[] { 20f }) };
+            Assert.Less(Curve.ValueAt(easeIn, 0, 0.25f), 5f);
+            Assert.AreEqual(0f, Curve.ValueAt(new Key[0], 0, 1f));
+        }
+
+        [Test]
+        public void m04_ratio_uses_first_channel()
+        {
+            var keys = new[] { K(0, new float[0], CurveType.Bezier, new[] { 0.25f, 0f, 0.75f, 1f }), K(1, new float[0]) };
+            Assert.IsTrue(Curve.RatioAt(keys, 0.5f, out int i, out float r));
+            Assert.AreEqual(0, i);
+            Assert.AreEqual(0.5f, r, 1e-3f);
+            Assert.IsTrue(Curve.RatioAt(keys, 2f, out i, out r));
+            Assert.AreEqual(1, i);
+            Assert.AreEqual(0f, r);
+            Assert.IsFalse(Curve.RatioAt(new Key[0], 0, out i, out r));
+        }
+
+        [Test]
+        public void m04_step_index_before_first_is_zero()
+        {
+            var keys = new[] { K(1, new float[0]), K(2, new float[0]) };
+            Assert.AreEqual(0, Curve.StepIndex(keys, 0f));
+            Assert.AreEqual(0, Curve.StepIndex(keys, 1.5f));
+            Assert.AreEqual(1, Curve.StepIndex(keys, 5f));
+            Assert.AreEqual(-1, Curve.StepIndex(new Key[0], 0f));
+        }
     }
 }
