@@ -51,6 +51,14 @@ anim.Completed += () => anim.Play("정지", true);   // 반복이 아닌 애니�
 anim.Stop();                         // 셋업 포즈
 ```
 
+코드로 만들 때는 `AddComponent` 뒤 같은 프레임에 데이터와 이름을 넣으면 Play On Awake로 자동 재생된다(자동 재생은 `Start`에서 한다). 그 전에 `Play`·`Stop`을 직접 부르면 자동 재생하지 않는다.
+
+```csharp
+var golem = new GameObject("골렘").AddComponent<KGBoneAnimation>();
+golem.skeletonData = golemData;
+golem.animationName = "idle";
+```
+
 이벤트의 `Time`은 키에 적힌 시간(애니메이션 안의 시간)이다. 이벤트 처리기 안에서 `Play`·`Stop`을 불러도 된다.
 반복하지 않는 재생은 끝 시간의 키도 낸다. 반복 재생에서는 애니메이션 길이와 같은 시간의 키가 프레임 경계에 따라 나지 않을 수 있으므로, 끝 이벤트는 길이보다 조금 앞에 둔다. `timeScale`이 음수면 이벤트를 내지 않는다.
 

@@ -43,19 +43,61 @@ namespace KGBone
         readonly PoseRequest request = new PoseRequest();
         readonly List<FiredEvent> pending = new List<FiredEvent>();
         Material[] materialArray = new Material[0];
+        // Start 전에 Play·Stop을 직접 불렀으면 자동 재생하지 않는다
+        bool controlled;
+        // 마지막으로 그릴 때의 입력. 에디터 모드에서 스크립트가 바꾼 것을 알아채 다시 그리는 데 쓴다
+        KGBoneSkeletonData drawnData;
+        string drawnSkin, drawnAnimationName;
+        bool drawnFlipX, drawnFlipY;
 
         void Awake()
         {
             ApplySorting();
-            if (Application.isPlaying && playOnAwake && !string.IsNullOrEmpty(animationName)) Play(animationName, loop);
-            else Refresh();
+            Refresh();
         }
 
-        void OnEnable() => Refresh();
+        // 자동 재생은 Start에서 한다. 코드로 만들 때(AddComponent 뒤에 데이터를 넣음) Awake는 데이터가 들어오기 전에 불리기 때문이다
+        void Start()
+        {
+            if (Application.isPlaying && playOnAwake && !controlled && !string.IsNullOrEmpty(animationName)) Play(animationName, loop);
+        }
+
+        void OnEnable()
+        {
+            Refresh();
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.update -= EditorTick;
+            UnityEditor.EditorApplication.update += EditorTick;
+#endif
+        }
 
         // 꺼질 때(도메인 다시 불러오기·스크립트 컴파일 포함) 메시를 지운다. OnDestroy는 도메인 다시 불러오기 때 불리지 않아
         // DontSave 메시가 참조를 잃고 쌓이기 때문이다. 켜지면 OnEnable에서 다시 만든다.
-        void OnDisable() => DestroyMesh();
+        void OnDisable()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.update -= EditorTick;
+#endif
+            DestroyMesh();
+        }
+
+#if UNITY_EDITOR
+        // 에디터 모드에서는 Update가 계산하지 않으므로, 스크립트가 데이터·스킨·애니메이션·뒤집기를 바꿨으면 여기서 다시 그린다
+        void EditorTick()
+        {
+            if (this == null || Application.isPlaying || !IsStale()) return;
+            Refresh();
+            UnityEditor.SceneView.RepaintAll();
+        }
+#endif
+
+        bool IsStale()
+        {
+            if (skeletonData != drawnData) return true;
+            if (skeletonData == null) return false;
+            return skin != drawnSkin || animationName != drawnAnimationName || flipX != drawnFlipX || flipY != drawnFlipY
+                || (poser != null && poser.Model != skeletonData.Model);
+        }
 
         void OnValidate()
         {
@@ -95,6 +137,7 @@ namespace KGBone
                 Debug.LogWarning($"애니메이션을 찾을 수 없습니다: {animation}", this);
                 return;
             }
+            controlled = true;
             CurrentAnimation = animation;
             this.loop = loop;
             Time = 0;
@@ -105,6 +148,7 @@ namespace KGBone
         /// <summary>재생을 멈추고 셋업 포즈로.</summary>
         public void Stop()
         {
+            controlled = true;
             CurrentAnimation = null;
             IsPlaying = false;
             Time = 0;
@@ -210,6 +254,7 @@ namespace KGBone
             if (EnsurePoser() == null)
             {
                 ClearMesh();
+                drawnData = null;
                 return;
             }
             Compute(null);
@@ -226,6 +271,11 @@ namespace KGBone
             request.Looping = loop;
             LastPose = poser.Compute(request);
             builder.Build(LastPose, skeletonData, flipX, flipY, EnsureMesh(), materials);
+            drawnData = skeletonData;
+            drawnSkin = skin;
+            drawnAnimationName = animationName;
+            drawnFlipX = flipX;
+            drawnFlipY = flipY;
             if (materialArray.Length != materials.Count) materialArray = new Material[materials.Count];
             materials.CopyTo(materialArray);
             GetComponent<MeshRenderer>().sharedMaterials = materialArray;

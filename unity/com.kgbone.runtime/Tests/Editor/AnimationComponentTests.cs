@@ -252,6 +252,52 @@ namespace KGBone.Tests
             Assert.AreEqual(0, VertexCount(a));
         }
 
+        [UnityTest]
+        public System.Collections.IEnumerator m11_spawned_from_code_plays_on_start()
+        {
+            // 게임 코드가 AddComponent 뒤에 데이터와 애니메이션 이름을 넣으면 시작하자마자 재생해야 한다.
+            // Awake는 AddComponent 안에서 바로 불려 그때는 데이터가 없어, 자동 재생이 빠지던 문제
+            yield return new EnterPlayMode();
+            // 플레이 모드 안에서는 가져오기가 미뤄질 수 있어 데이터를 메모리에서 만든다
+            var data = ScriptableObject.CreateInstance<KGBoneSkeletonData>();
+            data.Initialize(@"{""skeleton"":{""bones"":[{""name"":""root""}],""animations"":[{""name"":""걷기""},{""name"":""정지""}]}}",
+                null, new Material[4], new ImageEntry[0], 100, new string[0]);
+            var auto = new GameObject("자동").AddComponent<KGBoneAnimation>();
+            auto.skeletonData = data;
+            auto.animationName = "걷기";
+            // Start 전에 직접 Play를 부른 것은 자동 재생이 덮어쓰지 않는다
+            var manual = new GameObject("직접").AddComponent<KGBoneAnimation>();
+            manual.skeletonData = data;
+            manual.animationName = "걷기";
+            manual.Play("정지", true);
+            yield return null;
+            yield return null;
+            bool autoPlaying = auto.IsPlaying;
+            string autoAnim = auto.CurrentAnimation, manualAnim = manual.CurrentAnimation;
+            yield return new ExitPlayMode();
+            Assert.IsTrue(autoPlaying);
+            Assert.AreEqual("걷기", autoAnim);
+            Assert.AreEqual("정지", manualAnim);
+        }
+
+        [UnityTest]
+        public System.Collections.IEnumerator m11_editor_redraws_after_script_assigns_fields()
+        {
+            // 에디터 모드에서 스크립트로 데이터·스킨·애니메이션·뒤집기를 바꾸면 다음 에디터 갱신에서 다시 그려야 한다
+            var data = ImporterTests.ImportStage1();
+            var a = Make(null);
+            Assert.AreEqual(0, VertexCount(a));
+            a.skeletonData = data;
+            for (int i = 0; i < 10 && VertexCount(a) == 0; i++) yield return null;
+            Assert.Greater(VertexCount(a), 0);
+            Assert.AreEqual(13, a.LastPose.Bones.Length);
+            var before = a.GetComponent<MeshFilter>().sharedMesh.vertices[0];
+            a.flipX = true;
+            for (int i = 0; i < 10 && a.GetComponent<MeshFilter>().sharedMesh.vertices[0].x == before.x; i++) yield return null;
+            var after = a.GetComponent<MeshFilter>().sharedMesh.vertices[0];
+            Assert.AreEqual(-before.x, after.x, 1e-4f);
+        }
+
         [Test]
         public void m12_follower_tracks_bone()
         {
