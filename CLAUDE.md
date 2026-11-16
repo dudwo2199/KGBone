@@ -37,6 +37,10 @@ interface/            commands.json(명령 목록 원본), core-api.md, tauri-co
 docs/                 SPEC, UI_SPEC, FORMAT, SOURCES, GAPS, LOG
 samples/              직접 만든 시험 파일(tools/gen-samples.mjs)
 e2e/                  Playwright 화면 흐름 테스트
+unity/                유니티 런타임
+  com.kgbone.runtime/ UPM 패키지: Runtime/Core(순수 C# 계산부), Runtime(컴포넌트), Editor(.kgbone 가져오기), Shaders(URP), Tests(Golden 정답·테스트)
+  tests/              계산부 .NET 테스트 프로젝트(dotnet test)
+  KGBoneSandbox/      확인용 유니티 프로젝트(EditMode 테스트, 화면 찍기)
 tools/                생성기·빌드·테스트 실행 도우미
   mcp/                MCP 서버(창 없음): kgbone.wasm을 Node로 돌려 편집 명령을 도구로 내보낸다. 등록은 루트 .mcp.json
 ```
@@ -45,6 +49,7 @@ tools/                생성기·빌드·테스트 실행 도우미
 - 되도록 기능별로 파일을 나눈다(예: 본 생성, IK 계산, atlas 읽기를 각각 다른 파일로). 한 파일이 여러 기능을 떠안지 않게 한다.
 - 캡슐화: 모듈 내부 데이터는 감추고, 밖에서는 정해진 함수·명령으로만 바꾸게 한다(Rust는 pub 범위 최소화, TypeScript는 export 최소화).
 - 추상화: 공통 동작은 trait/interface로 묶는다(예: 제약 종류별 계산 `ConstraintSolver`, 첨부물 종류별 그리기, 파일 형식별 읽기·쓰기 `SkeletonFormat`, 명령 실행·되돌리기 `Command`/`UndoEntry`).
+- 예외: 유니티 런타임(`unity/com.kgbone.runtime/Runtime/Core`)은 계산을 C#으로 다시 구현한다(유니티에서 Rust를 부르면 플랫폼마다 네이티브 빌드가 필요하고 이 PC에서 막힌다). 대신 `npm run unity:golden`이 KGBone 핵심으로 만든 정답과 `npm run unity:test`로 비교해 같음을 보장한다. 핵심의 계산을 바꾸면 정답을 다시 만들고 C#도 같이 고친다(CI가 정답이 최신인지 검사한다). 계산부는 유니티와 같은 C# 9 문법만 쓴다.
 - 나누면 오히려 억지스러운 경우(하나의 알고리즘, 서로 강하게 얽힌 작은 코드)는 한 파일에 둬도 된다.
 - 확정한 인터페이스(`interface/`, `app/src/core/*.ts`, `app/src/platform/platform.ts`, 모델 타입, `api.rs` 메서드)는 함부로 바꾸지 않는다. 바꿔야 하면 양쪽을 같이 고치고 문서도 고친다.
 - 모든 편집은 되돌리기(Ctrl+Z)·다시 실행(Ctrl+Y, Ctrl+Shift+Z)이 된다. 드래그 한 번은 `history.begin`~`history.end`로 묶어 되돌리기 한 번.
@@ -70,6 +75,10 @@ npm run test:rust                # Rust 테스트(WASI) = cargo test -p kgbone-c
 npm run test:ui                  # 화면 단위 테스트(vitest)
 npm run test:mcp                 # MCP 서버 테스트(node --test, kgbone.wasm 필요)
 npm run test:e2e                 # 화면 흐름 테스트(Playwright, 설치된 Edge 사용)
+npm run unity:golden             # 유니티 런타임 정답 파일 다시 만들기(kgbone.wasm 필요)
+npm run unity:test               # 유니티 런타임 계산부 테스트(dotnet test, 정답 비교)
+npm run unity:editmode           # 유니티 EditMode 테스트(unity/KGBoneSandbox, 유니티 6000.3 필요, 에디터로 열어 두면 실패)
+npm run unity:sandbox            # 확인용 유니티 프로젝트에 시험 파일 복사(-- 폴더 로 추가 복사)
 npm test                         # 전부
 npm run icons                    # 아이콘 다시 만들기(tools/icon.png, app/public/icons)
 npx tauri build                  # 실행 파일(이 PC에서는 막힘 → GitHub Actions)
@@ -79,7 +88,7 @@ PATH에 cargo가 없으면 `%USERPROFILE%\.cargo\bin`을 앞에 붙인다.
 
 ## 6. '완료'의 정의
 - docs/SPEC.md의 해당 기능 '완료 기준'을 확인하는 자동 테스트가 있고 통과한다(테스트 이름에 기능 번호, 예: `f_b01_...`).
-- `npm run test:rust`, `npm run test:ui`, `npm run test:mcp`, `npm run test:e2e`가 모두 통과한다. 같은 실패를 3번 고쳐도 안 되면 원인과 함께 docs/GAPS.md에 적는다.
+- `npm run test:rust`, `npm run test:ui`, `npm run test:mcp`, `npm run test:e2e`, `npm run unity:test`가 모두 통과한다. 유니티 런타임을 고쳤으면 `npm run unity:editmode`도 통과한다. 같은 실패를 3번 고쳐도 안 되면 원인과 함께 docs/GAPS.md에 적는다.
 - 화면 글자는 한국어이고, 메뉴·단축키·버튼은 `interface/commands.json`의 같은 명령 id를 부른다.
 - 아직 안 되는 것은 docs/GAPS.md에 적혀 있다.
 

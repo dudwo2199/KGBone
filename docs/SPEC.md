@@ -1,7 +1,7 @@
 # KGBone 기능 명세 (SPEC)
 
 근거: `docs/SOURCES.md`의 S1~S14. 각 기능 줄 끝의 **완료 기준**은 자동 테스트로 확인한다(테스트 이름에 기능 번호를 넣는다. 예: `f_b01_bone_create`).
-테스트 위치 약어: **R** = Rust 테스트(`cargo test`), **U** = 화면 단위 테스트(`vitest`), **E** = 화면 흐름 테스트(Playwright).
+테스트 위치 약어: **R** = Rust 테스트(`cargo test`), **U** = 화면 단위 테스트(`vitest`), **E** = 화면 흐름 테스트(Playwright), **C** = 유니티 런타임 계산부 테스트(`dotnet test`, 같은 테스트가 유니티 EditMode에서도 돈다), **Y** = 유니티 EditMode 테스트(`npm run unity:editmode`).
 
 ## A. 모드
 | 번호 | 기능 | 완료 기준 |
@@ -120,6 +120,23 @@
 |---|---|---|
 | L01 | 새 파일 → 본 추가 → 이미지 붙이기 → 키 지정 → 재생 → 저장 → 다시 열기 | E: Playwright로 끝까지 통과 |
 | L02 | 메뉴·단축키·버튼이 같은 명령 호출 | U: 명령 목록의 모든 단축키가 등록된 명령 id를 가리킨다 |
+
+## M. 유니티 런타임 (1단계: 재생 + 본 위치 읽기)
+설계: `docs/superpowers/specs/2026-11-16-unity-runtime-stage1-design.md`. 위치: `unity/com.kgbone.runtime/`. 계산 결과는 KGBone 핵심과 같아야 한다(정답 파일: `npm run unity:golden`).
+| 번호 | 기능 | 완료 기준 |
+|---|---|---|
+| M01 | UPM 패키지 구조(Unity 6000.0+, URP), 계산부는 유니티 없이 컴파일 | C: `m01_world_bone_identity_maps_point`. Y: 확인용 프로젝트에서 패키지 전체 컴파일 |
+| M02 | JSON·`.kgbone` 읽기(기본값, 키·곡선, 시퀀스 이미지 이름) | C: `m02_json_*`, `m02_loader_*` |
+| M03 | 본 월드 계산(상속 5종, 반사 부모) | C: `m03_inherit_modes_hand_computed`, `m03_reflected_parent_no_scale_keeps_reflection_only_when_asked` |
+| M04 | 곡선(선형·계단·베지어, deform 비율 곡선) | C: `m04_*` |
+| M05 | 본 키(셋업 대비 더하기·곱하기, 축별 이름, 상속 키) | C: `m05_bone_keys_relative_to_setup` |
+| M06 | 슬롯 키(색·어두운 색·첨부물)와 그리기 순서 키 | C: `m06_*` |
+| M07 | 그리기 목록(region, 메시, 가중치 메시, 링크드 메시, deform, 블렌드)이 핵심과 같음 | C: `m07_all_golden_cases_match_core`(정답 64개), `m07_region_corners_hand_computed` |
+| M08 | 스킨과 스킨 전용 본 | C: `m08_skin_required_bone_inactive_without_skin` + 정답의 스킨별 케이스 |
+| M09 | 이벤트([last, time), 반복 바퀴, 시간은 키에 적힌 시간)와 반복 시점 | C: `m09_*` |
+| M10 | 가져오기 도구(데이터 에셋, 묶은 텍스처, 블렌드별 머티리얼, 미지원 기능·없는 이미지 경고) | Y: `m10_*` |
+| M11 | 재생 컴포넌트(재생·정지·속도·반복·이벤트·끝·뒤집기·Sorting) | Y: `m11_*` |
+| M12 | 본 위치 읽기와 본 따라가기 | Y: `m12_try_get_bone_with_flip`, `m12_follower_tracks_bone` |
 
 ## 이번에 제외 (→ docs/GAPS.md)
 바이너리 .skel 입출력, PSD 직접 관리, HTML/웹 컴포넌트 내보내기, 스킨별 아틀라스 패킹, 프로젝트 ZIP 패키징, GIF/동영상 내보내기, 문제(Issues) 뷰 자동 해결.

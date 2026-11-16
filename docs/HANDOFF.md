@@ -1,6 +1,6 @@
 # 이어서 작업하기 (다른 PC용 인수인계)
 
-마지막 갱신: 2026-11-16. 작업 명세 원본은 저장소 밖의 `KGBone 제작 프롬프트.txt`(0~9단계)이고, 규칙은 `CLAUDE.md`에 모두 옮겨 두었다.
+마지막 갱신: 2026-11-17. 작업 명세 원본은 저장소 밖의 `KGBone 제작 프롬프트.txt`(0~9단계)이고, 규칙은 `CLAUDE.md`에 모두 옮겨 두었다.
 
 ## 1. 지금 어디까지 했나
 | 단계 | 상태 |
@@ -8,18 +8,18 @@
 | 0~8단계 | 끝남 (docs/LOG.md에 단계별 끝난 시각) |
 | 9단계 마무리 | **남음**: 최신 커밋의 실행 파일 받기, LOG 기록, 최종 보고(시간·파일 수·코드 줄 수·테스트 수 표, 3분 시연 순서, exe 경로) |
 | 9단계 뒤 추가 | 웹 판(설치형 웹 앱, GitHub Pages), MCP 서버, 뷰포트 그림 끌어 옮기기(D14), README — 끝남 |
-| 유니티 런타임 1단계 | **설계 문서 승인 대기** (아래 1-1) |
+| 유니티 런타임 1단계 | 끝남(배포 전, 아래 1-1) |
 
 - 테스트: Rust 165개(핵심 156 + 앱 본체 9, 앱 본체는 CI에서만 실행), 화면 단위 56개, MCP 서버 12개, 화면 흐름(Playwright) 6개 — 모두 통과.
 - 코드: Rust 약 17,600줄 / TypeScript 약 8,700줄, 저장소 파일 약 270개.
 - 아직 안 되는 것·미확인 표기: `docs/GAPS.md`.
 
-### 1-1. 다음에 이어서 할 일: 유니티 런타임 1단계
-- 설계: `docs/superpowers/specs/2026-11-16-unity-runtime-stage1-design.md`. **사용자 승인 전이라 코드는 아직 없다.**
-- 사용자가 정한 것: KGBone 저장소 안 `unity/com.kgbone.runtime/`(UPM 패키지, git 주소 설치), C# 이식 + KGBone 핵심 결과와 자동 비교, URP, Unity 6 이상, 1단계 범위는 "재생 + 본 위치 읽기", 방식 A(자체 런타임 + 캐릭터당 메시 하나).
-- 설계자가 정한 값(설계 문서 6장)은 사용자가 읽고 확인할 예정.
-- 승인되면: 구현 계획을 단계별로 쓰고(`docs/superpowers/plans/`), CLAUDE.md에 규칙 예외("유니티 런타임은 C# 이식, 정답 비교로 보장")를 넣은 뒤 시작.
-- 이 PC: Unity 6000.3.17f1, .NET SDK 10 설치됨. `dotnet test`가 스마트 앱 컨트롤에 막히는지는 아직 모름.
+### 1-1. 유니티 런타임 1단계 (끝남, 배포 전)
+- 설계 `docs/superpowers/specs/2026-11-16-unity-runtime-stage1-design.md`, 계획 `docs/superpowers/plans/2026-11-16-unity-runtime-stage1.md`, 명세 SPEC.md M절.
+- 패키지 `unity/com.kgbone.runtime/`: 계산부(C#)가 KGBone 핵심과 같은지 정답 64개로 비교(`npm run unity:test`, CI 워크플로 `unity-core.yml`). 유니티 EditMode 94개(`npm run unity:editmode`).
+- 확인용 프로젝트 `unity/KGBoneSandbox/`: `npm run unity:sandbox -- <폴더>`로 파일을 넣고, 메뉴 KGBone > 화면 찍기(또는 배치 모드 `-executeMethod KGBoneSandbox.SandboxTools.CaptureBatch`)로 `Logs/capture-*.png`를 만든다.
+- 이 PC: Unity 6000.3.17f1, .NET SDK 10. `dotnet test`는 스마트 앱 컨트롤에 막히지 않는다.
+- 다음 단계 후보: 2단계(제약), 3단계(클리핑·시퀀스·섞기·스킨 바꾸기·본 덮어쓰기). 미확인 사항은 GAPS G-26~G-28.
 - **배포 전 할 일: 저장소 라이선스 정하기.** 유니티 패키지가 완성되면 배포(버전 태그·설치 주소 안내) 전에 라이선스 파일을 추가한다(사용자 결정, 2026-11-16). 지금은 라이선스가 없어 공개 저장소지만 남이 코드를 가져다 쓸 수 없는 상태다.
 - 시험용 골렘(유료 에셋 미리보기에서 잘라 만든 것)은 원래 폴더의 `local/golem/`에만 있고 커밋하지 않는다(`local/`은 로컬 git 제외 목록에 있음).
 
@@ -46,6 +46,8 @@ npm run test:rust   # Rust 테스트(WASI, Node로 실행)
 npm run test:ui     # 화면 단위 테스트
 npm run test:mcp    # MCP 서버 테스트
 npm run test:e2e    # 화면 흐름 테스트(설치된 Edge 사용)
+npm run unity:test  # 유니티 런타임 계산부 테스트(dotnet)
+npm run unity:editmode  # 유니티 EditMode 테스트(유니티 6000.3)
 npm run wasm:fetch  # Rust가 없는 PC: 배포된 kgbone.wasm 받기(4-2장)
 npm run icons       # 아이콘 다시 만들기(tools/icon.png, app/public/icons)
 npm run build:exe   # Tauri 실행 파일(src-tauri/target/release/KGBone.exe) — 아래 4장 참고

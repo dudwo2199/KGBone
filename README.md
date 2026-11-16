@@ -63,6 +63,17 @@ Windows 11용이고 화면은 한국어다.
 | Spine JSON 호환 `.json` + `.atlas` + `.png` | 다른 도구와 주고받기. 모르는 필드·키 순서·숫자 표기를 보존한다 |
 | PNG 시퀀스 | 애니메이션을 프레임 그림으로. 게임 엔진의 스프라이트 애니메이션으로 바로 쓸 수 있다 |
 
+## 유니티에서 재생하기
+
+`unity/com.kgbone.runtime`은 `.kgbone`을 유니티(Unity 6 이상, URP)에서 KGBone과 같은 결과로 재생하는 패키지다. 다른 런타임 없이 이것만으로 재생한다.
+
+1. Package Manager → **Add package from git URL** → `https://github.com/dudwo2199/KGBone.git?path=/unity/com.kgbone.runtime#main`
+2. `.kgbone` 파일과 그 이미지 폴더를 `Assets` 아래에 넣으면 데이터 에셋·텍스처·머티리얼이 자동으로 생긴다.
+3. 빈 GameObject에 **KGBoneAnimation**을 붙이고 데이터와 애니메이션을 고른다.
+
+지금은 1단계(재생 + 본 위치 읽기)다. 제약·클리핑·시퀀스·애니메이션 섞기는 아직 없다. 자세한 사용법: [unity/com.kgbone.runtime/README.md](unity/com.kgbone.runtime/README.md)
+아직 버전 태그와 라이선스가 없다(배포 전).
+
 ## 개발
 
 ### 준비
@@ -91,8 +102,11 @@ npm run dev         # 개발 서버 http://localhost:1420
 | `npm run test:ui` | 화면 단위 테스트(vitest) |
 | `npm run test:mcp` | MCP 서버 테스트 |
 | `npm run test:e2e` | 화면 흐름 테스트(Playwright, 설치된 Edge 사용) |
+| `npm run unity:test` | 유니티 런타임 계산부 테스트(dotnet test, KGBone 핵심과 정답 비교) |
+| `npm run unity:golden` | 유니티 런타임 정답 파일 다시 만들기 |
+| `npm run unity:editmode` | 유니티 EditMode 테스트(Unity 6000.3 필요) |
 
-main에 push하면 GitHub Actions가 웹 판을 GitHub Pages에 배포하고(`deploy-pages.yml`), Windows 실행 파일을 빌드한다(`build-windows.yml`).
+main에 push하면 GitHub Actions가 웹 판을 GitHub Pages에 배포하고(`deploy-pages.yml`), Windows 실행 파일을 빌드하고(`build-windows.yml`), 유니티 런타임 계산부를 정답과 비교한다(`unity-core.yml`).
 
 ### 구조
 
@@ -102,13 +116,14 @@ crates/kgbone-wasm/   핵심을 WebAssembly(C ABI)로 내보내는 얇은 층
 src-tauri/            실행 파일 판 앱 본체(Tauri 2)
 app/                  화면(React + TypeScript + Vite, WebGL2 미리보기)
 interface/            명령 목록(commands.json)과 연결 인터페이스 문서
+unity/                유니티 런타임 패키지(com.kgbone.runtime), 계산부 테스트, 확인용 유니티 프로젝트
 tools/                생성기, 빌드 도우미, MCP 서버(tools/mcp)
 samples/              직접 만든 시험 파일
 e2e/                  화면 흐름 테스트
 docs/                 명세(SPEC, UI_SPEC, FORMAT), 근거(SOURCES), 미구현(GAPS), 기록(LOG), 인수인계(HANDOFF)
 ```
 
-계산 로직은 `kgbone-core` 한 곳에만 있고, 화면은 이것을 WebAssembly로, 실행 파일 판은 Rust 라이브러리로 쓴다.
+계산 로직은 `kgbone-core` 한 곳에만 있고, 화면은 이것을 WebAssembly로, 실행 파일 판은 Rust 라이브러리로 쓴다. 유니티 런타임만 예외로 C#으로 다시 구현하고, 핵심이 만든 정답과 자동으로 비교한다.
 메뉴·단축키·버튼은 모두 [interface/commands.json](interface/commands.json)의 같은 명령 id를 부른다.
 작업 규칙은 [CLAUDE.md](CLAUDE.md)에 있다.
 
