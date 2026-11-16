@@ -1,0 +1,13 @@
+{
+  "name": "KGBone.Tests",
+  "rootNamespace": "KGBone.Tests",
+  "references": ["KGBone.Runtime.Core", "KGBone.Runtime", "KGBone.Editor", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

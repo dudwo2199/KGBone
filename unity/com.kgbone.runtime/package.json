@@ -1,0 +1,11 @@
+{
+  "name": "com.kgbone.runtime",
+  "displayName": "KGBone Runtime",
+  "version": "0.1.0",
+  "unity": "6000.0",
+  "description": "KGBone(2D 스켈레탈 애니메이션 에디터)의 .kgbone 파일을 유니티에서 재생하는 런타임.",
+  "keywords": ["2d", "skeletal", "animation", "kgbone"],
+  "dependencies": {
+    "com.unity.render-pipelines.universal": "17.0.3"
+  }
+}

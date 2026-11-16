@@ -19,3 +19,14 @@ test-results/
 playwright-report/
 app/public/kgbone.wasm
 app/dist/
+
+# 유니티 런타임: 테스트 빌드 산출물, 확인용 유니티 프로젝트의 자동 생성 폴더, 복사해 채우는 시험 파일
+unity/tests/**/bin/
+unity/tests/**/obj/
+unity/KGBoneSandbox/Library/
+unity/KGBoneSandbox/Temp/
+unity/KGBoneSandbox/Logs/
+unity/KGBoneSandbox/UserSettings/
+unity/KGBoneSandbox/obj/
+unity/KGBoneSandbox/Assets/Samples/
+unity/KGBoneSandbox/Assets/Samples.meta

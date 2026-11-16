@@ -1,0 +1,9 @@
+{
+  "name": "KGBone.Editor",
+  "rootNamespace": "KGBone.Editor",
+  "references": ["KGBone.Runtime.Core", "KGBone.Runtime"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "autoReferenced": true
+}
