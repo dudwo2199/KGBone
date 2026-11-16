@@ -1,0 +1,54 @@
+# 유니티 런타임 계산부 검사: 정답 파일이 KGBone 핵심과 같은지 확인하고, C# 계산부를 정답과 비교한다.
+# 유니티 라이선스가 필요 없도록 유니티를 쓰지 않는다(계산부는 순수 C#이라 dotnet test로 돈다).
+name: 유니티 런타임 계산부
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 받기
+        uses: actions/checkout@v4
+
+      - name: Node 준비
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Rust 준비
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
+
+      - name: 의존성 설치
+        run: npm ci --no-audit --no-fund
+
+      - name: 핵심(wasm) 빌드
+        run: npm run wasm
+
+      - name: 시험 파일과 정답 파일이 최신인지 확인
+        run: |
+          npm run samples
+          npm run unity:golden
+          if ! git diff --exit-code -- samples unity/com.kgbone.runtime/Tests/Golden; then
+            echo "::error::정답 파일이 핵심과 다릅니다. npm run samples && npm run unity:golden 후 커밋하세요"
+            exit 1
+          fi
+
+      - name: .NET 준비
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: 계산부 테스트(정답 비교)
+        run: npm run unity:test
