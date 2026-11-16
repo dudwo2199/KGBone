@@ -1,0 +1,19 @@
+{
+	"skeleton": {
+		"bones": [
+			{
+				"x": 1.50,
+				"name": "root",
+				"rotation": 10.0
+			},
+			{
+				"name": "child",
+				"parent": "root",
+				"length": 1e2
+			}
+		],
+		"x-future": { "keep": true }
+	},
+	"formatVersion": 1,
+	"imagesPath": "./images"
+}

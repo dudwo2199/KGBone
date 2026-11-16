@@ -1,0 +1,96 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone 0.1.0",
+	"imagesPath": "../images",
+	"skeleton": {
+		"x": -100,
+		"width": 200,
+		"height": 300,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "head",
+				"parent": "root",
+				"y": 60
+			},
+			{
+				"name": "hat-bone",
+				"parent": "head",
+				"y": 40,
+				"skinRequired": true
+			}
+		],
+		"slots": [
+			{
+				"name": "head",
+				"bone": "head",
+				"attachment": "head"
+			},
+			{
+				"name": "hat",
+				"bone": "hat-bone",
+				"color": "FFFFFFCC",
+				"dark": "202020",
+				"attachment": "hat"
+			},
+			{
+				"name": "glow",
+				"bone": "head",
+				"attachment": "glow",
+				"blend": "additive"
+			}
+		],
+		"skins": [
+			{
+				"name": "default",
+				"attachments": {
+					"head": {
+						"head": {
+							"type": "region",
+							"width": 64,
+							"height": 64
+						}
+					},
+					"glow": {
+						"glow": {
+							"type": "region",
+							"width": 48,
+							"height": 48
+						}
+					}
+				}
+			},
+			{
+				"name": "red",
+				"bones": ["hat-bone"],
+				"attachments": {
+					"hat": {
+						"hat": {
+							"type": "region",
+							"path": "hat-red",
+							"width": 56,
+							"height": 24
+						}
+					}
+				}
+			},
+			{
+				"name": "blue",
+				"bones": ["hat-bone"],
+				"attachments": {
+					"hat": {
+						"hat": {
+							"type": "region",
+							"path": "hat-blue",
+							"rotation": 5,
+							"width": 56,
+							"height": 24
+						}
+					}
+				}
+			}
+		]
+	}
+}

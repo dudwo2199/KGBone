@@ -1,0 +1,29 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone sample",
+	"imagesPath": "../images",
+	"skeleton": {
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "a",
+				"parent": "root",
+				"length": 50,
+				"x": 10,
+				"y": 20,
+				"rotation": 30,
+				"scaleX": 2
+			},
+			{
+				"name": "b",
+				"parent": "a",
+				"length": 25,
+				"x": 50,
+				"rotation": -30
+			}
+		]
+	},
+	"editor": {}
+}

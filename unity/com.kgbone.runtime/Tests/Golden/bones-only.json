@@ -1,0 +1,7 @@
+{
+	"kgbone": "bones-only.kgbone",
+	"source": "samples/kgbone/bones-only.kgbone",
+	"cases": [
+		{"request":{"animation":null,"time":0,"lastTime":null,"skin":null,"looping":false},"output":{"bones":[{"a":1,"b":-4.371139e-8,"c":0,"d":1,"x":0,"y":0},{"a":1.7320508,"b":-0.5000001,"c":1,"d":0.8660254,"x":9.999999,"y":20},{"a":1.75,"b":0.43301252,"c":0.4330127,"d":1.25,"x":96.60254,"y":70}],"active":[true,true,true],"draw":[],"events":[]}}
+	]
+}

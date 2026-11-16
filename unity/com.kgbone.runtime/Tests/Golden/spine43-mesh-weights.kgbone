@@ -1,0 +1,88 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone 0.1.0",
+	"imagesPath": "../images",
+	"skeleton": {
+		"x": -100,
+		"width": 200,
+		"height": 300,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "tail1",
+				"parent": "root",
+				"length": 64
+			},
+			{
+				"name": "tail2",
+				"parent": "tail1",
+				"length": 64,
+				"x": 64
+			}
+		],
+		"slots": [
+			{
+				"name": "tail",
+				"bone": "tail1",
+				"attachment": "tail"
+			}
+		],
+		"skins": [
+			{
+				"name": "default",
+				"attachments": {
+					"tail": {
+						"tail": {
+							"type": "mesh",
+							"width": 128,
+							"uvs": [0, 1, 0.5, 1, 1, 1, 1, 0, 0.5, 0, 0, 0],
+							"triangles": [0, 1, 5, 1, 4, 5, 1, 2, 4, 2, 3, 4],
+							"weighted": true,
+							"vertices": [1, 1, 0, -16, 1, 2, 1, 64, -16, 0.5, 2, 0, -16, 0.5, 1, 2, 64, -16, 1, 1, 2, 64, 16, 1, 2, 1, 64, 16, 0.5, 2, 0, 16, 0.5, 1, 1, 0, 16, 1],
+							"hull": 6,
+							"edges": [0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 0]
+						}
+					}
+				}
+			}
+		],
+		"animations": [
+			{
+				"name": "wag",
+				"bones": {
+					"tail2": {
+						"rotate": [
+							{
+								"v": [0],
+								"curve": [0.25, 0, 0.75, 30]
+							},
+							{
+								"time": 1,
+								"v": [30]
+							}
+						]
+					}
+				},
+				"deform": {
+					"default": {
+						"tail": {
+							"tail": [
+								{},
+								{
+									"time": 0.5,
+									"v": [0, 4, 0, 4],
+									"offset": 2
+								},
+								{
+									"time": 1
+								}
+							]
+						}
+					}
+				}
+			}
+		]
+	}
+}

@@ -1,0 +1,917 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone sample",
+	"imagesPath": "../images",
+	"skeleton": {
+		"fps": 30,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "몸",
+				"parent": "root",
+				"length": 60,
+				"y": 60,
+				"rotation": 90,
+				"scaleX": 1.2
+			},
+			{
+				"name": "팔-보통",
+				"parent": "몸",
+				"length": 40,
+				"x": 50,
+				"y": 10,
+				"rotation": -30,
+				"scaleY": 0.8,
+				"shearX": 5
+			},
+			{
+				"name": "팔-이동만",
+				"parent": "몸",
+				"length": 30,
+				"x": 50,
+				"y": -10,
+				"rotation": 20,
+				"inherit": "onlyTranslation"
+			},
+			{
+				"name": "꼬리-회전없음",
+				"parent": "몸",
+				"length": 50,
+				"y": 20,
+				"rotation": 160,
+				"shearY": 10,
+				"inherit": "noRotationOrReflection"
+			},
+			{
+				"name": "모자-크기없음",
+				"parent": "몸",
+				"length": 20,
+				"x": 70,
+				"rotation": 10,
+				"inherit": "noScale"
+			},
+			{
+				"name": "반사부모",
+				"parent": "root",
+				"length": 30,
+				"x": -80,
+				"y": 40,
+				"rotation": 15,
+				"scaleX": -1
+			},
+			{
+				"name": "반사-크기없음",
+				"parent": "반사부모",
+				"length": 20,
+				"x": 30,
+				"inherit": "noScale"
+			},
+			{
+				"name": "반사-크기반사없음",
+				"parent": "반사부모",
+				"length": 20,
+				"x": 30,
+				"y": 10,
+				"inherit": "noScaleOrReflection"
+			},
+			{
+				"name": "반사-회전반사없음",
+				"parent": "반사부모",
+				"length": 15,
+				"x": 20,
+				"y": -10,
+				"rotation": 30,
+				"inherit": "noRotationOrReflection"
+			},
+			{
+				"name": "가중치A",
+				"parent": "root",
+				"length": 30,
+				"x": 60
+			},
+			{
+				"name": "가중치B",
+				"parent": "가중치A",
+				"length": 30,
+				"x": 30,
+				"rotation": 20
+			},
+			{
+				"name": "빨강전용",
+				"parent": "몸",
+				"length": 10,
+				"x": 80,
+				"y": 20,
+				"skinRequired": true
+			}
+		],
+		"slots": [
+			{
+				"name": "꼬리",
+				"bone": "꼬리-회전없음",
+				"attachment": "tail"
+			},
+			{
+				"name": "몸",
+				"bone": "몸",
+				"attachment": "body",
+				"color": "FFEEDDFF",
+				"dark": "202040"
+			},
+			{
+				"name": "팔",
+				"bone": "팔-보통",
+				"attachment": "arm",
+				"blend": "multiply"
+			},
+			{
+				"name": "꼬리복사",
+				"bone": "반사부모",
+				"attachment": "tail-link"
+			},
+			{
+				"name": "가중치",
+				"bone": "가중치A",
+				"attachment": "leg",
+				"blend": "screen"
+			},
+			{
+				"name": "모자",
+				"bone": "모자-크기없음",
+				"attachment": "hat-red",
+				"blend": "additive"
+			},
+			{
+				"name": "보석",
+				"bone": "빨강전용",
+				"attachment": "gem"
+			},
+			{
+				"name": "빛",
+				"bone": "반사-크기없음",
+				"attachment": "glow",
+				"dark": "000000"
+			},
+			{
+				"name": "머리",
+				"bone": "반사-크기반사없음",
+				"attachment": "head"
+			},
+			{
+				"name": "손",
+				"bone": "반사-회전반사없음",
+				"attachment": "gem"
+			}
+		],
+		"skins": [
+			{
+				"name": "default",
+				"attachments": {
+					"꼬리": {
+						"tail": {
+							"type": "mesh",
+							"width": 128,
+							"height": 32,
+							"uvs": [
+								0,
+								1,
+								1,
+								1,
+								1,
+								0,
+								0,
+								0
+							],
+							"triangles": [
+								0,
+								1,
+								2,
+								0,
+								2,
+								3
+							],
+							"vertices": [
+								0,
+								-16,
+								128,
+								-16,
+								128,
+								16,
+								0,
+								16
+							],
+							"hull": 4
+						}
+					},
+					"몸": {
+						"body": {
+							"type": "region",
+							"x": 30,
+							"rotation": 30,
+							"scaleX": 2,
+							"width": 48,
+							"height": 96
+						}
+					},
+					"팔": {
+						"arm": {
+							"type": "region",
+							"x": 20,
+							"width": 64,
+							"height": 20,
+							"color": "FFFFFFC0"
+						}
+					},
+					"꼬리복사": {
+						"tail": {
+							"type": "mesh",
+							"width": 128,
+							"height": 32,
+							"uvs": [
+								0,
+								1,
+								1,
+								1,
+								1,
+								0,
+								0,
+								0
+							],
+							"triangles": [
+								0,
+								1,
+								2,
+								0,
+								2,
+								3
+							],
+							"vertices": [
+								0,
+								-16,
+								128,
+								-16,
+								128,
+								16,
+								0,
+								16
+							],
+							"hull": 4
+						},
+						"tail-link": {
+							"type": "linkedmesh",
+							"path": "tail",
+							"parent": "tail",
+							"timelines": true,
+							"color": "C0FFC0FF"
+						}
+					},
+					"가중치": {
+						"leg": {
+							"type": "mesh",
+							"path": "leg",
+							"width": 72,
+							"height": 24,
+							"weighted": true,
+							"hull": 6,
+							"uvs": [
+								0,
+								1,
+								0.5,
+								1,
+								0.5,
+								0,
+								0,
+								0,
+								1,
+								1,
+								1,
+								0
+							],
+							"triangles": [
+								0,
+								1,
+								2,
+								0,
+								2,
+								3,
+								1,
+								4,
+								5,
+								1,
+								5,
+								2
+							],
+							"vertices": [
+								2,
+								10,
+								0,
+								-12,
+								1,
+								11,
+								-30,
+								-12,
+								0,
+								2,
+								10,
+								30,
+								-12,
+								0.5,
+								11,
+								0,
+								-12,
+								0.5,
+								2,
+								10,
+								30,
+								12,
+								0.5,
+								11,
+								0,
+								12,
+								0.5,
+								2,
+								10,
+								0,
+								12,
+								1,
+								11,
+								-30,
+								12,
+								0,
+								2,
+								10,
+								60,
+								-12,
+								0,
+								11,
+								30,
+								-12,
+								1,
+								2,
+								10,
+								60,
+								12,
+								0,
+								11,
+								30,
+								12,
+								1
+							]
+						}
+					},
+					"모자": {
+						"hat-red": {
+							"type": "region",
+							"y": 10,
+							"width": 56,
+							"height": 24
+						}
+					},
+					"보석": {
+						"gem": {
+							"type": "region",
+							"width": 32,
+							"height": 32
+						}
+					},
+					"빛": {
+						"glow": {
+							"type": "region",
+							"width": 48,
+							"height": 48
+						}
+					},
+					"머리": {
+						"head": {
+							"type": "region",
+							"x": 10,
+							"width": 64,
+							"height": 64
+						}
+					},
+					"손": {
+						"gem": {
+							"type": "region",
+							"width": 16,
+							"height": 16
+						}
+					}
+				}
+			},
+			{
+				"name": "빨강",
+				"bones": [
+					"빨강전용"
+				],
+				"attachments": {
+					"모자": {
+						"hat-red": {
+							"type": "region",
+							"x": 5,
+							"y": 10,
+							"width": 56,
+							"height": 24,
+							"color": "FF8080FF"
+						}
+					}
+				}
+			}
+		],
+		"events": [
+			{
+				"name": "발",
+				"int": 3,
+				"float": 0.5,
+				"string": "쿵"
+			},
+			{
+				"name": "숨"
+			}
+		],
+		"animations": [
+			{
+				"name": "걷기",
+				"bones": {
+					"몸": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								],
+								"curve": [
+									0.25,
+									0,
+									0.75,
+									10
+								]
+							},
+							{
+								"time": 0.5,
+								"v": [
+									10
+								],
+								"curve": "stepped"
+							},
+							{
+								"time": 1,
+								"v": [
+									0
+								]
+							}
+						],
+						"translate": [
+							{
+								"time": 0,
+								"v": [
+									0,
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									10,
+									-5
+								]
+							}
+						],
+						"scale": [
+							{
+								"time": 0,
+								"v": [
+									1,
+									1
+								],
+								"curve": [
+									0.2,
+									1,
+									0.3,
+									1.2,
+									0.1,
+									1,
+									0.4,
+									0.9
+								]
+							},
+							{
+								"time": 0.5,
+								"v": [
+									1.2,
+									0.9
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									1,
+									1
+								]
+							}
+						],
+						"shear": [
+							{
+								"time": 0,
+								"v": [
+									0,
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									5,
+									-5
+								]
+							}
+						]
+					},
+					"팔-보통": {
+						"translatex": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									8
+								]
+							}
+						],
+						"scaley": [
+							{
+								"time": 0,
+								"v": [
+									1
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									1.5
+								]
+							}
+						],
+						"sheary": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									10
+								]
+							}
+						]
+					},
+					"팔-이동만": {
+						"inherit": [
+							{
+								"time": 0,
+								"s": "onlyTranslation"
+							},
+							{
+								"time": 0.5,
+								"s": "normal"
+							}
+						]
+					},
+					"꼬리-회전없음": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								],
+								"curve": [
+									0.2,
+									0,
+									0.4,
+									-30
+								]
+							},
+							{
+								"time": 0.6,
+								"v": [
+									-30
+								]
+							}
+						],
+						"shearx": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									10
+								]
+							}
+						],
+						"translatey": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									5
+								]
+							}
+						],
+						"scalex": [
+							{
+								"time": 0,
+								"v": [
+									1
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0.5
+								]
+							}
+						]
+					}
+				},
+				"slots": {
+					"몸": {
+						"rgba": [
+							{
+								"time": 0,
+								"v": [
+									1,
+									1,
+									1,
+									1
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0.5,
+									0.2,
+									0.2,
+									0.8
+								]
+							}
+						]
+					},
+					"팔": {
+						"alpha": [
+							{
+								"time": 0,
+								"v": [
+									1
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0.3
+								]
+							}
+						]
+					},
+					"모자": {
+						"rgb": [
+							{
+								"time": 0,
+								"v": [
+									1,
+									1,
+									1
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0,
+									1,
+									0
+								]
+							}
+						]
+					},
+					"빛": {
+						"rgba2": [
+							{
+								"time": 0,
+								"v": [
+									1,
+									1,
+									1,
+									1,
+									0,
+									0,
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									1,
+									0.5,
+									0.5,
+									1,
+									0.3,
+									0.1,
+									0.1
+								]
+							}
+						]
+					},
+					"머리": {
+						"rgb2": [
+							{
+								"time": 0,
+								"v": [
+									1,
+									1,
+									1,
+									0,
+									0,
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0.5,
+									0.5,
+									1,
+									0.2,
+									0.2,
+									0.4
+								]
+							}
+						]
+					},
+					"손": {
+						"attachment": [
+							{
+								"time": 0,
+								"s": "gem"
+							},
+							{
+								"time": 0.4
+							},
+							{
+								"time": 0.8,
+								"s": "gem"
+							}
+						]
+					}
+				},
+				"deform": {
+					"default": {
+						"꼬리": {
+							"tail": [
+								{
+									"time": 0
+								},
+								{
+									"time": 0.5,
+									"offset": 2,
+									"v": [
+										0,
+										5,
+										0,
+										5
+									],
+									"curve": [
+										0.25,
+										0,
+										0.75,
+										1
+									]
+								},
+								{
+									"time": 1
+								}
+							]
+						},
+						"꼬리복사": {
+							"tail": [
+								{
+									"time": 0
+								},
+								{
+									"time": 1,
+									"v": [
+										3,
+										0,
+										3,
+										0,
+										3,
+										0,
+										3,
+										0
+									]
+								}
+							]
+						},
+						"가중치": {
+							"leg": [
+								{
+									"time": 0
+								},
+								{
+									"time": 1,
+									"offset": 4,
+									"v": [
+										0,
+										6,
+										0,
+										6,
+										0,
+										-6,
+										0,
+										-6
+									]
+								}
+							]
+						}
+					}
+				},
+				"drawOrder": [
+					{
+						"time": 0.25,
+						"offsets": [
+							{
+								"slot": "꼬리",
+								"offset": 3
+							}
+						]
+					},
+					{
+						"time": 0.75,
+						"offsets": [
+							{
+								"slot": "머리",
+								"offset": -5
+							},
+							{
+								"slot": "팔",
+								"offset": 1
+							}
+						]
+					}
+				],
+				"events": [
+					{
+						"time": 0,
+						"name": "발"
+					},
+					{
+						"time": 0.5,
+						"name": "발",
+						"int": 7,
+						"string": "쾅"
+					},
+					{
+						"time": 1,
+						"name": "숨"
+					}
+				]
+			},
+			{
+				"name": "정지",
+				"bones": {
+					"몸": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									5
+								]
+							}
+						]
+					}
+				},
+				"events": [
+					{
+						"time": 0,
+						"name": "숨"
+					}
+				]
+			}
+		]
+	},
+	"editor": {}
+}

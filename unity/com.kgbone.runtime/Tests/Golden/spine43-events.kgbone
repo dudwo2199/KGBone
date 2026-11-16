@@ -1,0 +1,50 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone 0.1.0",
+	"imagesPath": "../images",
+	"skeleton": {
+		"x": -100,
+		"width": 200,
+		"height": 300,
+		"bones": [
+			{
+				"name": "root"
+			}
+		],
+		"events": [
+			{
+				"name": "footstep",
+				"int": 1,
+				"float": 0.5,
+				"string": "왼발",
+				"audio": "step.wav",
+				"volume": 0.8,
+				"balance": -0.2
+			},
+			{
+				"name": "hit"
+			}
+		],
+		"animations": [
+			{
+				"name": "walk",
+				"events": [
+					{
+						"time": 0.25,
+						"name": "footstep"
+					},
+					{
+						"time": 0.75,
+						"name": "footstep",
+						"int": 2,
+						"string": "오른발"
+					},
+					{
+						"time": 1,
+						"name": "hit"
+					}
+				]
+			}
+		]
+	}
+}

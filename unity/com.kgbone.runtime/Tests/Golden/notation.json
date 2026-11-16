@@ -1,0 +1,7 @@
+{
+	"kgbone": "notation.kgbone",
+	"source": "samples/kgbone/notation.kgbone",
+	"cases": [
+		{"request":{"animation":null,"time":0,"lastTime":null,"skin":null,"looping":false},"output":{"bones":[{"a":0.9848077,"b":-0.1736482,"c":0.17364818,"d":0.9848077,"x":1.5,"y":0},{"a":0.9848077,"b":-0.17364824,"c":0.17364818,"d":0.9848077,"x":1.5,"y":0}],"active":[true,true],"draw":[],"events":[]}}
+	]
+}

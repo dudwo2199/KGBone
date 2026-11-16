@@ -1,0 +1,16 @@
+{
+	"kgbone": "spine43-events.kgbone",
+	"source": "samples/spine43/events.json",
+	"cases": [
+		{"request":{"animation":null,"time":0,"lastTime":null,"skin":null,"looping":false},"output":{"bones":[{"a":1,"b":-4.371139e-8,"c":0,"d":1,"x":0,"y":0}],"active":[true],"draw":[],"events":[]}},
+		{"request":{"animation":"walk","time":0,"lastTime":null,"skin":null,"looping":false},"output":{"bones":[{"a":1,"b":-4.371139e-8,"c":0,"d":1,"x":0,"y":0}],"active":[true],"draw":[],"events":[]}},
+		{"request":{"animation":"walk","time":0.3333333333333333,"lastTime":null,"skin":null,"looping":false},"output":{"bones":[{"a":1,"b":-4.371139e-8,"c":0,"d":1,"x":0,"y":0}],"active":[true],"draw":[],"events":[]}},
+		{"request":{"animation":"walk","time":0.5,"lastTime":null,"skin":null,"looping":false},"output":{"bones":[{"a":1,"b":-4.371139e-8,"c":0,"d":1,"x":0,"y":0}],"active":[true],"draw":[],"events":[]}},
+		{"request":{"animation":"walk","time":0.6666666666666666,"lastTime":null,"skin":null,"looping":false},"output":{"bones":[{"a":1,"b":-4.371139e-8,"c":0,"d":1,"x":0,"y":0}],"active":[true],"draw":[],"events":[]}},
+		{"request":{"animation":"walk","time":1,"lastTime":null,"skin":null,"looping":false},"output":{"bones":[{"a":1,"b":-4.371139e-8,"c":0,"d":1,"x":0,"y":0}],"active":[true],"draw":[],"events":[]}},
+		{"request":{"animation":"walk","time":1.5,"lastTime":null,"skin":null,"looping":true},"output":{"bones":[{"a":1,"b":-4.371139e-8,"c":0,"d":1,"x":0,"y":0}],"active":[true],"draw":[],"events":[]}},
+		{"request":{"animation":"walk","time":0.5,"lastTime":0,"skin":null,"looping":false},"output":{"bones":[{"a":1,"b":-4.371139e-8,"c":0,"d":1,"x":0,"y":0}],"active":[true],"draw":[],"events":[{"name":"footstep","time":0.25,"int":1,"float":0.5,"string":"왼발","volume":0.8,"balance":-0.2}]}},
+		{"request":{"animation":"walk","time":1.2,"lastTime":0.9,"skin":null,"looping":true},"output":{"bones":[{"a":1,"b":-4.371139e-8,"c":0,"d":1,"x":0,"y":0}],"active":[true],"draw":[],"events":[{"name":"hit","time":1,"int":0,"float":0,"string":"","volume":1,"balance":0}]}},
+		{"request":{"animation":"walk","time":0.1,"lastTime":0.9,"skin":null,"looping":true},"output":{"bones":[{"a":1,"b":-4.371139e-8,"c":0,"d":1,"x":0,"y":0}],"active":[true],"draw":[],"events":[{"name":"hit","time":1,"int":0,"float":0,"string":"","volume":1,"balance":0}]}}
+	]
+}

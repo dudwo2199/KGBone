@@ -1,0 +1,51 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone 0.1.0",
+	"imagesPath": "../images",
+	"skeleton": {
+		"x": -100,
+		"width": 200,
+		"height": 300,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "hip",
+				"parent": "root",
+				"y": 100,
+				"color": "FF0000FF"
+			},
+			{
+				"name": "spine",
+				"parent": "hip",
+				"length": 80,
+				"rotation": 90
+			},
+			{
+				"name": "neck",
+				"parent": "spine",
+				"length": 20,
+				"x": 80,
+				"rotation": -10,
+				"scaleX": 1.5,
+				"inherit": "noScale"
+			},
+			{
+				"name": "arm",
+				"parent": "spine",
+				"length": 50,
+				"x": 60,
+				"rotation": 180,
+				"shearX": 10,
+				"shearY": -5
+			},
+			{
+				"name": "only-t",
+				"parent": "spine",
+				"x": 30,
+				"inherit": "onlyTranslation"
+			}
+		]
+	}
+}
