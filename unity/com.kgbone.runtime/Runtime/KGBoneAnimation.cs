@@ -60,6 +60,11 @@ namespace KGBone
         string observedName;
         readonly List<TrackCompletion> completions = new List<TrackCompletion>();
         readonly HashSet<string> warned = new HashSet<string>();
+        PoseOverrides overrides = new PoseOverrides();
+        readonly Dictionary<int, (Vector3 position, float mix)> worldPositions = new Dictionary<int, (Vector3, float)>();
+        readonly Dictionary<int, (float degrees, float mix)> worldRotations = new Dictionary<int, (float, float)>();
+        string[] activeSkins;
+        string activeSkinsKey;
         KGBoneSkeletonData poserData;
         Mesh mesh;
         readonly MeshBuilder builder = new MeshBuilder();
@@ -242,10 +247,145 @@ namespace KGBone
         /// <summary>트랙의 지금 애니메이션 이름(비어 있거나 비우는 중이면 null).</summary>
         public string GetTrackAnimation(int track) => tracks?.Current(track)?.Name;
 
-        void WarnMissing(string name)
+        void WarnMissing(string name) => Warn($"애니메이션을 찾을 수 없습니다: {name}");
+
+        // ---------- 첨부물·스킨·본 덮어쓰기 ----------
+
+        /// <summary>슬롯 첨부물을 바꾼다(애니메이션 키보다 우선, ClearAttachment까지 유지). null이면 그 슬롯을 숨긴다.</summary>
+        public void SetAttachment(string slot, string attachment)
         {
-            if (warned.Add(name ?? "")) Debug.LogWarning($"애니메이션을 찾을 수 없습니다: {name}", this);
+            var p = EnsurePoser();
+            if (p == null) return;
+            int si = p.Model.SlotIndex(slot);
+            if (si < 0)
+            {
+                Warn("슬롯을 찾을 수 없습니다: " + slot);
+                return;
+            }
+            if (attachment != null && !AttachmentExists(p.Model, slot, attachment))
+            {
+                Warn("첨부물을 찾을 수 없습니다: " + slot + "/" + attachment);
+                return;
+            }
+            overrides.SetAttachment(si, attachment);
+            Refresh();
         }
+
+        /// <summary>SetAttachment를 풀고 애니메이션·셋업 첨부물로 돌아간다.</summary>
+        public void ClearAttachment(string slot)
+        {
+            var p = EnsurePoser();
+            if (p == null) return;
+            int si = p.Model.SlotIndex(slot);
+            if (si < 0) return;
+            overrides.ClearAttachment(si);
+            Refresh();
+        }
+
+        static bool AttachmentExists(SkeletonModel m, string slot, string name)
+        {
+            foreach (var s in m.Skins) if (s.Get(slot, name) != null) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// 스킨 여러 개를 함께 켠다(옷 + 무기). 같은 슬롯·이름의 첨부물은 뒤에 적은 스킨이 이긴다. 기본 스킨은 항상 포함.
+        /// skin 필드는 첫 값이 되고, 필드를 직접 다른 값으로 바꾸면 그 스킨 하나로 돌아간다. 스킨을 바꾸면 물리를 초기화한다.
+        /// </summary>
+        public void SetSkins(params string[] skins)
+        {
+            var p = EnsurePoser();
+            if (p == null) return;
+            skins = skins ?? new string[0];
+            foreach (var n in skins)
+                if (!string.IsNullOrEmpty(n) && p.Model.FindSkin(n) == null)
+                {
+                    Warn("스킨을 찾을 수 없습니다: " + n);
+                    return;
+                }
+            activeSkins = (string[])skins.Clone();
+            activeSkinsKey = string.Join("\n", activeSkins);
+            skin = activeSkins.Length > 0 ? activeSkins[0] : null;
+            Refresh();
+        }
+
+        /// <summary>본의 로컬 값(부모 기준, 에디터 속성 패널과 같은 값) 중 정한 것만 정한다. Mix로 애니메이션 값과 섞는다. ClearBone까지 유지.</summary>
+        public void SetBoneLocal(string bone, BoneOverride value)
+        {
+            int i = BoneOrWarn(bone);
+            if (i < 0) return;
+            overrides.SetBoneLocal(i, value);
+            Refresh();
+        }
+
+        /// <summary>본 원점을 유니티 월드 좌표의 점으로 옮긴다(예: IK 대상 본을 마우스 위치로). 제약보다 먼저 적용된다. 매 계산 이 월드 점을 따른다.</summary>
+        public void SetBoneWorldPosition(string bone, Vector3 position, float mix = 1)
+        {
+            int i = BoneOrWarn(bone);
+            if (i < 0) return;
+            worldPositions[i] = (position, mix);
+            Refresh();
+        }
+
+        /// <summary>본 X축이 유니티 월드에서 degrees(도) 방향을 보게 한다(예: 마우스 쪽으로 고개). TryGetBone의 회전과 같은 기준.</summary>
+        public void SetBoneWorldRotation(string bone, float degrees, float mix = 1)
+        {
+            int i = BoneOrWarn(bone);
+            if (i < 0) return;
+            worldRotations[i] = (degrees, mix);
+            Refresh();
+        }
+
+        public void ClearBone(string bone)
+        {
+            var p = EnsurePoser();
+            if (p == null) return;
+            int i = p.BoneIndex(bone);
+            if (i < 0) return;
+            overrides.ClearBone(i);
+            worldPositions.Remove(i);
+            worldRotations.Remove(i);
+            Refresh();
+        }
+
+        public void ClearAllBones()
+        {
+            overrides.ClearAllBones();
+            worldPositions.Clear();
+            worldRotations.Clear();
+            if (isActiveAndEnabled) Refresh();
+        }
+
+        int BoneOrWarn(string bone)
+        {
+            var p = EnsurePoser();
+            if (p == null) return -1;
+            int i = p.BoneIndex(bone);
+            if (i < 0) Warn("본을 찾을 수 없습니다: " + bone);
+            return i;
+        }
+
+        void Warn(string message)
+        {
+            if (warned.Add(message)) Debug.LogWarning(message, this);
+        }
+
+        /// <summary>유니티 월드 점 → 뼈대 좌표(TryGetBone의 반대: GameObject 변환, 뒤집기, pixelsPerUnit).</summary>
+        Vector2 ToSkeleton(Vector3 world)
+        {
+            var l = transform.InverseTransformPoint(world);
+            float fx = flipX ? -1f : 1f, fy = flipY ? -1f : 1f, ppu = skeletonData.PixelsPerUnit;
+            return new Vector2(l.x * ppu * fx, l.y * ppu * fy);
+        }
+
+        /// <summary>유니티 월드 각도(도) → 뼈대 좌표 각도(TryGetBone 회전의 반대).</summary>
+        float ToSkeletonAngle(float degrees)
+        {
+            float fx = flipX ? -1f : 1f, fy = flipY ? -1f : 1f;
+            float phi = (degrees - transform.eulerAngles.z) * Mathf.Deg2Rad;
+            return Mathf.Atan2(Mathf.Sin(phi) * fy, Mathf.Cos(phi) * fx) * Mathf.Rad2Deg;
+        }
+
 
         /// <summary>물리 한 프레임 진행 시간: 0~0.1초(에디터 재생과 같은 상한). 컴포넌트 timeScale은 곱하지 않는다.</summary>
         internal static float PhysicsDt(float dt) => Mathf.Min(0.1f, Mathf.Max(dt, 0f));
@@ -372,6 +512,10 @@ namespace KGBone
                     var e = tracks.SetAnimation(0, old0.Name, old0.Loop, 0);
                     if (e != null) e.Time = old0.Time;
                 }
+                // 덮어쓰기는 본·슬롯 번호로 들고 있으므로 모델이 바뀌면 비운다
+                overrides = new PoseOverrides();
+                worldPositions.Clear();
+                worldRotations.Clear();
                 poser = new SkeletonPoser(skeletonData.Model);
                 poserData = skeletonData;
                 LastPose = null;
@@ -408,12 +552,28 @@ namespace KGBone
             }
             request.LastTime = lastTime;
             request.Skin = string.IsNullOrEmpty(skin) ? null : skin;
-            if (request.Skin != physicsSkin)
+            // skin 필드를 직접 다른 값으로 바꾸면 SetSkins로 합친 상태를 풀고 그 스킨 하나로
+            if (activeSkins != null && (activeSkins.Length > 0 && !string.IsNullOrEmpty(activeSkins[0]) ? activeSkins[0] : null) != request.Skin)
+            {
+                activeSkins = null;
+                activeSkinsKey = null;
+            }
+            request.Skins = activeSkins;
+            string skinKey = activeSkins != null ? activeSkinsKey : request.Skin;
+            if (skinKey != physicsSkin)
             {
                 // 스킨이 바뀌면 켜지는 본·제약이 달라지므로 물리를 처음부터
                 poser.ResetPhysics();
-                physicsSkin = request.Skin;
+                physicsSkin = skinKey;
             }
+            // 월드 덮어쓰기는 유니티 월드 값으로 들고 있다가 매 계산 지금 GameObject 기준 뼈대 좌표로 바꾼다
+            foreach (var kv in worldPositions)
+            {
+                var s = ToSkeleton(kv.Value.position);
+                overrides.SetBoneWorldPosition(kv.Key, s.x, s.y, kv.Value.mix);
+            }
+            foreach (var kv in worldRotations) overrides.SetBoneWorldRotation(kv.Key, ToSkeletonAngle(kv.Value.degrees), kv.Value.mix);
+            request.Overrides = overrides;
             request.Looping = loop;
             LastPose = poser.Compute(request);
             builder.Build(LastPose, skeletonData, flipX, flipY, EnsureMesh(), materials);

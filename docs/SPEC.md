@@ -155,6 +155,8 @@
 | M18 | 클리핑: 클리핑 슬롯부터 end 슬롯까지 자르기(보통·반전·볼록, 오목 다각형, 가중치·변형 키 클립 다각형), 경고 없음 | C: `m18_*` + 정답(`spine43-clipping`, `unity-stage3-clipping`). Y: `m18_importer_no_clipping_warning` |
 | M19 | 번호 트랙 계산부: 섞기(두 포즈 섞기, 셋업으로 꺼지지 않음·끝에서 튀지 않음), 윗 트랙은 키 있는 값만, 예약·비우기·트랙 비율, 섞는 중 바꾸면 얼린 포즈에서 섞기, 지금 항목만 이벤트(트랙 번호), 트랙 하나·섞기 없음이면 일반 요청과 같음 | C: `m19_*` |
 | M20 | 컴포넌트 트랙 API(`SetAnimation`·`AddAnimation`·`ClearTrack`·`AddEmpty`·`SetTrackAlpha`·`GetTrackAnimation`, `TrackCompleted`, `defaultMix` 기본 0), 기존 `Play`·`Stop` 동작 유지, 실행 중 Animation Name 바꾸면 Default Mix로 섞기, 없는 이름 경고 한 번 | Y: `m20_*` + 기존 `m11_*` |
+| M21 | 스킨 합치기(뒤 스킨 우선, 스킨 전용 본·제약은 하나라도 가지면), 첨부물 덮어쓰기(키보다 우선, null = 숨김, 해제), 컴포넌트 `SetSkins`·`SetAttachment`·`ClearAttachment`, 없는 이름 경고 한 번 | C: `m21_*`. Y: `m21_*` |
+| M22 | 본 덮어쓰기(로컬 값·Mix, 월드 위치·월드 회전, 제약 앞 — IK 대상 옮기기, 제약 걸린 본은 제약이 이김), 컴포넌트 `SetBoneLocal`·`SetBoneWorldPosition`·`SetBoneWorldRotation`·`ClearBone`·`ClearAllBones`(뒤집기·크기·회전 반영) | C: `m22_*`. Y: `m22_*` |
 
 ## N. MCP 연결
 MCP 서버(`tools/mcp/server.mjs`)가 열린 KGBone 창의 문서를 편집한다. 메시지: `interface/agent-link.md`. 사용 설명서 9장.

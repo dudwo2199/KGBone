@@ -299,6 +299,103 @@ namespace KGBone.Tests
             Assert.IsNull(a.GetTrackAnimation(1));
         }
 
+        // ---------- M21 첨부물·스킨 합치기 ----------
+        static string DrawnImage(KGBoneAnimation a, string slot)
+        {
+            foreach (var d in a.LastPose.Draw) if (d.Slot == slot) return d.Image;
+            return null;
+        }
+
+        [Test]
+        public void m21_set_attachment_swaps_weapon()
+        {
+            var a = Make(ImportTracks());
+            a.SetAnimation(0, "걷기", true);
+            Assert.AreEqual("hat-red", DrawnImage(a, "무기"));
+            a.SetAttachment("무기", "도끼");
+            a.Advance(0.1f);
+            Assert.AreEqual("hat-blue", DrawnImage(a, "무기"));
+            a.SetAttachment("무기", null);
+            Assert.IsNull(DrawnImage(a, "무기"), "null이면 숨김");
+            a.ClearAttachment("무기");
+            Assert.AreEqual("hat-red", DrawnImage(a, "무기"));
+        }
+
+        [Test]
+        public void m21_set_skins_combines()
+        {
+            var a = Make(ImportTracks());
+            a.SetSkins("몸", "칼");
+            Assert.AreEqual("몸", a.skin);
+            Assert.AreEqual("gem", DrawnImage(a, "갑옷"));
+            Assert.AreEqual("tail", DrawnImage(a, "무기"), "뒤 스킨(칼)의 무기");
+            a.skin = "몸"; // 필드를 그대로 두면 합친 상태 유지
+            a.Advance(0);
+            Assert.AreEqual("tail", DrawnImage(a, "무기"));
+            a.skin = "칼"; // 필드를 바꾸면 그 스킨 하나
+            a.Advance(0);
+            Assert.IsNull(DrawnImage(a, "갑옷"));
+            Assert.AreEqual("tail", DrawnImage(a, "무기"));
+        }
+
+        [Test]
+        public void m21_unknown_names_warn_once()
+        {
+            var a = Make(ImportTracks());
+            LogAssert.Expect(LogType.Warning, "슬롯을 찾을 수 없습니다: 없는슬롯");
+            LogAssert.Expect(LogType.Warning, "첨부물을 찾을 수 없습니다: 무기/없는것");
+            LogAssert.Expect(LogType.Warning, "본을 찾을 수 없습니다: 없는본");
+            LogAssert.Expect(LogType.Warning, "스킨을 찾을 수 없습니다: 없는스킨");
+            for (int i = 0; i < 2; i++)
+            {
+                a.SetAttachment("없는슬롯", "칼");
+                a.SetAttachment("무기", "없는것");
+                a.SetBoneLocal("없는본", new BoneOverride { Rotation = 1 });
+                a.SetBoneWorldRotation("없는본", 10);
+                a.SetSkins("없는스킨");
+            }
+            LogAssert.NoUnexpectedReceived();
+            a.Advance(0);
+            Assert.AreEqual("hat-red", DrawnImage(a, "무기"));
+        }
+
+        // ---------- M22 본 덮어쓰기 ----------
+        [Test]
+        public void m22_world_position_with_flip_and_scale()
+        {
+            var a = Make(ImportTracks());
+            a.transform.position = new Vector3(1, 2, 0);
+            a.transform.localScale = new Vector3(2, 2, 1);
+            a.transform.rotation = Quaternion.Euler(0, 0, 20);
+            a.flipX = true;
+            var target = new Vector3(3, 1, 0);
+            a.SetBoneWorldPosition("팔", target);
+            Assert.IsTrue(a.TryGetBone("팔", out var p, out _, out _));
+            Assert.AreEqual(target.x, p.x, 1e-3f);
+            Assert.AreEqual(target.y, p.y, 1e-3f);
+            a.ClearAllBones();
+            Assert.IsTrue(a.TryGetBone("팔", out p, out _, out _));
+            Assert.Greater((p - target).magnitude, 0.1f);
+        }
+
+        [Test]
+        public void m22_world_rotation_follows_mouse_angle()
+        {
+            foreach (bool flip in new[] { false, true })
+            {
+                var a = Make(ImportTracks());
+                a.flipX = flip;
+                a.transform.rotation = Quaternion.Euler(0, 0, 30);
+                a.SetBoneWorldRotation("팔", 45);
+                Assert.IsTrue(a.TryGetBone("팔", out _, out float rot, out _));
+                Assert.AreEqual(0f, Mathf.DeltaAngle(45f, rot), 1e-2f, "flipX " + flip);
+                a.SetBoneLocal("팔", new BoneOverride { Rotation = 10 });
+                a.ClearBone("팔");
+                Assert.IsTrue(a.TryGetBone("팔", out _, out float back, out _));
+                Assert.Greater(Mathf.Abs(Mathf.DeltaAngle(45f, back)), 1f, "해제하면 원래대로");
+            }
+        }
+
         static int KGBoneMeshCount()
         {
             int n = 0;

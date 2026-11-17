@@ -44,6 +44,16 @@
 				"name": "팔",
 				"bone": "팔",
 				"attachment": "arm"
+			},
+			{
+				"name": "무기",
+				"bone": "팔",
+				"attachment": "칼"
+			},
+			{
+				"name": "갑옷",
+				"bone": "몸",
+				"attachment": "갑옷"
 			}
 		],
 		"skins": [
@@ -71,6 +81,46 @@
 							"x": 20,
 							"width": 64,
 							"height": 20
+						}
+					},
+					"무기": {
+						"칼": {
+							"path": "hat-red",
+							"x": 40,
+							"width": 56,
+							"height": 24
+						},
+						"도끼": {
+							"path": "hat-blue",
+							"x": 40,
+							"width": 56,
+							"height": 24
+						}
+					}
+				}
+			},
+			{
+				"name": "몸",
+				"attachments": {
+					"갑옷": {
+						"갑옷": {
+							"path": "gem",
+							"x": 30,
+							"width": 32,
+							"height": 32
+						}
+					}
+				}
+			},
+			{
+				"name": "칼",
+				"attachments": {
+					"무기": {
+						"칼": {
+							"path": "tail",
+							"x": 60,
+							"width": 128,
+							"height": 32
 						}
 					}
 				}

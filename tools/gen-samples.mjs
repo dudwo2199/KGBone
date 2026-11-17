@@ -762,6 +762,8 @@ const unityStage3Tracks = {
     { name: "다리", bone: "다리", attachment: "leg" },
     { name: "몸", bone: "몸", attachment: "body" },
     { name: "팔", bone: "팔", attachment: "arm" },
+    { name: "무기", bone: "팔", attachment: "칼" },
+    { name: "갑옷", bone: "몸", attachment: "갑옷" },
   ],
   skins: [
     {
@@ -770,8 +772,12 @@ const unityStage3Tracks = {
         "다리": { leg: { x: 36, rotation: 0, width: 72, height: 24 } },
         "몸": { body: { x: 30, rotation: -90, width: 48, height: 96 } },
         "팔": { arm: { x: 20, width: 64, height: 20 } },
+        "무기": { 칼: { path: "hat-red", x: 40, width: 56, height: 24 }, 도끼: { path: "hat-blue", x: 40, width: 56, height: 24 } },
       },
     },
+    // 무기 바꾸기용: 몸 스킨(갑옷), 칼 스킨(무기 칼을 꼬리 그림으로 바꿈)
+    { name: "몸", attachments: { "갑옷": { 갑옷: { path: "gem", x: 30, width: 32, height: 32 } } } },
+    { name: "칼", attachments: { "무기": { 칼: { path: "tail", x: 60, width: 128, height: 32 } } } },
   ],
   events: [{ name: "발" }, { name: "타격", int: 3 }],
   animations: [

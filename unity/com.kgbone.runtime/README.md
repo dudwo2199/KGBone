@@ -93,6 +93,36 @@ void OnAttack()
 anim.EventFired += e => { if (e.Track == 1 && e.Name == "타격") Hit(); };
 ```
 
+## 무기 바꾸기와 스킨 합치기
+
+```csharp
+anim.SetAttachment("무기", "도끼");   // 슬롯 첨부물 바꾸기(애니메이션의 첨부물 키보다 우선). null이면 숨김
+anim.ClearAttachment("무기");         // 애니메이션·셋업 첨부물로 돌아감
+anim.SetSkins("몸", "칼");            // 스킨 합치기: 같은 슬롯·이름이면 뒤에 적은 스킨(칼)이 이김, 기본 스킨은 항상 포함
+```
+
+`SetSkins`를 부르면 `skin` 필드는 첫 값이 되고, 필드를 직접 다른 값으로 바꾸면 그 스킨 하나로 돌아간다. 스킨을 바꾸면 물리 흔들림을 초기화한다.
+
+## 코드로 본 움직이기 (마우스 따라 고개 돌리기)
+
+```csharp
+void Update()
+{
+    Vector3 mouse = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+    // 고개: 본 X축이 마우스 쪽을 보게(유니티 월드 각도, TryGetBone 회전과 같은 기준)
+    anim.TryGetBone("머리", out Vector3 head, out _, out _);
+    float angle = Mathf.Atan2(mouse.y - head.y, mouse.x - head.x) * Mathf.Rad2Deg;
+    anim.SetBoneWorldRotation("머리", angle, 0.8f);   // mix 0.8: 애니메이션 고개 움직임을 조금 남김
+    // 팔: IK 대상 본을 마우스 위치로 옮기면 IK 제약이 팔을 따라오게 한다
+    anim.SetBoneWorldPosition("조준", mouse);
+}
+```
+
+- `SetBoneLocal(본, new BoneOverride { Rotation = 30, Mix = 1 })`: 로컬 값(부모 기준, 에디터 속성 패널과 같은 값) 중 정한 것만 바꾼다.
+- 덮어쓰기는 `ClearBone`·`ClearAllBones`까지 매 프레임 유지된다. 월드 위치·회전은 유니티 월드 값으로 기억하므로 캐릭터가 움직여도 그 월드 점·방향을 따른다.
+- 덮어쓰기는 애니메이션 뒤, **제약 앞**에 들어간다. 그래서 IK 대상을 옮기면 IK가 따라오고, 제약이 걸린 본 자체를 덮어쓰면 제약 결과가 이긴다.
+- 없는 슬롯·첨부물·본·스킨은 경고를 한 번만 내고 무시한다. 덮어쓰기·합친 스킨은 플레이 중 상태라 씬에 저장되지 않고, `.kgbone`을 다시 가져오면 덮어쓰기는 비워진다.
+
 ## 제약과 물리
 
 제약 5종(IK, 트랜스폼, 패스, 물리, 슬라이더)과 제약 키는 KGBone 에디터와 같게 계산된다.
@@ -122,14 +152,14 @@ if (anim.TryGetBone("손", out Vector3 position, out float rotation, out Vector2
 
 코드 없이 붙이려면 이펙트·무기 GameObject에 **KGBoneBoneFollower**를 붙이고 Target과 Bone Name을 고른다(Follow Rotation을 켜면 회전도 따라간다).
 
-## 지원 범위 (3단계 진행 중)
+## 지원 범위 (3단계까지)
 
 | 지원 | 아직 없음 |
 |---|---|
 | 본(상속 5종), 이미지·메시·가중치 메시·링크드 메시, 메시 변형 키 | |
 | 제약: IK(1본·2본, 부드러움·늘이기·줄이기·부피), 트랜스폼(속성 매핑), 패스(열림·닫힘, 가중치, 변형 키, 위치·간격·회전 방식), 물리(reset 키, 월드 움직임 반영 옵션), 슬라이더, 제약 값 키, 스킨 전용 제약 | |
 | 슬롯 색·어두운 색, 첨부물 키, 그리기 순서 키, 블렌드 4종, 클리핑(보통·반전·볼록), 시퀀스(모드 7종) | |
-| 스킨 1개 + 스킨 전용 본, 이벤트, 선형·계단·베지어 곡선 | 스킨 합치기, 첨부물 바꾸기, 본 덮어쓰기 — 3단계 진행 중 |
+| 스킨 + 스킨 전용 본, 스킨 합치기, 첨부물 바꾸기, 본 덮어쓰기(로컬·월드 위치·월드 회전), 이벤트, 선형·계단·베지어 곡선 | |
 | 번호 트랙, 섞기·전환, 예약(`AddAnimation`·`AddEmpty`), 트랙 비율, 트랙별 이벤트·끝남 | 트랙 더하기(additive) 섞기, 본 마스크, Animator·Timeline 연동, 루트 모션 |
 
 ## 개발
