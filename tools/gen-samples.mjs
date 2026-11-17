@@ -749,4 +749,38 @@ const unityStage3Clipping = {
 };
 write("kgbone/unity-stage3-clipping.kgbone", k(unityStage3Clipping));
 
+// 유니티 런타임 3단계 시험 파일(정답 대상 아님): 트랙·섞기 컴포넌트 테스트용. 걷기·달리기(다리·팔), 공격(팔만, 이벤트 "타격"), 대기
+const unityStage3Tracks = {
+  fps: 30,
+  bones: [
+    { name: "root" },
+    { name: "몸", parent: "root", length: 60, y: 50, rotation: 90 },
+    { name: "팔", parent: "몸", length: 40, x: 50, rotation: -100 },
+    { name: "다리", parent: "root", length: 50, rotation: -90 },
+  ],
+  slots: [
+    { name: "다리", bone: "다리", attachment: "leg" },
+    { name: "몸", bone: "몸", attachment: "body" },
+    { name: "팔", bone: "팔", attachment: "arm" },
+  ],
+  skins: [
+    {
+      name: "default",
+      attachments: {
+        "다리": { leg: { x: 36, rotation: 0, width: 72, height: 24 } },
+        "몸": { body: { x: 30, rotation: -90, width: 48, height: 96 } },
+        "팔": { arm: { x: 20, width: 64, height: 20 } },
+      },
+    },
+  ],
+  events: [{ name: "발" }, { name: "타격", int: 3 }],
+  animations: [
+    { name: "걷기", bones: { "다리": { rotate: lin([[0, 0], [0.5, 30], [1, 0]]) }, "팔": { rotate: lin([[0, 0], [0.5, -20], [1, 0]]) } }, events: [{ time: 0.5, name: "발" }] },
+    { name: "달리기", bones: { "다리": { rotate: lin([[0, 0], [0.3, 60], [0.6, 0]]) }, "팔": { rotate: lin([[0, 0], [0.3, -40], [0.6, 0]]) } } },
+    { name: "공격", bones: { "팔": { rotate: lin([[0, 0], [0.2, 90], [0.4, 90]]) } }, events: [{ time: 0.2, name: "타격" }] },
+    { name: "대기", bones: { "몸": { translate: lin([[0, [0, 0]], [1, [0, 4]]]) } } },
+  ],
+};
+write("kgbone/unity-stage3-tracks.kgbone", k(unityStage3Tracks));
+
 console.log("samples 생성 완료:", root);

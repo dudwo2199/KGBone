@@ -114,7 +114,10 @@ namespace KGBone.Tests
                 File.Copy(png, dest, true);
             }
             Directory.CreateDirectory(Path.Combine(Tmp, "kg"));
-            File.Copy(Path.Combine(GoldenFile.GoldenDir(), name + ".kgbone"), Path.Combine(Tmp, "kg", name + ".kgbone"), true);
+            // 정답 대상이 아닌 시험 파일은 samples/kgbone에서
+            string file = Path.Combine(GoldenFile.GoldenDir(), name + ".kgbone");
+            if (!File.Exists(file)) file = Path.Combine(Repo, "samples", "kgbone", name + ".kgbone");
+            File.Copy(file, Path.Combine(Tmp, "kg", name + ".kgbone"), true);
             beforeImport?.Invoke(Path.Combine(Tmp, "images"));
             return Import(Tmp + "/kg/" + name + ".kgbone");
         }

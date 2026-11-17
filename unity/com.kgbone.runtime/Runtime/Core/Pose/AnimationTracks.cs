@@ -25,6 +25,8 @@ namespace KGBone.Core
         internal float LastTime, MixTime, Elapsed;
         internal bool Completed;
         internal bool IsEmpty => Data == null;
+        /// <summary>반복 아닌 항목이 끝에 닿았는가(끝 프레임에 멈춰 있음).</summary>
+        public bool IsComplete => !Loop && Completed;
     }
 
     public readonly struct TrackCompletion
@@ -63,6 +65,16 @@ namespace KGBone.Core
         public AnimationTracks(SkeletonModel model) { this.model = model; }
 
         public int TrackCount => tracks.Count;
+
+        /// <summary>적용할 항목(섞이며 빠지는 것·예약 포함)이 하나라도 있는가.</summary>
+        public bool HasAny
+        {
+            get
+            {
+                foreach (var tr in tracks) if (tr.Cur != null || tr.Queue.Count > 0) return true;
+                return false;
+            }
+        }
 
         Track Get(int track)
         {

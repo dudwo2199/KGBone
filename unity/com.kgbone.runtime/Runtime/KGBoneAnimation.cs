@@ -26,20 +26,40 @@ namespace KGBone
         public float physicsMoveFactor;
         [Range(0, 1), Tooltip("물리 제약: GameObject가 회전한 만큼 흔들림에 반영할 비율(0이면 에디터와 같음)")]
         public float physicsRotateFactor;
+        [Min(0), Tooltip("트랙 애니메이션을 바꿀 때 섞는 기본 시간(초). 0이면 바로 바뀜")]
+        public float defaultMix;
 
         /// <summary>애니메이션 이벤트가 날 때(키 하나에 한 번, 반복이면 바퀴마다).</summary>
         public event Action<KGBoneEvent> EventFired;
-        /// <summary>반복하지 않는 애니메이션이 끝에 도달했을 때(한 번).</summary>
+        /// <summary>트랙 0에서 반복하지 않는 애니메이션이 끝에 도달했을 때(한 번).</summary>
         public event Action Completed;
+        /// <summary>어느 트랙이든 반복하지 않는 애니메이션이 끝에 도달했을 때(트랙 번호, 애니메이션 이름).</summary>
+        public event Action<int, string> TrackCompleted;
 
-        /// <summary>현재 시간(초). 반복 재생이면 바퀴를 더한 누적 시간.</summary>
-        public float Time { get; set; }
-        public bool IsPlaying { get; private set; }
-        public string CurrentAnimation { get; private set; }
+        /// <summary>트랙 0의 현재 시간(초). 반복 재생이면 바퀴를 더한 누적 시간.</summary>
+        public float Time
+        {
+            get => Track0?.Time ?? idleTime;
+            set
+            {
+                var e = Track0;
+                if (e != null) e.Time = value;
+                else idleTime = value;
+            }
+        }
+        /// <summary>트랙 0이 재생 중인가(반복 아닌 애니메이션이 끝에 닿으면 false).</summary>
+        public bool IsPlaying => Track0 != null && !Track0.IsComplete;
+        /// <summary>트랙 0의 애니메이션 이름.</summary>
+        public string CurrentAnimation => Track0?.Name;
         /// <summary>마지막으로 계산한 포즈(KGBone 단위, 뒤집기 전).</summary>
         public PoseResult LastPose { get; private set; }
 
         SkeletonPoser poser;
+        AnimationTracks tracks;
+        float idleTime;
+        string observedName;
+        readonly List<TrackCompletion> completions = new List<TrackCompletion>();
+        readonly HashSet<string> warned = new HashSet<string>();
         KGBoneSkeletonData poserData;
         Mesh mesh;
         readonly MeshBuilder builder = new MeshBuilder();
@@ -68,7 +88,10 @@ namespace KGBone
         void Start()
         {
             if (Application.isPlaying && playOnAwake && !controlled && !string.IsNullOrEmpty(animationName)) Play(animationName, loop);
+            observedName = animationName;
         }
+
+        TrackEntry Track0 => tracks?.Current(0);
 
         void OnEnable()
         {
@@ -147,21 +170,81 @@ namespace KGBone
                 return;
             }
             controlled = true;
-            CurrentAnimation = animation;
             this.loop = loop;
-            Time = 0;
-            IsPlaying = true;
+            tracks.SetAnimation(0, animation, loop, 0);
+            observedName = animationName;
             Refresh();
         }
 
-        /// <summary>재생을 멈추고 셋업 포즈로.</summary>
+        /// <summary>재생을 멈추고(모든 트랙 비움) 셋업 포즈로.</summary>
         public void Stop()
         {
             controlled = true;
-            CurrentAnimation = null;
-            IsPlaying = false;
-            Time = 0;
+            tracks?.ClearAll();
+            idleTime = 0;
             Refresh();
+        }
+
+        // ---------- 트랙 ----------
+
+        /// <summary>
+        /// 트랙에 애니메이션을 놓는다(처음부터). mix초 동안 지금 애니메이션과 섞어 넘어가며, mix &lt; 0이면 defaultMix.
+        /// 윗 트랙은 아랫 트랙 결과 위에 자기 키가 있는 값만 덮는다. 같은 이름으로 다시 부르면 처음부터 다시 시작한다.
+        /// 없는 이름이면 경고 한 번 뒤 null(트랙 그대로).
+        /// </summary>
+        public TrackEntry SetAnimation(int track, string name, bool loop, float mix = -1)
+        {
+            if (EnsurePoser() == null) return null;
+            controlled = true;
+            var e = tracks.SetAnimation(track, name, loop, mix < 0 ? defaultMix : mix);
+            if (e == null)
+            {
+                WarnMissing(name);
+                return null;
+            }
+            if (track == 0) this.loop = loop;
+            Refresh();
+            return e;
+        }
+
+        /// <summary>지금 애니메이션이 끝나면(반복이면 이번 바퀴 끝) delay초 뒤 시작하도록 예약한다. mix &lt; 0이면 defaultMix.</summary>
+        public TrackEntry AddAnimation(int track, string name, bool loop, float delay = 0, float mix = -1)
+        {
+            if (EnsurePoser() == null) return null;
+            controlled = true;
+            var e = tracks.AddAnimation(track, name, loop, delay, mix < 0 ? defaultMix : mix);
+            if (e == null) WarnMissing(name);
+            return e;
+        }
+
+        /// <summary>트랙을 mix초 동안 서서히 빼고 비운다(mix &lt; 0이면 defaultMix, 0이면 바로).</summary>
+        public void ClearTrack(int track, float mix = -1)
+        {
+            if (tracks == null) return;
+            tracks.ClearTrack(track, mix < 0 ? defaultMix : mix);
+            if (isActiveAndEnabled) Refresh();
+        }
+
+        /// <summary>지금 애니메이션이 끝나면 delay초 뒤 트랙을 mix초 동안 비우도록 예약한다.</summary>
+        public void AddEmpty(int track, float delay = 0, float mix = -1)
+        {
+            if (EnsurePoser() == null) return;
+            tracks.AddEmpty(track, delay, mix < 0 ? defaultMix : mix);
+        }
+
+        /// <summary>트랙 비율(0~1). 1보다 작으면 아랫 트랙 결과와 그 비율로 섞인다.</summary>
+        public void SetTrackAlpha(int track, float alpha)
+        {
+            if (EnsurePoser() == null) return;
+            tracks.SetAlpha(track, alpha);
+        }
+
+        /// <summary>트랙의 지금 애니메이션 이름(비어 있거나 비우는 중이면 null).</summary>
+        public string GetTrackAnimation(int track) => tracks?.Current(track)?.Name;
+
+        void WarnMissing(string name)
+        {
+            if (warned.Add(name ?? "")) Debug.LogWarning($"애니메이션을 찾을 수 없습니다: {name}", this);
         }
 
         /// <summary>물리 한 프레임 진행 시간: 0~0.1초(에디터 재생과 같은 상한). 컴포넌트 timeScale은 곱하지 않는다.</summary>
@@ -207,45 +290,38 @@ namespace KGBone
                 request.Physics = PhysicsStep.Advance(PhysicsDt(dt));
                 request.WorldMotion = TakeWorldMotion();
             }
-            float last = Time;
-            float delta = dt * timeScale;
-            // 시간을 거꾸로 돌릴 때는 이벤트를 내지 않는다(구간 규칙이 앞으로 가는 시간만 전제한다)
-            bool fireEvents = IsPlaying && delta >= 0;
-            bool reachedEnd = false;
-            AnimationData anim = null;
-            if (IsPlaying)
+            // 실행 중 animationName 필드를 바꾸면 트랙 0을 defaultMix로 바꾼다(재생 중일 때만)
+            if (observedName != animationName)
             {
-                Time += delta;
-                anim = p.Model.FindAnimation(CurrentAnimation);
-                if (!loop && anim != null)
-                {
-                    if (Time >= anim.Duration)
-                    {
-                        Time = anim.Duration;
-                        IsPlaying = false;
-                        reachedEnd = true;
-                    }
-                    else if (Time < 0) Time = 0;
-                }
+                observedName = animationName;
+                if (Track0 != null && !string.IsNullOrEmpty(animationName)
+                    && tracks.SetAnimation(0, animationName, loop, defaultMix) == null) WarnMissing(animationName);
             }
-            Compute(fireEvents ? last : (float?)null);
+            var t0 = Track0;
+            if (t0 != null && t0.Loop != loop) t0.Loop = loop;
+            float delta = dt * timeScale;
+            // 반복 아닌 애니메이션은 끝에서 멈추고, 끝 시간 키(길이 0이면 0초 키)도 끝에 도달할 때 낸다(AnimationTracks)
+            completions.Clear();
+            tracks.Update(delta, completions);
+            // 시간을 거꾸로 돌릴 때는 이벤트를 내지 않는다(구간 규칙이 앞으로 가는 시간만 전제한다)
+            Compute(delta >= 0 ? 0f : (float?)null);
             request.Physics = PhysicsStep.None;
             request.WorldMotion = default;
 
             // 처리기가 Play·Stop을 불러 포즈가 다시 계산돼도 안전하도록 이벤트를 따로 담아 두고 내보낸다
             pending.Clear();
-            if (fireEvents)
-            {
-                pending.AddRange(LastPose.Events);
-                // 반복하지 않는 애니메이션의 끝 시간 키(길이 0이면 0초 키)는 [이전, 지금) 구간에 들지 않으므로 끝에 도달할 때 보탠다
-                if (reachedEnd) EventFinder.KeysAt(p.Model, anim, anim.Duration, pending);
-            }
+            if (delta >= 0) pending.AddRange(LastPose.Events);
             for (int i = 0; i < pending.Count && EventFired != null; i++)
             {
                 var e = pending[i];
-                EventFired(new KGBoneEvent(e.Name, e.Time, e.Int, e.Float, e.String, e.Volume, e.Balance));
+                EventFired(new KGBoneEvent(e.Name, e.Time, e.Int, e.Float, e.String, e.Volume, e.Balance, e.Track, e.Animation));
             }
-            if (reachedEnd) Completed?.Invoke();
+            for (int i = 0; i < completions.Count; i++)
+            {
+                var c = completions[i];
+                TrackCompleted?.Invoke(c.Track, c.Name);
+                if (c.Track == 0) Completed?.Invoke();
+            }
         }
 
         /// <summary>
@@ -288,6 +364,14 @@ namespace KGBone
             // 같은 데이터 에셋이라도 다시 가져오면 모델이 바뀐다(객체는 그대로일 수 있음)
             if (poser == null || poserData != skeletonData || poser.Model != skeletonData.Model)
             {
+                // 트랙은 새 모델로 다시 만들고 트랙 0의 애니메이션·시간만 이어 간다
+                var old0 = Track0;
+                tracks = new AnimationTracks(skeletonData.Model);
+                if (old0 != null)
+                {
+                    var e = tracks.SetAnimation(0, old0.Name, old0.Loop, 0);
+                    if (e != null) e.Time = old0.Time;
+                }
                 poser = new SkeletonPoser(skeletonData.Model);
                 poserData = skeletonData;
                 LastPose = null;
@@ -309,10 +393,19 @@ namespace KGBone
 
         void Compute(float? lastTime)
         {
-            // 에디터에서 재생 중이 아니면 고른 애니메이션의 0초를 미리 보여 준다
-            string anim = CurrentAnimation ?? (Application.isPlaying || string.IsNullOrEmpty(animationName) ? null : animationName);
-            request.Animation = anim;
-            request.Time = Time;
+            if (tracks.HasAny)
+            {
+                request.Tracks = tracks;
+                request.Animation = null;
+                request.Time = 0;
+            }
+            else
+            {
+                // 에디터에서 재생 중이 아니면 고른 애니메이션의 0초(또는 Time)를 미리 보여 준다
+                request.Tracks = null;
+                request.Animation = Application.isPlaying || string.IsNullOrEmpty(animationName) ? null : animationName;
+                request.Time = idleTime;
+            }
             request.LastTime = lastTime;
             request.Skin = string.IsNullOrEmpty(skin) ? null : skin;
             if (request.Skin != physicsSkin)

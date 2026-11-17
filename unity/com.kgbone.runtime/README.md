@@ -65,6 +65,34 @@ golem.animationName = "idle";
 
 선형 색 공간(URP 기본)에서도 불투명한 부분은 KGBone과 같은 색이다. additive·screen 블렌드와 반투명 가장자리는 조금 다를 수 있다.
 
+## 트랙과 섞기
+
+애니메이션은 번호 트랙에 놓는다. `Play(이름, 반복)`은 트랙 0에 바로(섞지 않고) 놓는 것과 같다.
+- 같은 트랙에서 바꾸면 `mix`초 동안 지금 포즈에서 새 포즈로 섞여 넘어간다(`mix`를 안 주면 인스펙터의 **Default Mix**, 기본 0 = 바로).
+- 윗 트랙은 아랫 트랙 결과 위에 **자기 키가 있는 값만** 덮는다. 공격 애니메이션에 팔 키만 있으면 다리는 아랫 트랙(걷기)을 계속 따른다.
+- `AddAnimation`은 지금 애니메이션이 끝나면(반복이면 이번 바퀴 끝) `delay`초 뒤 시작하도록 예약한다. `AddEmpty`·`ClearTrack`은 트랙을 서서히 비운다.
+- 섞는 도중에 또 바꾸면 그 순간의 모습에서 새로 섞는다(튀지 않음).
+- 이벤트(`EventFired`)에는 `Track`(트랙 번호)과 `Animation`(애니메이션 이름)이 들어 있다. 섞이며 빠지는 애니메이션의 이벤트는 내지 않는다.
+- `TrackCompleted(트랙, 이름)`은 반복 아닌 애니메이션이 끝에 닿을 때 한 번. `Completed`는 트랙 0에 대해서만.
+- 트랙·섞기는 플레이 중 상태라 씬에 저장되지 않는다. 에디터 모드 미리보기는 지금처럼 인스펙터의 Animation Name 0초다.
+
+```csharp
+// 걷기·달리기는 트랙 0, 공격은 트랙 1에 겹친다
+anim.defaultMix = 0.15f;
+anim.SetAnimation(0, "걷기", true);
+void OnRun(bool running)
+{
+    string want = running ? "달리기" : "걷기";
+    if (anim.GetTrackAnimation(0) != want) anim.SetAnimation(0, want, true); // 같은 이름을 다시 부르면 처음부터 시작하므로 확인하고 부른다
+}
+void OnAttack()
+{
+    anim.SetAnimation(1, "공격", false, 0.1f); // 팔만 공격 동작
+    anim.AddEmpty(1, 0, 0.2f);                 // 끝나면 0.2초 동안 빠지며 걷기 팔로 돌아감
+}
+anim.EventFired += e => { if (e.Track == 1 && e.Name == "타격") Hit(); };
+```
+
 ## 제약과 물리
 
 제약 5종(IK, 트랜스폼, 패스, 물리, 슬라이더)과 제약 키는 KGBone 에디터와 같게 계산된다.
@@ -101,7 +129,8 @@ if (anim.TryGetBone("손", out Vector3 position, out float rotation, out Vector2
 | 본(상속 5종), 이미지·메시·가중치 메시·링크드 메시, 메시 변형 키 | |
 | 제약: IK(1본·2본, 부드러움·늘이기·줄이기·부피), 트랜스폼(속성 매핑), 패스(열림·닫힘, 가중치, 변형 키, 위치·간격·회전 방식), 물리(reset 키, 월드 움직임 반영 옵션), 슬라이더, 제약 값 키, 스킨 전용 제약 | |
 | 슬롯 색·어두운 색, 첨부물 키, 그리기 순서 키, 블렌드 4종, 클리핑(보통·반전·볼록), 시퀀스(모드 7종) | |
-| 스킨 1개 + 스킨 전용 본, 이벤트, 선형·계단·베지어 곡선 | 애니메이션 섞기·전환, 여러 트랙, 실행 중 스킨 바꾸기, 본 덮어쓰기, Animator 연동 — 3단계 |
+| 스킨 1개 + 스킨 전용 본, 이벤트, 선형·계단·베지어 곡선 | 스킨 합치기, 첨부물 바꾸기, 본 덮어쓰기 — 3단계 진행 중 |
+| 번호 트랙, 섞기·전환, 예약(`AddAnimation`·`AddEmpty`), 트랙 비율, 트랙별 이벤트·끝남 | 트랙 더하기(additive) 섞기, 본 마스크, Animator·Timeline 연동, 루트 모션 |
 
 ## 개발
 

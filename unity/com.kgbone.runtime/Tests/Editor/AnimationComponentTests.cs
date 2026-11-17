@@ -195,6 +195,110 @@ namespace KGBone.Tests
             Assert.AreEqual(0.7f, a.Time, 1e-5f);
         }
 
+        // ---------- M20 트랙 컴포넌트 ----------
+        static KGBoneSkeletonData ImportTracks() => ImporterTests.ImportGolden("unity-stage3-tracks");
+
+        static WorldBone Plain(KGBoneSkeletonData data, string anim, float time, bool loop, string bone)
+        {
+            var p = new SkeletonPoser(data.Model);
+            var r = p.Compute(new PoseRequest { Animation = anim, Time = time, Looping = loop });
+            return r.Bones[p.BoneIndex(bone)];
+        }
+
+        static void SameBone(WorldBone want, WorldBone got, string what)
+        {
+            Assert.AreEqual(want.A, got.A, 1e-4f, what + ".a");
+            Assert.AreEqual(want.C, got.C, 1e-4f, what + ".c");
+            Assert.AreEqual(want.X, got.X, 1e-3f, what + ".x");
+            Assert.AreEqual(want.Y, got.Y, 1e-3f, what + ".y");
+        }
+
+        WorldBone Bone(KGBoneAnimation a, string name) => a.LastPose.Bones[a.skeletonData.Model.BoneIndex(name)];
+
+        [Test]
+        public void m20_existing_play_unchanged()
+        {
+            var data = ImporterTests.ImportStage1();
+            var a = Make(data);
+            a.Play("걷기", true);
+            a.Advance(0.25f);
+            a.Advance(0.4f);
+            Assert.AreEqual(0.65f, a.Time, 1e-6f);
+            var p = new SkeletonPoser(data.Model);
+            var want = p.Compute(new PoseRequest { Animation = "걷기", Time = a.Time, Looping = true });
+            for (int i = 0; i < want.Bones.Length; i++) SameBone(want.Bones[i], a.LastPose.Bones[i], "bone " + i);
+            Assert.AreEqual("걷기", a.GetTrackAnimation(0));
+        }
+
+        [Test]
+        public void m20_walk_with_attack_overlay()
+        {
+            var data = ImportTracks();
+            var a = Make(data);
+            a.SetAnimation(0, "걷기", true);
+            a.SetAnimation(1, "공격", false);
+            a.AddEmpty(1, 0, 0.2f);
+            a.Advance(0.1f);
+            SameBone(Plain(data, "걷기", 0.1f, true, "다리"), Bone(a, "다리"), "다리(걷기 그대로)");
+            Assert.AreNotEqual(Plain(data, "걷기", 0.1f, true, "팔").A, Bone(a, "팔").A, "팔은 공격 값");
+            for (int i = 0; i < 6; i++) a.Advance(0.1f); // 0.7초: 공격 끝(0.4) + 0.2초 빠짐 = 0.6초에 다 빠짐
+            SameBone(Plain(data, "걷기", 0.7f, true, "팔"), Bone(a, "팔"), "팔이 걷기로 돌아옴");
+            Assert.IsNull(a.GetTrackAnimation(1));
+        }
+
+        [Test]
+        public void m20_animation_name_change_uses_default_mix()
+        {
+            var data = ImportTracks();
+            var a = Make(data);
+            a.defaultMix = 0.2f;
+            a.Play("걷기", true);
+            a.Advance(0.5f);
+            a.animationName = "달리기";
+            a.Advance(0.1f);
+            Assert.AreEqual("달리기", a.CurrentAnimation);
+            float walk = Plain(data, "걷기", 0.6f, true, "다리").A, run = Plain(data, "달리기", 0.1f, true, "다리").A, got = Bone(a, "다리").A;
+            Assert.Greater(got, System.Math.Min(walk, run) + 1e-4f);
+            Assert.Less(got, System.Math.Max(walk, run) - 1e-4f);
+        }
+
+        [Test]
+        public void m20_track_completed_and_event_track()
+        {
+            var a = Make(ImportTracks());
+            var events = new List<KGBoneEvent>();
+            var done = new List<string>();
+            int track0Completed = 0;
+            a.EventFired += e => events.Add(e);
+            a.TrackCompleted += (t, n) => done.Add(t + ":" + n);
+            a.Completed += () => track0Completed++;
+            a.SetAnimation(1, "공격", false);
+            a.Advance(0.3f);
+            Assert.AreEqual(1, events.Count);
+            Assert.AreEqual("타격", events[0].Name);
+            Assert.AreEqual(1, events[0].Track);
+            Assert.AreEqual("공격", events[0].Animation);
+            Assert.AreEqual(3, events[0].Int);
+            a.Advance(0.2f);
+            a.Advance(0.2f);
+            CollectionAssert.AreEqual(new[] { "1:공격" }, done);
+            Assert.AreEqual(0, track0Completed);
+        }
+
+        [Test]
+        public void m20_unknown_animation_keeps_track()
+        {
+            var a = Make(ImportTracks());
+            a.SetAnimation(0, "걷기", true);
+            LogAssert.Expect(LogType.Warning, "애니메이션을 찾을 수 없습니다: 없음");
+            Assert.IsNull(a.SetAnimation(0, "없음", true));
+            Assert.IsNull(a.AddAnimation(0, "없음", true));
+            Assert.IsNull(a.SetAnimation(1, "없음", true));
+            LogAssert.NoUnexpectedReceived();
+            Assert.AreEqual("걷기", a.GetTrackAnimation(0));
+            Assert.IsNull(a.GetTrackAnimation(1));
+        }
+
         static int KGBoneMeshCount()
         {
             int n = 0;
