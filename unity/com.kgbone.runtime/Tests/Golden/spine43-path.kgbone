@@ -1,0 +1,82 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone 0.1.0",
+	"imagesPath": "../images",
+	"skeleton": {
+		"x": -100,
+		"width": 200,
+		"height": 300,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "p1",
+				"parent": "root",
+				"length": 20
+			},
+			{
+				"name": "p2",
+				"parent": "p1",
+				"length": 20,
+				"x": 20
+			},
+			{
+				"name": "p3",
+				"parent": "p2",
+				"length": 20,
+				"x": 20
+			}
+		],
+		"slots": [
+			{
+				"name": "path",
+				"bone": "root",
+				"attachment": "path"
+			}
+		],
+		"constraints": [
+			{
+				"type": "path",
+				"name": "follow-path",
+				"bones": ["p1", "p2", "p3"],
+				"target": "path",
+				"rotateMode": "chain",
+				"position": 0.1
+			}
+		],
+		"skins": [
+			{
+				"name": "default",
+				"attachments": {
+					"path": {
+						"path": {
+							"type": "path",
+							"vertexCount": 6,
+							"vertices": [-10, 0, 0, 0, 10, 0, 90, 0, 100, 0, 110, 0],
+							"lengths": [100]
+						}
+					}
+				}
+			}
+		],
+		"animations": [
+			{
+				"name": "slide",
+				"constraints": {
+					"follow-path": {
+						"position": [
+							{
+								"v": [0]
+							},
+							{
+								"time": 2,
+								"v": [0.6]
+							}
+						]
+					}
+				}
+			}
+		]
+	}
+}

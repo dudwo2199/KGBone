@@ -553,4 +553,64 @@ const unityStage2Mixed = {
   ],
 };
 write("kgbone/unity-stage2-mixed.kgbone", k(unityStage2Mixed));
+
+// 유니티 런타임 2단계 시험 파일: 패스(열림·닫힘, 일정 속도 끔, 가중치 패스, 패스 변형 키, 위치·간격·회전 방식 4×3, offsetRotation, 제약 키)
+const chain = (prefix, parent, n, len, x = 0, y = 0) =>
+  Array.from({ length: n }, (_, i) => ({ name: `${prefix}${i}`, parent: i ? `${prefix}${i - 1}` : parent, length: len, ...(i ? { x: len } : { x, y }) }));
+// 정점 3개씩 [앞 제어, 점, 뒤 제어]
+const wavy = [-20, 30, 0, 0, 20, -30, 40, 40, 60, 50, 80, 60, 120, -20, 140, -10, 160, 0];
+const ring = [0, -60, 40, -40, 60, 0, 60, 40, 40, 60, 0, 60, -40, 40, -60, 0, -60, -40, -40, -60];
+const unityStage2Path = {
+  fps: 30,
+  bones: [
+    { name: "root" },
+    { name: "패스본", parent: "root", x: -50, y: -20, rotation: 10, scaleX: 1.1 },
+    { name: "고리본", parent: "root", x: 200, y: 100 },
+    { name: "가중A", parent: "root", x: -100, y: 120 },
+    { name: "가중B", parent: "가중A", x: 120, rotation: 20 },
+    ...chain("뱀", "root", 4, 18),
+    ...chain("고리", "root", 3, 25, 200, 100),
+    ...chain("줄", "root", 3, 20, -100, 120),
+    ...chain("고정", "root", 2, 15, 0, -100),
+  ],
+  slots: [
+    { name: "물결", bone: "패스본", attachment: "물결" },
+    { name: "고리", bone: "고리본", attachment: "고리" },
+    { name: "줄", bone: "가중A", attachment: "줄" },
+  ],
+  skins: [
+    {
+      name: "default",
+      attachments: {
+        "물결": { "물결": { type: "path", vertexCount: 9, vertices: wavy, lengths: [100, 200, 300] } },
+        "고리": { "고리": { type: "path", closed: true, constantSpeed: false, vertexCount: 12, vertices: ring, lengths: [1, 2, 3, 4] } },
+        "줄": {
+          "줄": {
+            type: "path", weighted: true, vertexCount: 6, lengths: [1],
+            // 점마다 [본 수, (본 번호, x, y, 가중치)…]: 앞 3개는 가중A, 뒤 3개는 가중A·가중B 섞임
+            vertices: [1, 3, -20, 0, 1, 1, 3, 0, 0, 1, 1, 3, 30, 10, 1, 2, 3, 90, -10, 0.5, 4, -30, -10, 0.5, 2, 3, 120, 0, 0.3, 4, 0, 0, 0.7, 1, 4, 20, 0, 1],
+          },
+        },
+      },
+    },
+  ],
+  constraints: [
+    { type: "path", name: "뱀길", bones: ["뱀0", "뱀1", "뱀2", "뱀3"], target: "물결", position: 0.05, spacing: 4, rotateMode: "tangent", offsetRotation: 5 },
+    { type: "path", name: "고리길", bones: ["고리0", "고리1", "고리2"], target: "고리", spacingMode: "percent", spacing: 0.3, position: 0.9, rotateMode: "chainScale", mixRotate: 0.8, mixX: 0.9, mixY: 1 },
+    { type: "path", name: "줄길", bones: ["줄0", "줄1", "줄2"], target: "줄", positionMode: "fixed", position: 10, spacingMode: "proportional", spacing: 0.25, rotateMode: "chain" },
+    { type: "path", name: "고정간격", bones: ["고정0", "고정1"], target: "물결", positionMode: "fixed", position: -30, spacingMode: "fixed", spacing: 500 },
+  ],
+  animations: [
+    {
+      name: "기어가기",
+      bones: { "패스본": { rotate: lin([[0, 0], [2, 30]]) }, "가중B": { rotate: lin([[0, 0], [1, 40], [2, -20]]) } },
+      deform: { default: { "물결": { "물결": [{ time: 0 }, { time: 1, offset: 6, v: [0, 30, 0, 30, 0, 30] }, { time: 2 }] } } },
+      constraints: {
+        "뱀길": { position: lin([[0, 0.05], [2, 0.6]]), spacing: lin([[0, 4], [2, 12]]), mix: lin([[0, [1, 1, 1]], [2, [0.5, 1, 0.8]]]) },
+        "고리길": { position: lin([[0, 0.9], [2, 1.7]]) },
+      },
+    },
+  ],
+};
+write("kgbone/unity-stage2-path.kgbone", k(unityStage2Path));
 console.log("samples 생성 완료:", root);

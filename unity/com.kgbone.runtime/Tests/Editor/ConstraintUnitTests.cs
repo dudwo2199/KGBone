@@ -440,6 +440,50 @@ namespace KGBone.Tests
             CollectionAssert.IsEmpty(ik.ConstraintWarnings());
         }
 
+        // ---------- M14 패스 (핵심 pose/path.rs 테스트와 같은 값) ----------
+        static string Pc(string spacing, string rotate, float position, float space, bool vertical) =>
+            $@"{{""formatVersion"":1,""skeleton"":{{""bones"":[{{""name"":""root""}},{{""name"":""b0"",""parent"":""root"",""length"":20}},{{""name"":""b1"",""parent"":""b0"",""length"":20,""x"":20}},
+                {{""name"":""b2"",""parent"":""b1"",""length"":20,""x"":20}},{{""name"":""pathbone"",""parent"":""root""{(vertical ? @",""rotation"":90" : "")}}}],
+                ""slots"":[{{""name"":""path"",""bone"":""pathbone"",""attachment"":""p""}}],
+                ""skins"":[{{""name"":""default"",""attachments"":{{""path"":{{""p"":{{""type"":""path"",""vertexCount"":6,""vertices"":[-10,0,0,0,33.333333333,0,66.666666667,0,100,0,110,0],""lengths"":[100]}}}}}}}}],
+                ""constraints"":[{{""type"":""path"",""name"":""pc"",""bones"":[""b0"",""b1"",""b2""],""target"":""path"",""spacingMode"":""{spacing}"",""rotateMode"":""{rotate}"",""position"":{F(position)},""spacing"":{F(space)}}}]}}}}";
+
+        [Test]
+        public void m14_path_f_f04_straight_path_positions()
+        {
+            var o = Pose(Pc("length", "tangent", 0.1f, 5, false));
+            float[] xs = { 10, 35, 60 };
+            for (int k = 0; k < 3; k++)
+            {
+                Assert.AreEqual(xs[k], o.Bones[1 + k].X, 1e-2f, $"x{k}");
+                Assert.AreEqual(0f, o.Bones[1 + k].Y, 1e-2f, $"y{k}");
+                Assert.AreEqual(0f, o.Bones[1 + k].RotationX, 1e-2f, $"r{k}");
+            }
+            Assert.AreEqual(70f, Pose(Pc("fixed", "chain", 0.1f, 30, false)).Bones[3].X, 1e-2f);
+            o = Pose(Pc("percent", "tangent", 0.1f, 0.2f, false));
+            Assert.AreEqual(30f, o.Bones[2].X, 1e-2f);
+            Assert.AreEqual(50f, o.Bones[3].X, 1e-2f);
+            Assert.AreEqual(50f, Pose(Pc("proportional", "tangent", 0.1f, 0.6f, false)).Bones[3].X, 1e-2f);
+            Assert.AreEqual(1.5f, Pose(Pc("fixed", "chainScale", 0.1f, 30, false)).Bones[1].ScaleX, 1e-2f);
+            o = Pose(Pc("length", "tangent", 0.1f, 5, true));
+            float[] ys = { 10, 35, 60 };
+            for (int k = 0; k < 3; k++)
+            {
+                Assert.AreEqual(0f, o.Bones[1 + k].X, 1e-2f);
+                Assert.AreEqual(ys[k], o.Bones[1 + k].Y, 1e-2f);
+                Assert.AreEqual(90f, o.Bones[1 + k].RotationX, 1e-2f);
+            }
+        }
+
+        [Test]
+        public void m14_path_without_attachment_does_nothing()
+        {
+            // 대상 슬롯의 첨부물이 패스가 아니거나 없으면 본은 그대로(예외 없음)
+            var o = Pose(Pc("length", "tangent", 0.1f, 5, false).Replace(@"""attachment"":""p""", @"""attachment"":""없음"""));
+            Assert.AreEqual(0f, o.Bones[1].X, 1e-6f);
+            Assert.AreEqual(20f, o.Bones[2].X, 1e-6f);
+        }
+
         [Test]
         public void m14_loads_path_attachment()
         {

@@ -1,0 +1,456 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone sample",
+	"imagesPath": "../images",
+	"skeleton": {
+		"fps": 30,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "패스본",
+				"parent": "root",
+				"x": -50,
+				"y": -20,
+				"rotation": 10,
+				"scaleX": 1.1
+			},
+			{
+				"name": "고리본",
+				"parent": "root",
+				"x": 200,
+				"y": 100
+			},
+			{
+				"name": "가중A",
+				"parent": "root",
+				"x": -100,
+				"y": 120
+			},
+			{
+				"name": "가중B",
+				"parent": "가중A",
+				"x": 120,
+				"rotation": 20
+			},
+			{
+				"name": "뱀0",
+				"parent": "root",
+				"length": 18,
+				"x": 0,
+				"y": 0
+			},
+			{
+				"name": "뱀1",
+				"parent": "뱀0",
+				"length": 18,
+				"x": 18
+			},
+			{
+				"name": "뱀2",
+				"parent": "뱀1",
+				"length": 18,
+				"x": 18
+			},
+			{
+				"name": "뱀3",
+				"parent": "뱀2",
+				"length": 18,
+				"x": 18
+			},
+			{
+				"name": "고리0",
+				"parent": "root",
+				"length": 25,
+				"x": 200,
+				"y": 100
+			},
+			{
+				"name": "고리1",
+				"parent": "고리0",
+				"length": 25,
+				"x": 25
+			},
+			{
+				"name": "고리2",
+				"parent": "고리1",
+				"length": 25,
+				"x": 25
+			},
+			{
+				"name": "줄0",
+				"parent": "root",
+				"length": 20,
+				"x": -100,
+				"y": 120
+			},
+			{
+				"name": "줄1",
+				"parent": "줄0",
+				"length": 20,
+				"x": 20
+			},
+			{
+				"name": "줄2",
+				"parent": "줄1",
+				"length": 20,
+				"x": 20
+			},
+			{
+				"name": "고정0",
+				"parent": "root",
+				"length": 15,
+				"x": 0,
+				"y": -100
+			},
+			{
+				"name": "고정1",
+				"parent": "고정0",
+				"length": 15,
+				"x": 15
+			}
+		],
+		"slots": [
+			{
+				"name": "물결",
+				"bone": "패스본",
+				"attachment": "물결"
+			},
+			{
+				"name": "고리",
+				"bone": "고리본",
+				"attachment": "고리"
+			},
+			{
+				"name": "줄",
+				"bone": "가중A",
+				"attachment": "줄"
+			}
+		],
+		"skins": [
+			{
+				"name": "default",
+				"attachments": {
+					"물결": {
+						"물결": {
+							"type": "path",
+							"vertexCount": 9,
+							"vertices": [
+								-20,
+								30,
+								0,
+								0,
+								20,
+								-30,
+								40,
+								40,
+								60,
+								50,
+								80,
+								60,
+								120,
+								-20,
+								140,
+								-10,
+								160,
+								0
+							],
+							"lengths": [
+								100,
+								200,
+								300
+							]
+						}
+					},
+					"고리": {
+						"고리": {
+							"type": "path",
+							"closed": true,
+							"constantSpeed": false,
+							"vertexCount": 12,
+							"vertices": [
+								0,
+								-60,
+								40,
+								-40,
+								60,
+								0,
+								60,
+								40,
+								40,
+								60,
+								0,
+								60,
+								-40,
+								40,
+								-60,
+								0,
+								-60,
+								-40,
+								-40,
+								-60
+							],
+							"lengths": [
+								1,
+								2,
+								3,
+								4
+							]
+						}
+					},
+					"줄": {
+						"줄": {
+							"type": "path",
+							"weighted": true,
+							"vertexCount": 6,
+							"lengths": [
+								1
+							],
+							"vertices": [
+								1,
+								3,
+								-20,
+								0,
+								1,
+								1,
+								3,
+								0,
+								0,
+								1,
+								1,
+								3,
+								30,
+								10,
+								1,
+								2,
+								3,
+								90,
+								-10,
+								0.5,
+								4,
+								-30,
+								-10,
+								0.5,
+								2,
+								3,
+								120,
+								0,
+								0.3,
+								4,
+								0,
+								0,
+								0.7,
+								1,
+								4,
+								20,
+								0,
+								1
+							]
+						}
+					}
+				}
+			}
+		],
+		"constraints": [
+			{
+				"type": "path",
+				"name": "뱀길",
+				"bones": [
+					"뱀0",
+					"뱀1",
+					"뱀2",
+					"뱀3"
+				],
+				"target": "물결",
+				"position": 0.05,
+				"spacing": 4,
+				"rotateMode": "tangent",
+				"offsetRotation": 5
+			},
+			{
+				"type": "path",
+				"name": "고리길",
+				"bones": [
+					"고리0",
+					"고리1",
+					"고리2"
+				],
+				"target": "고리",
+				"spacingMode": "percent",
+				"spacing": 0.3,
+				"position": 0.9,
+				"rotateMode": "chainScale",
+				"mixRotate": 0.8,
+				"mixX": 0.9,
+				"mixY": 1
+			},
+			{
+				"type": "path",
+				"name": "줄길",
+				"bones": [
+					"줄0",
+					"줄1",
+					"줄2"
+				],
+				"target": "줄",
+				"positionMode": "fixed",
+				"position": 10,
+				"spacingMode": "proportional",
+				"spacing": 0.25,
+				"rotateMode": "chain"
+			},
+			{
+				"type": "path",
+				"name": "고정간격",
+				"bones": [
+					"고정0",
+					"고정1"
+				],
+				"target": "물결",
+				"positionMode": "fixed",
+				"position": -30,
+				"spacingMode": "fixed",
+				"spacing": 500
+			}
+		],
+		"animations": [
+			{
+				"name": "기어가기",
+				"bones": {
+					"패스본": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									30
+								]
+							}
+						]
+					},
+					"가중B": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									40
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									-20
+								]
+							}
+						]
+					}
+				},
+				"deform": {
+					"default": {
+						"물결": {
+							"물결": [
+								{
+									"time": 0
+								},
+								{
+									"time": 1,
+									"offset": 6,
+									"v": [
+										0,
+										30,
+										0,
+										30,
+										0,
+										30
+									]
+								},
+								{
+									"time": 2
+								}
+							]
+						}
+					}
+				},
+				"constraints": {
+					"뱀길": {
+						"position": [
+							{
+								"time": 0,
+								"v": [
+									0.05
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									0.6
+								]
+							}
+						],
+						"spacing": [
+							{
+								"time": 0,
+								"v": [
+									4
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									12
+								]
+							}
+						],
+						"mix": [
+							{
+								"time": 0,
+								"v": [
+									1,
+									1,
+									1
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									0.5,
+									1,
+									0.8
+								]
+							}
+						]
+					},
+					"고리길": {
+						"position": [
+							{
+								"time": 0,
+								"v": [
+									0.9
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									1.7
+								]
+							}
+						]
+					}
+				}
+			}
+		]
+	},
+	"editor": {}
+}

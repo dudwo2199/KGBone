@@ -105,6 +105,7 @@ namespace KGBone.Core
                 case ConstraintType.Ik:
                 case ConstraintType.Transform:
                 case ConstraintType.Slider:
+                case ConstraintType.Path:
                     return true;
                 default: return false;
             }
