@@ -1,0 +1,269 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone sample",
+	"imagesPath": "../images",
+	"skeleton": {
+		"fps": 30,
+		"referenceScale": 80,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "몸",
+				"parent": "root",
+				"length": 40,
+				"y": 20,
+				"rotation": 90
+			},
+			{
+				"name": "머리카락",
+				"parent": "몸",
+				"length": 35,
+				"x": 40,
+				"rotation": 150
+			},
+			{
+				"name": "귀걸이",
+				"parent": "몸",
+				"x": 30,
+				"y": 10
+			},
+			{
+				"name": "꼬리0",
+				"parent": "root",
+				"length": 20,
+				"x": -10,
+				"rotation": 200
+			},
+			{
+				"name": "꼬리1",
+				"parent": "꼬리0",
+				"length": 20,
+				"x": 20
+			},
+			{
+				"name": "망토",
+				"parent": "몸",
+				"length": 50,
+				"x": 10,
+				"y": -15,
+				"rotation": 180
+			}
+		],
+		"constraints": [
+			{
+				"type": "physics",
+				"name": "머리",
+				"bone": "머리카락",
+				"rotate": 1,
+				"scaleX": 0.4,
+				"shearX": 0.3,
+				"volume": true,
+				"inertia": 0.8,
+				"strength": 120,
+				"damping": 0.8,
+				"gravity": 20
+			},
+			{
+				"type": "physics",
+				"name": "귀",
+				"bone": "귀걸이",
+				"x": 1,
+				"y": 1,
+				"fps": 30,
+				"strength": 60,
+				"damping": 0.5,
+				"mass": 2,
+				"gravity": 40
+			},
+			{
+				"type": "physics",
+				"name": "꼬리앞",
+				"bone": "꼬리0",
+				"rotate": 1,
+				"x": 0.5,
+				"inertia": 1,
+				"strength": 80,
+				"wind": 10
+			},
+			{
+				"type": "physics",
+				"name": "꼬리뒤",
+				"bone": "꼬리1",
+				"rotate": 1,
+				"strength": 50,
+				"damping": 2,
+				"limit": 40
+			},
+			{
+				"type": "physics",
+				"name": "망토",
+				"bone": "망토",
+				"rotate": 0.7,
+				"y": 1,
+				"strength": 30,
+				"gravity": 10,
+				"mix": 0.6
+			}
+		],
+		"animations": [
+			{
+				"name": "뛰기",
+				"bones": {
+					"몸": {
+						"translate": [
+							{
+								"time": 0,
+								"v": [
+									0,
+									0
+								]
+							},
+							{
+								"time": 0.25,
+								"v": [
+									30,
+									15
+								]
+							},
+							{
+								"time": 0.5,
+								"v": [
+									60,
+									0
+								]
+							},
+							{
+								"time": 0.75,
+								"v": [
+									30,
+									15
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0,
+									0
+								]
+							}
+						],
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 0.5,
+								"v": [
+									25
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0
+								]
+							}
+						]
+					},
+					"꼬리0": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 0.5,
+								"v": [
+									-40
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0
+								]
+							}
+						]
+					}
+				},
+				"constraints": {
+					"머리": {
+						"reset": [
+							{
+								"time": 0.6
+							}
+						],
+						"strength": [
+							{
+								"time": 0,
+								"v": [
+									120
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									200
+								]
+							}
+						]
+					},
+					"": {
+						"wind": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									15
+								]
+							}
+						]
+					},
+					"망토": {
+						"mix": [
+							{
+								"time": 0,
+								"v": [
+									0.6
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									1
+								]
+							}
+						],
+						"gravity": [
+							{
+								"time": 0,
+								"v": [
+									10
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									30
+								]
+							}
+						]
+					}
+				}
+			}
+		]
+	},
+	"editor": {}
+}

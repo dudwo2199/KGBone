@@ -613,4 +613,41 @@ const unityStage2Path = {
   ],
 };
 write("kgbone/unity-stage2-path.kgbone", k(unityStage2Path));
+
+// 유니티 런타임 2단계 시험 파일: 물리(이동·회전·크기·기울기·부피, 바람·중력, fps 30, 속도 한계, 길이 0인 본, reset 키, 이름 "" 키, 사슬)
+const unityStage2Physics = {
+  fps: 30,
+  referenceScale: 80,
+  bones: [
+    { name: "root" },
+    { name: "몸", parent: "root", length: 40, y: 20, rotation: 90 },
+    { name: "머리카락", parent: "몸", length: 35, x: 40, rotation: 150 },
+    { name: "귀걸이", parent: "몸", x: 30, y: 10 },
+    { name: "꼬리0", parent: "root", length: 20, x: -10, rotation: 200 },
+    { name: "꼬리1", parent: "꼬리0", length: 20, x: 20 },
+    { name: "망토", parent: "몸", length: 50, x: 10, y: -15, rotation: 180 },
+  ],
+  constraints: [
+    { type: "physics", name: "머리", bone: "머리카락", rotate: 1, scaleX: 0.4, shearX: 0.3, volume: true, inertia: 0.8, strength: 120, damping: 0.8, gravity: 20 },
+    { type: "physics", name: "귀", bone: "귀걸이", x: 1, y: 1, fps: 30, strength: 60, damping: 0.5, mass: 2, gravity: 40 },
+    { type: "physics", name: "꼬리앞", bone: "꼬리0", rotate: 1, x: 0.5, inertia: 1, strength: 80, wind: 10 },
+    { type: "physics", name: "꼬리뒤", bone: "꼬리1", rotate: 1, strength: 50, damping: 2, limit: 40 },
+    { type: "physics", name: "망토", bone: "망토", rotate: 0.7, y: 1, strength: 30, gravity: 10, mix: 0.6 },
+  ],
+  animations: [
+    {
+      name: "뛰기",
+      bones: {
+        "몸": { translate: lin([[0, [0, 0]], [0.25, [30, 15]], [0.5, [60, 0]], [0.75, [30, 15]], [1, [0, 0]]]), rotate: lin([[0, 0], [0.5, 25], [1, 0]]) },
+        "꼬리0": { rotate: lin([[0, 0], [0.5, -40], [1, 0]]) },
+      },
+      constraints: {
+        "머리": { reset: [{ time: 0.6 }], strength: lin([[0, 120], [1, 200]]) },
+        "": { wind: lin([[0, 0], [1, 15]]) },
+        "망토": { mix: lin([[0, 0.6], [1, 1]]), gravity: lin([[0, 10], [1, 30]]) },
+      },
+    },
+  ],
+};
+write("kgbone/unity-stage2-physics.kgbone", k(unityStage2Physics));
 console.log("samples 생성 완료:", root);

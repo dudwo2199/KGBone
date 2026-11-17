@@ -16,6 +16,8 @@ namespace KGBone.Core
     {
         public string ImagesPath = "./images";
         public float Fps = 30;
+        /// <summary>물리 크기 기준(바람·중력 배율, 길이 0인 본의 끝 거리).</summary>
+        public float ReferenceScale = 100;
         public List<BoneData> Bones = new List<BoneData>();
         public List<SlotData> Slots = new List<SlotData>();
         public List<SkinData> Skins = new List<SkinData>();
@@ -106,6 +108,7 @@ namespace KGBone.Core
                 case ConstraintType.Transform:
                 case ConstraintType.Slider:
                 case ConstraintType.Path:
+                case ConstraintType.Physics:
                     return true;
                 default: return false;
             }

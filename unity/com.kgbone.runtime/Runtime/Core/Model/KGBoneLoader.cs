@@ -17,6 +17,7 @@ namespace KGBone.Core
             {
                 ImagesPath = root.Get("imagesPath")?.AsString("./images") ?? "./images",
                 Fps = sk.Get("fps")?.AsFloat(30) ?? 30,
+                ReferenceScale = sk.Get("referenceScale")?.AsFloat(100) ?? 100,
             };
             foreach (var b in Items(sk.Get("bones"))) m.Bones.Add(ReadBone(b, m));
             foreach (var s in Items(sk.Get("slots"))) m.Slots.Add(ReadSlot(s, m));

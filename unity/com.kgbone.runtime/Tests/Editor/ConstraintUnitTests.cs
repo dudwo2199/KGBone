@@ -435,7 +435,8 @@ namespace KGBone.Tests
         public void m10_constraint_warnings_only_unsupported_types()
         {
             var m = KGBoneLoader.Load(System.IO.File.ReadAllText(System.IO.Path.Combine(GoldenFile.RepoRoot(), "samples/kgbone/full-4.3.kgbone")));
-            CollectionAssert.AreEqual(new[] { "물리 제약 1개는 아직 계산하지 않습니다" }, m.ConstraintWarnings());
+            // 2단계: 제약 5종을 모두 계산하므로 제약 경고가 없다
+            CollectionAssert.IsEmpty(m.ConstraintWarnings());
             var ik = KGBoneLoader.Load(System.IO.File.ReadAllText(System.IO.Path.Combine(GoldenFile.RepoRoot(), "unity/com.kgbone.runtime/Tests/Golden/spine43-ik.kgbone")));
             CollectionAssert.IsEmpty(ik.ConstraintWarnings());
         }
@@ -482,6 +483,100 @@ namespace KGBone.Tests
             var o = Pose(Pc("length", "tangent", 0.1f, 5, false).Replace(@"""attachment"":""p""", @"""attachment"":""없음"""));
             Assert.AreEqual(0f, o.Bones[1].X, 1e-6f);
             Assert.AreEqual(20f, o.Bones[2].X, 1e-6f);
+        }
+
+        // ---------- M15 물리 (핵심 pose/physics.rs 테스트와 같은 값) ----------
+        static string Phys(float gravity, string extra = "", string anims = "") =>
+            $@"{{""formatVersion"":1,""skeleton"":{{""bones"":[{{""name"":""root""}},{{""name"":""tail"",""parent"":""root"",""length"":50}}],
+                ""constraints"":[{{""type"":""physics"",""name"":""phys"",""bone"":""tail"",""x"":1,""y"":1,""rotate"":1,""scaleX"":0.5,""limit"":5000,""fps"":60,
+                    ""inertia"":1,""strength"":100,""damping"":1,""mass"":1,""gravity"":{F(gravity)},""mix"":1,""volume"":true}}{extra}]{anims}}}}}";
+
+        static WorldBone[][] Run(SkeletonPoser p, int steps, PoseRequest template = null)
+        {
+            var o = new WorldBone[steps][];
+            for (int i = 0; i < steps; i++)
+            {
+                var r = template ?? new PoseRequest();
+                r.Physics = PhysicsStep.Advance(1f / 60f);
+                o[i] = (WorldBone[])p.Compute(r).Bones.Clone();
+            }
+            return o;
+        }
+
+        static void SameBones(WorldBone[] a, WorldBone[] b, float tol = 0f)
+        {
+            Assert.AreEqual(a.Length, b.Length);
+            for (int i = 0; i < a.Length; i++)
+            {
+                Assert.AreEqual(a[i].A, b[i].A, tol); Assert.AreEqual(a[i].B, b[i].B, tol); Assert.AreEqual(a[i].C, b[i].C, tol);
+                Assert.AreEqual(a[i].D, b[i].D, tol); Assert.AreEqual(a[i].X, b[i].X, tol); Assert.AreEqual(a[i].Y, b[i].Y, tol);
+            }
+        }
+
+        [Test]
+        public void m15_physics_f_f05_deterministic_and_still()
+        {
+            var m = KGBoneLoader.Load(Phys(30));
+            var a = Run(new SkeletonPoser(m), 120);
+            var b = Run(new SkeletonPoser(m), 120);
+            for (int i = 0; i < 120; i++) SameBones(a[i], b[i]);
+            Assert.Less(a[119][1].Y, -0.01f);
+            var still = KGBoneLoader.Load(Phys(0));
+            var outs = Run(new SkeletonPoser(still), 120);
+            SameBones(outs[119], (WorldBone[])new SkeletonPoser(still).Compute(new PoseRequest()).Bones.Clone());
+            var e = new SkeletonPoser(m);
+            var first = Run(e, 120);
+            e.Compute(new PoseRequest { Physics = PhysicsStep.Reset });
+            var again = Run(e, 120);
+            SameBones(first[119], again[119]);
+            e.ResetPhysics();
+            var again2 = Run(e, 120);
+            SameBones(first[60], again2[60]);
+            var e2 = new SkeletonPoser(m);
+            e2.Compute(new PoseRequest());
+            var big = (WorldBone[])e2.Compute(new PoseRequest { Physics = PhysicsStep.Advance(2f) }).Bones.Clone();
+            SameBones(big, first[119], 1e-3f);
+        }
+
+        [Test]
+        public void m15_physics_none_keeps_state()
+        {
+            // 진행하지 않는 요청(None)은 상태를 그대로 두고 마지막 처짐을 그대로 보여 준다
+            var p = new SkeletonPoser(KGBoneLoader.Load(Phys(30)));
+            var a = Run(p, 30);
+            var held = (WorldBone[])p.Compute(new PoseRequest()).Bones.Clone();
+            SameBones(a[29], held);
+        }
+
+        [Test]
+        public void m15_reset_key_resets_named_constraint_only()
+        {
+            // 서로 다른 본의 물리 제약 두 개, phys에만 0.5초 reset 키. 구간 [0.4, 0.6)을 지나는 요청(진행 없음)에서
+            // phys는 처음 상태(셋업 위치), other는 처진 그대로여야 한다
+            var m = KGBoneLoader.Load(@"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},{""name"":""tail"",""parent"":""root"",""length"":50},{""name"":""tail2"",""parent"":""root"",""length"":50,""y"":100}],
+                ""constraints"":[{""type"":""physics"",""name"":""phys"",""bone"":""tail"",""x"":1,""y"":1,""gravity"":30},{""type"":""physics"",""name"":""other"",""bone"":""tail2"",""x"":1,""y"":1,""gravity"":30}],
+                ""animations"":[{""name"":""a"",""constraints"":{""phys"":{""reset"":[{""time"":0.5}]}},""bones"":{""root"":{""rotate"":[{""time"":1,""v"":[0]}]}}}]}}");
+            var p = new SkeletonPoser(m);
+            Run(p, 30, new PoseRequest { Animation = "a", Time = 0.2f });
+            var held = (WorldBone[])p.Compute(new PoseRequest { Animation = "a", Time = 0.4f }).Bones.Clone();
+            Assert.Less(held[1].Y, -0.01f);
+            Assert.Less(held[2].Y, 100f - 0.01f);
+            var after = p.Compute(new PoseRequest { Animation = "a", Time = 0.6f, LastTime = 0.4f }).Bones;
+            Assert.AreEqual(0f, after[1].Y, 1e-6f, "phys는 초기화");
+            Assert.AreEqual(held[2].Y, after[2].Y, 1e-6f, "other는 그대로");
+        }
+
+        [Test]
+        public void m15_empty_name_reset_key_resets_all()
+        {
+            var m = KGBoneLoader.Load(@"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},{""name"":""tail"",""parent"":""root"",""length"":50},{""name"":""tail2"",""parent"":""root"",""length"":50,""y"":100}],
+                ""constraints"":[{""type"":""physics"",""name"":""phys"",""bone"":""tail"",""y"":1,""gravity"":30},{""type"":""physics"",""name"":""other"",""bone"":""tail2"",""y"":1,""gravity"":30}],
+                ""animations"":[{""name"":""a"",""constraints"":{"""":{""reset"":[{""time"":0.5}]}},""bones"":{""root"":{""rotate"":[{""time"":1,""v"":[0]}]}}}]}}");
+            var p = new SkeletonPoser(m);
+            Run(p, 30, new PoseRequest { Animation = "a", Time = 0.2f });
+            var after = p.Compute(new PoseRequest { Animation = "a", Time = 0.6f, LastTime = 0.4f }).Bones;
+            Assert.AreEqual(0f, after[1].Y, 1e-6f);
+            Assert.AreEqual(100f, after[2].Y, 1e-6f);
         }
 
         [Test]

@@ -14,6 +14,8 @@ namespace KGBone.Core
         /// <summary>켤 스킨(null이면 기본 스킨만).</summary>
         public string Skin;
         public bool Looping;
+        /// <summary>물리 진행 방법(기본: 진행하지 않음).</summary>
+        public PhysicsStep Physics = PhysicsStep.None;
     }
 
     /// <summary>그릴 삼각형 묶음 하나(슬롯 하나의 이미지·메시).</summary>

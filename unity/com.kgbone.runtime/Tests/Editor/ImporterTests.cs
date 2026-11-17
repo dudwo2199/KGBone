@@ -99,9 +99,8 @@ namespace KGBone.Tests
             File.Copy(Path.Combine(Repo, "samples", "kgbone", "full-4.3.kgbone"), Path.Combine(Tmp, "k3", "full.kgbone"), true);
             var data = Import(Tmp + "/k3/full.kgbone");
             Assert.IsNotNull(data);
-            // 2단계 ①: IK·트랜스폼·슬라이더는 계산하므로 경고하지 않고, 물리만 경고한다
-            CollectionAssert.Contains(data.Warnings, "물리 제약 1개는 아직 계산하지 않습니다");
-            foreach (var w in data.Warnings) Assert.IsFalse(w.StartsWith("IK") || w.StartsWith("트랜스폼") || w.StartsWith("슬라이더"), w);
+            // 2단계: 제약 5종을 모두 계산하므로 제약 경고는 없다(클리핑 등 다른 경고는 그대로)
+            foreach (var w in data.Warnings) StringAssert.DoesNotContain("제약", w);
         }
     }
 }

@@ -1,0 +1,85 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone 0.1.0",
+	"imagesPath": "../images",
+	"skeleton": {
+		"x": -100,
+		"width": 200,
+		"height": 300,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "body",
+				"parent": "root",
+				"length": 60,
+				"rotation": 90
+			},
+			{
+				"name": "hair",
+				"parent": "body",
+				"length": 40,
+				"x": 60,
+				"rotation": 180
+			}
+		],
+		"constraints": [
+			{
+				"type": "physics",
+				"name": "hair-phys",
+				"bone": "hair",
+				"x": 0.5,
+				"rotate": 1,
+				"inertia": 0.8,
+				"strength": 120,
+				"damping": 0.9,
+				"mass": 1.5,
+				"wind": 10,
+				"gravity": 50
+			}
+		],
+		"animations": [
+			{
+				"name": "shake",
+				"bones": {
+					"body": {
+						"translate": [
+							{
+								"v": [0, 0]
+							},
+							{
+								"time": 0.5,
+								"v": [40, 0]
+							},
+							{
+								"time": 1,
+								"v": [0, 0]
+							}
+						]
+					}
+				},
+				"constraints": {
+					"hair-phys": {
+						"mix": [
+							{
+								"v": [1]
+							},
+							{
+								"time": 1,
+								"v": [0.5]
+							}
+						]
+					},
+					"": {
+						"reset": [
+							{
+								"time": 1
+							}
+						]
+					}
+				}
+			}
+		]
+	}
+}

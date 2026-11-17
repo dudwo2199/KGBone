@@ -25,6 +25,9 @@ const TARGETS = [
   ["unity-stage2-mixed", "samples/kgbone/unity-stage2-mixed.kgbone"],
   ["spine43-path", "samples/spine43/path.json"],
   ["unity-stage2-path", "samples/kgbone/unity-stage2-path.kgbone"],
+  // 물리: 한 엔진으로 연속 요청한 결과를 프레임마다 저장한다(stateful, 아래 sequence)
+  ["spine43-physics", "samples/spine43/physics.json", { stateful: true }],
+  ["unity-stage2-physics", "samples/kgbone/unity-stage2-physics.kgbone", { stateful: true }],
 ];
 
 /** 애니메이션 길이 d에 대한 요청들(시점, 반복 재생, 이벤트 구간) */
@@ -40,6 +43,26 @@ function requests(skin, anim, d) {
   ];
 }
 
+/**
+ * 물리 연속 요청(애니메이션마다, 시작 전에 물리 초기화): 1/60초 × 120프레임(반복 재생, lastTime 포함) →
+ * "reset" 한 번 → 불규칙 간격(0.004, 0.033, 0.1, 0, 0.017) × 12 = 60프레임.
+ */
+function sequence(skin, anim) {
+  const out = [];
+  let t = 0;
+  let last = null;
+  const push = (physics, dt, extra = {}) => {
+    const time = Math.fround(t + dt);
+    out.push({ animation: anim, time, lastTime: last, skin, looping: true, physics, ...extra });
+    last = time;
+    t = time;
+  };
+  for (let i = 0; i < 120; i++) push(1 / 60, 1 / 60, i === 0 ? { resetPhysics: true } : {});
+  push("reset", 0);
+  for (let r = 0; r < 12; r++) for (const dt of [0.004, 0.033, 0.1, 0, 0.017]) push(dt, dt);
+  return out;
+}
+
 const pick = (o) => ({ bones: o.bones, active: o.active, draw: o.draw, events: o.events });
 
 const core = await loadCore();
@@ -47,7 +70,7 @@ mkdirSync(outDir, { recursive: true });
 for (const f of readdirSync(outDir)) if (f.endsWith(".json") || f.endsWith(".kgbone")) rmSync(join(outDir, f));
 
 let total = 0;
-for (const [name, rel] of TARGETS) {
+for (const [name, rel, opts = {}] of TARGETS) {
   const text = readFileSync(join(repo, rel), "utf8");
   if (rel.endsWith(".kgbone")) core.call({ method: "openKgbone", text });
   else core.call({ method: "importSpineJson", text });
@@ -71,7 +94,18 @@ for (const [name, rel] of TARGETS) {
     }),
   );
   const cases = [];
-  for (const skin of skins) {
+  if (opts.stateful) {
+    for (const skin of skins) {
+      for (const anim of [null, ...anims]) {
+        for (const request of sequence(skin, anim)) {
+          if (request.resetPhysics) core.call({ method: "resetPhysics" });
+          const output = core.call({ method: "pose", request });
+          cases.push({ request, output: pick(output) });
+        }
+      }
+    }
+  }
+  for (const skin of opts.stateful ? [] : skins) {
     for (const anim of [null, ...anims]) {
       for (const request of requests(skin, anim, anim ? durations[anim] : 0)) {
         const output = core.call({ method: "pose", request: { ...request, physics: "none" } });
@@ -81,7 +115,8 @@ for (const [name, rel] of TARGETS) {
   }
   writeFileSync(join(outDir, `${name}.kgbone`), kgbone);
   const body = cases.map((c) => "\t\t" + JSON.stringify(c)).join(",\n");
-  writeFileSync(join(outDir, `${name}.json`), `{\n\t"kgbone": ${JSON.stringify(name + ".kgbone")},\n\t"source": ${JSON.stringify(rel)},\n\t"cases": [\n${body}\n\t]\n}\n`);
+  const stateful = opts.stateful ? `\n\t"stateful": true,` : "";
+  writeFileSync(join(outDir, `${name}.json`), `{\n\t"kgbone": ${JSON.stringify(name + ".kgbone")},\n\t"source": ${JSON.stringify(rel)},${stateful}\n\t"cases": [\n${body}\n\t]\n}\n`);
   total += cases.length;
   console.log(`${name}: 케이스 ${cases.length}개`);
 }

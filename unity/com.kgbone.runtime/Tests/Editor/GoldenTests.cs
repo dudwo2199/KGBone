@@ -34,6 +34,7 @@ namespace KGBone.Tests
             foreach (var path in GoldenFile.All())
             {
                 var root = JsonValue.Parse(System.IO.File.ReadAllText(path));
+                if (root.Get("stateful")?.AsBool() == true) continue;
                 string kgbone = Path.Combine(Path.GetDirectoryName(path), root.Get("kgbone").AsString());
                 var cases = root.Get("cases").Items;
                 for (int i = 0; i < cases.Count; i++)
@@ -53,22 +54,62 @@ namespace KGBone.Tests
 
         static readonly Dictionary<string, SkeletonModel> Models = new Dictionary<string, SkeletonModel>();
 
-        [TestCaseSource(nameof(Cases))]
-        public void m07_all_golden_cases_match_core(GoldenCase c)
+        /// <summary>연속(stateful) 정답 파일: 파일 하나를 한 계산기로 순서대로 계산한다(물리 상태가 이어진다).</summary>
+        public static IEnumerable<TestCaseData> Sequences()
         {
-            if (!Models.TryGetValue(c.KgbonePath, out var model))
-                Models[c.KgbonePath] = model = KGBoneLoader.Load(System.IO.File.ReadAllText(c.KgbonePath));
-            var r = c.Request;
+            foreach (var path in GoldenFile.All())
+            {
+                var root = JsonValue.Parse(System.IO.File.ReadAllText(path));
+                if (root.Get("stateful")?.AsBool() != true) continue;
+                yield return new TestCaseData(path).SetName("m15_golden_sequence_" + Path.GetFileNameWithoutExtension(path));
+            }
+        }
+
+        static PoseRequest RequestOf(JsonValue r)
+        {
             var lastTime = r.Get("lastTime");
-            var req = new PoseRequest
+            var physics = r.Get("physics");
+            var step = PhysicsStep.None;
+            if (physics != null && physics.Kind == JsonKind.String) step = physics.AsString() == "reset" ? PhysicsStep.Reset : PhysicsStep.None;
+            else if (physics != null && physics.Kind == JsonKind.Number) step = PhysicsStep.Advance(physics.AsFloat());
+            return new PoseRequest
             {
                 Animation = r.Get("animation")?.AsString(),
                 Time = r.Get("time").AsFloat(),
                 LastTime = lastTime == null || lastTime.Kind == JsonKind.Null ? (float?)null : lastTime.AsFloat(),
                 Skin = r.Get("skin")?.AsString(),
                 Looping = r.Get("looping").AsBool(),
+                Physics = step,
             };
-            var got = new SkeletonPoser(model).Compute(req);
+        }
+
+        [TestCaseSource(nameof(Sequences))]
+        public void m15_golden_sequences_match_core(string path)
+        {
+            var root = JsonValue.Parse(System.IO.File.ReadAllText(path));
+            string kgbone = Path.Combine(Path.GetDirectoryName(path), root.Get("kgbone").AsString());
+            var poser = new SkeletonPoser(KGBoneLoader.Load(System.IO.File.ReadAllText(kgbone)));
+            var cases = root.Get("cases").Items;
+            for (int i = 0; i < cases.Count; i++)
+            {
+                var r = cases[i].Get("request");
+                if (r.Get("resetPhysics")?.AsBool() == true) poser.ResetPhysics();
+                var got = poser.Compute(RequestOf(r));
+                try { Compare(cases[i].Get("output"), got); }
+                catch (AssertionException e)
+                {
+                    string anim = r.Get("animation")?.AsString() ?? "셋업";
+                    Assert.Fail($"프레임 {i} ({anim}, physics {r.Get("physics")?.ToString()}): {e.Message}");
+                }
+            }
+        }
+
+        [TestCaseSource(nameof(Cases))]
+        public void m07_all_golden_cases_match_core(GoldenCase c)
+        {
+            if (!Models.TryGetValue(c.KgbonePath, out var model))
+                Models[c.KgbonePath] = model = KGBoneLoader.Load(System.IO.File.ReadAllText(c.KgbonePath));
+            var got = new SkeletonPoser(model).Compute(RequestOf(c.Request));
             Compare(c.Output, got);
         }
 
