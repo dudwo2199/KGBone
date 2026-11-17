@@ -17,6 +17,10 @@ namespace KGBone.Core
         public string String;
         public float Volume;
         public float Balance;
+        /// <summary>트랙 번호(트랙 재생이 아니면 0).</summary>
+        public int Track;
+        /// <summary>이벤트를 낸 애니메이션 이름.</summary>
+        public string Animation;
     }
 
     public static class EventFinder

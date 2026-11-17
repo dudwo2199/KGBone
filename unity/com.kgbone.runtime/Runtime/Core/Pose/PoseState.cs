@@ -1,4 +1,5 @@
 // 계산 중 상태(핵심 pose/mod.rs의 SkeletonPose에서 제약·시퀀스를 뺀 것). 배열은 한 번 만들고 다시 쓴다.
+using System;
 using System.Collections.Generic;
 
 namespace KGBone.Core
@@ -92,6 +93,29 @@ namespace KGBone.Core
             Deform.Clear();
             SequenceFrames.Clear();
             for (int i = 0; i < ConstraintValues.Length; i++) System.Array.Copy(ConstraintSetup[i], ConstraintValues[i], ConstraintSetup[i].Length);
+        }
+
+        /// <summary>other의 값을 모두 복사한다(같은 모델의 포즈). 변형 배열은 이 포즈의 버퍼를 다시 쓴다.</summary>
+        public void CopyFrom(PoseState other)
+        {
+            Array.Copy(other.Locals, Locals, Locals.Length);
+            Array.Copy(other.Inherits, Inherits, Inherits.Length);
+            Array.Copy(other.World, World, World.Length);
+            Array.Copy(other.Active, Active, Active.Length);
+            Array.Copy(other.SlotColors, SlotColors, SlotColors.Length);
+            Array.Copy(other.SlotDarks, SlotDarks, SlotDarks.Length);
+            Array.Copy(other.SlotAttachments, SlotAttachments, SlotAttachments.Length);
+            Array.Copy(other.DrawOrder, DrawOrder, DrawOrder.Length);
+            Deform.Clear();
+            foreach (var kv in other.Deform)
+            {
+                var buf = DeformBuffer(kv.Key, kv.Value.Length);
+                Array.Copy(kv.Value, buf, buf.Length);
+                Deform[kv.Key] = buf;
+            }
+            SequenceFrames.Clear();
+            foreach (var kv in other.SequenceFrames) SequenceFrames[kv.Key] = kv.Value;
+            for (int i = 0; i < ConstraintValues.Length; i++) Array.Copy(other.ConstraintValues[i], ConstraintValues[i], ConstraintValues[i].Length);
         }
 
         /// <summary>제약의 셋업 값(핵심 constraint_setup_values).</summary>

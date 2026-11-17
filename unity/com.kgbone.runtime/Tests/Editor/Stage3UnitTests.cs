@@ -138,5 +138,225 @@ namespace KGBone.Tests
             var flatConvex = ClipSquare(new float[] { 0, 0, 5, 0, 10, 0 }, true, false);
             CollectionAssert.IsEmpty(flatConvex.i);
         }
+
+        // ---------- M19 트랙 계산부 ----------
+        // b1·b2 회전(셋업 0°). 걷기: 0→90(1초), 달리기: 0→−90(1초), 팔: b1만 30, 짧은: b2만 10→20(0.1초)
+        const string TrackModelJson = @"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},{""name"":""b1"",""parent"":""root""},{""name"":""b2"",""parent"":""root""}],
+            ""events"":[{""name"":""e""}],
+            ""animations"":[
+              {""name"":""걷기"",""bones"":{""b1"":{""rotate"":[{""time"":0,""v"":[0]},{""time"":1,""v"":[90]}]},""b2"":{""rotate"":[{""time"":0,""v"":[0]},{""time"":1,""v"":[90]}]}},""events"":[{""time"":0.5,""name"":""e""}]},
+              {""name"":""달리기"",""bones"":{""b1"":{""rotate"":[{""time"":0,""v"":[0]},{""time"":1,""v"":[-90]}]},""b2"":{""rotate"":[{""time"":0,""v"":[0]},{""time"":1,""v"":[-90]}]}},""events"":[{""time"":0.05,""name"":""e""}]},
+              {""name"":""팔"",""bones"":{""b1"":{""rotate"":[{""time"":0,""v"":[30]},{""time"":1,""v"":[30]}]}}},
+              {""name"":""짧은"",""bones"":{""b2"":{""rotate"":[{""time"":0,""v"":[10]},{""time"":0.1,""v"":[20]}]}}}
+            ]}}";
+
+        sealed class TrackRig
+        {
+            public readonly SkeletonModel M = KGBoneLoader.Load(TrackModelJson);
+            public readonly AnimationTracks T;
+            public readonly PoseState Pose;
+            public readonly List<TrackCompletion> Done = new List<TrackCompletion>();
+            public TrackRig() { T = new AnimationTracks(M); Pose = new PoseState(M); }
+            /// <summary>dt 진행 후 포즈를 계산하고 (b1, b2) 회전을 돌려준다. dt 0이면 진행 없이 계산만.</summary>
+            public (float b1, float b2) Step(float dt)
+            {
+                if (dt != 0f) T.Update(dt, Done);
+                Pose.ResetToSetup(M);
+                T.Apply(Pose, SkinSet.Single(null));
+                return (Pose.Locals[1].Rotation, Pose.Locals[2].Rotation);
+            }
+        }
+
+        [Test]
+        public void m19_single_track_matches_plain_apply()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(0, "걷기", true, 0);
+            var plain = new PoseState(r.M);
+            var anim = r.M.FindAnimation("걷기");
+            float time = 0;
+            foreach (float dt in new[] { 0.13f, 0.4f, 0.47f, 0.33f, 0.016f })
+            {
+                time += dt;
+                var (b1, b2) = r.Step(dt);
+                plain.ResetToSetup(r.M);
+                AnimationApplier.Apply(r.M, anim, AnimationApplier.AnimationTime(anim.Duration, time, true), null, plain);
+                Assert.AreEqual(plain.Locals[1].Rotation, b1);
+                Assert.AreEqual(plain.Locals[2].Rotation, b2);
+            }
+        }
+
+        [Test]
+        public void m19_mix_midpoint_is_between_poses()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(0, "걷기", false, 0);
+            Assert.AreEqual(45f, r.Step(0.5f).b1, 1e-3f);
+            r.T.SetAnimation(0, "달리기", false, 0.2f);
+            var (b1, b2) = r.Step(0.1f);
+            // 걷기 0.6초 = 54°, 달리기 0.1초 = −9°, 섞기 절반 → 22.5°(셋업 0°로 꺼지지 않음)
+            Assert.AreEqual(22.5f, b1, 1e-3f);
+            Assert.AreEqual(22.5f, b2, 1e-3f);
+        }
+
+        [Test]
+        public void m19_mix_end_no_jump()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(1, "팔", false, 0);
+            r.Step(0.1f);
+            r.T.SetAnimation(1, "짧은", false, 0.2f);
+            float prev = r.Step(0).b1, maxStep = 0;
+            for (int i = 0; i < 15; i++)
+            {
+                float b1 = r.Step(0.02f).b1;
+                maxStep = System.Math.Max(maxStep, System.Math.Abs(b1 - prev));
+                prev = b1;
+            }
+            // 팔에만 있던 b1 키는 0.2초 동안 30°→0°로 고르게 빠진다(한 프레임 3°), 끝나도 튀지 않음
+            Assert.LessOrEqual(maxStep, 3f + 1e-3f);
+            Assert.AreEqual(0f, prev, 1e-4f);
+        }
+
+        [Test]
+        public void m19_upper_track_only_keyed_values()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(0, "걷기", true, 0);
+            r.T.SetAnimation(1, "팔", true, 0);
+            var (b1, b2) = r.Step(0.25f);
+            Assert.AreEqual(30f, b1, 1e-4f);
+            Assert.AreEqual(22.5f, b2, 1e-3f);
+        }
+
+        [Test]
+        public void m19_queue_starts_at_end_plus_delay()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(0, "짧은", false, 0);
+            r.T.AddAnimation(0, "걷기", true, 0.25f, 0);
+            r.Step(0.3f);
+            Assert.AreEqual("짧은", r.T.Current(0).Name);
+            r.Step(0.1f);
+            Assert.AreEqual("걷기", r.T.Current(0).Name);
+            Assert.AreEqual(0.05f, r.T.Current(0).Time, 1e-4f);
+        }
+
+        [Test]
+        public void m19_clear_track_fades_out()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(0, "걷기", true, 0);
+            r.T.SetAnimation(1, "팔", true, 0);
+            Assert.AreEqual(30f, r.Step(0.2f).b1, 1e-4f);
+            r.T.ClearTrack(1, 0.2f);
+            Assert.AreEqual(28.5f, r.Step(0.1f).b1, 1e-3f); // (팔 30 + 걷기 27) / 2
+            Assert.AreEqual(36f, r.Step(0.1f).b1, 1e-3f);
+            Assert.IsNull(r.T.Current(1));
+        }
+
+        [Test]
+        public void m19_completion_once()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(0, "짧은", false, 0);
+            r.Step(0.05f);
+            Assert.AreEqual(0, r.Done.Count);
+            r.Step(0.1f);
+            Assert.AreEqual(1, r.Done.Count);
+            Assert.AreEqual(0, r.Done[0].Track);
+            Assert.AreEqual("짧은", r.Done[0].Name);
+            r.Step(0.1f);
+            Assert.AreEqual(1, r.Done.Count);
+        }
+
+        [Test]
+        public void m19_mix_longer_than_from_holds_last_frame()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(0, "짧은", false, 0);
+            Assert.AreEqual(15f, r.Step(0.05f).b2, 1e-3f);
+            r.T.SetAnimation(0, "걷기", false, 0.5f);
+            float prev = r.Step(0).b2;
+            for (int i = 0; i < 10; i++)
+            {
+                float b2 = r.Step(0.05f).b2;
+                Assert.LessOrEqual(System.Math.Abs(b2 - prev), 7f, "프레임 " + i);
+                if (i == 4) Assert.AreEqual(21.25f, b2, 1e-3f); // 짧은은 끝(20°)에서 멈춤, 걷기 0.25초 22.5°, 절반
+                prev = b2;
+            }
+            Assert.AreEqual(45f, prev, 1e-3f);
+        }
+
+        [Test]
+        public void m19_set_during_clear_no_jump()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(1, "팔", false, 0);
+            r.Step(0.1f);
+            r.T.ClearTrack(1, 0.2f);
+            Assert.AreEqual(15f, r.Step(0.1f).b1, 1e-3f);
+            r.T.SetAnimation(1, "팔", false, 0.2f);
+            Assert.AreEqual(15f, r.Step(0).b1, 1e-3f);
+            Assert.AreEqual(22.5f, r.Step(0.1f).b1, 1e-3f);
+        }
+
+        [Test]
+        public void m19_set_during_mix_freezes()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(0, "걷기", false, 0);
+            r.Step(0.5f);
+            r.T.SetAnimation(0, "달리기", false, 0.2f);
+            var mid = r.Step(0.1f);
+            r.T.SetAnimation(0, "팔", false, 0.2f);
+            var now = r.Step(0);
+            Assert.AreEqual(mid.b1, now.b1, 1e-3f);
+            Assert.AreEqual(mid.b2, now.b2, 1e-3f);
+            // 팔에 없는 b2는 얼린 값에서 셋업(0°)으로 빠진다
+            Assert.AreEqual(mid.b2 * 0.5f, r.Step(0.1f).b2, 1e-3f);
+        }
+
+        [Test]
+        public void m19_alpha_half()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(0, "걷기", true, 0);
+            r.T.SetAnimation(1, "팔", true, 0);
+            r.T.SetAlpha(1, 0.5f);
+            Assert.AreEqual(24f, r.Step(0.2f).b1, 1e-3f); // 걷기 18° + (30 − 18) × 0.5
+        }
+
+        [Test]
+        public void m19_events_from_current_only()
+        {
+            var r = new TrackRig();
+            var events = new List<FiredEvent>();
+            r.T.SetAnimation(0, "걷기", false, 0);
+            r.Step(0.4f);
+            r.T.SetAnimation(0, "달리기", false, 0.3f);
+            r.Step(0.2f); // 걷기는 0.5초 이벤트를 지나지만 빠지는 중이라 내지 않음, 달리기 0.05초 이벤트
+            r.T.CollectEvents(events);
+            Assert.AreEqual(1, events.Count);
+            Assert.AreEqual(0, events[0].Track);
+            Assert.AreEqual("달리기", events[0].Animation);
+            r.T.SetAnimation(1, "걷기", false, 0);
+            r.Step(0.6f);
+            events.Clear();
+            r.T.CollectEvents(events);
+            Assert.AreEqual(1, events.Count);
+            Assert.AreEqual(1, events[0].Track);
+            Assert.AreEqual("걷기", events[0].Animation);
+        }
+
+        [Test]
+        public void m19_unknown_name_returns_null()
+        {
+            var r = new TrackRig();
+            r.T.SetAnimation(0, "걷기", true, 0);
+            Assert.IsNull(r.T.SetAnimation(0, "없음", true, 0));
+            Assert.IsNull(r.T.AddAnimation(0, "없음", true, 0, 0));
+            Assert.AreEqual("걷기", r.T.Current(0).Name);
+        }
     }
 }
