@@ -18,7 +18,7 @@
 | page → 중계소 | `{type:"result", id, result \| error}` |
 | page → 중계소 | `{type:"fs", id, op, ...}` → `{type:"fs-result", id, result \| error}`; 폴더가 바뀌면 `{type:"fs-changed", dir}` |
 
-창은 `call`을 받은 차례대로 하나씩 처리한다. 응답이 120초 안에 없으면 MCP 서버가 실패로 돌려준다.
+창은 `call`을 받은 차례대로 하나씩 처리한다. 응답이 120초 안에 없으면 MCP 서버가 실패로 돌려준다. `ui.run`이 대화상자를 열면 창이 바로 취소하고 오류로 답한다. MCP 서버는 창 연결이 끊긴 뒤 첫 편집 호출을 실행하지 않고 알린다(`tools/mcp/target.mjs`).
 
 ## 3. 창이 처리하는 call (method)
 | method | params | result |

@@ -4,6 +4,7 @@ import type { Core, PngSequenceOptions, SpineExportOptions } from '../core/bridg
 import type { PoseRequest } from '../core/types';
 import { DISK_PREFIX } from '../platform/diskPlatform';
 import type { Services } from '../services';
+import { DialogService } from '../ui/dialogs/service';
 import type { AgentHandler } from './agentLink';
 
 type Params = Record<string, unknown>;
@@ -53,6 +54,31 @@ function screenshot(): { base64: string; width: number; height: number } {
   return { base64: url.slice(url.indexOf(',') + 1), width: canvas.width, height: canvas.height };
 }
 
+/**
+ * 화면 명령 실행. 명령이 대화상자를 열면(사용자 입력 필요) 바로 취소하고 실패로 알린다 —
+ * 그대로 두면 사용자가 닫을 때까지 AI가 기다리게 된다.
+ */
+export async function runUiCommand(s: Services, id: string, args: Params): Promise<void> {
+  const before = new Set(s.dialogs.get().stack.map((d) => d.id));
+  let opened: string | null = null;
+  const unsubscribe = s.dialogs.subscribe(() => {
+    for (const d of s.dialogs.get().stack) {
+      if (before.has(d.id)) continue;
+      before.add(d.id);
+      opened ??= DialogService.titleOf(d.spec);
+      s.dialogs.cancel(d);
+    }
+  });
+  try {
+    await s.commands.run(s, id, args);
+  } finally {
+    unsubscribe();
+  }
+  if (opened) {
+    throw new Error(`${id}는 대화상자(${opened})를 여는 명령이라 실행하지 않고 닫았습니다. 필요한 값은 명령 인자로 넘기거나(command_list의 args), 사용자에게 창에서 직접 해 달라고 하세요.`);
+  }
+}
+
 export function createAgentHandler(s: Services): AgentHandler {
   return async (method, params) => {
     switch (method) {
@@ -84,7 +110,7 @@ export function createAgentHandler(s: Services): AgentHandler {
         await s.images.open(s.files.imagesDir());
         return { warnings: [] };
       case 'ui.run':
-        await s.commands.run(s, String(params.id), (params.args ?? {}) as Params);
+        await runUiCommand(s, String(params.id), (params.args ?? {}) as Params);
         return null;
       case 'ui.screenshot':
         // 바로 전 편집이 그려지도록 한 프레임 기다린다

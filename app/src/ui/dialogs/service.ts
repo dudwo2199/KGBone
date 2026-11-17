@@ -43,6 +43,32 @@ export class DialogService extends Store<{ stack: OpenDialog[] }> implements App
     });
   }
 
+  /** 대화상자를 취소한 것처럼 닫는다(각 종류의 '취소' 값으로 끝냄) */
+  cancel(d: OpenDialog): void {
+    const k = d.spec.kind;
+    d.resolve(k === 'confirmSave' ? 'cancel' : k === 'confirm' ? false : k === 'message' || k === 'report' || k === 'shortcuts' || k === 'aiConnect' ? undefined : null);
+  }
+
+  /** 대화상자 제목(알림용) */
+  static titleOf(spec: DialogSpec): string {
+    switch (spec.kind) {
+      case 'confirmSave':
+        return '저장 확인';
+      case 'shortcuts':
+        return '단축키 목록';
+      case 'aiConnect':
+        return 'AI 연결';
+      case 'pickImage':
+        return '이미지 고르기';
+      case 'exportSpine':
+        return '내보내기';
+      case 'pngSequence':
+        return 'PNG 시퀀스';
+      default:
+        return (spec as { title?: string; kind: string }).title ?? (spec as { kind: string }).kind;
+    }
+  }
+
   isOpen(): boolean {
     return this.get().stack.length > 0;
   }

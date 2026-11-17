@@ -10,6 +10,7 @@ import { loadCore } from "./core.mjs";
 import { Link } from "./link.mjs";
 import { LiveSession } from "./live.mjs";
 import { allowedRoots, EditorSession } from "./session.mjs";
+import { TargetGuard } from "./target.mjs";
 import { callTool, listTools } from "./tools.mjs";
 
 const PROTOCOL_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
@@ -46,7 +47,12 @@ export async function handleMessage(session, msg, ctx = {}) {
       return reply({ tools: listTools() });
     case "tools/call": {
       const s = typeof session === "function" ? session() : session;
-      return reply(await callTool(s, msg.params?.name, msg.params?.arguments, ctx));
+      // 창 연결이 끊기거나 붙어 대상 문서가 바뀌었으면 알린다(ctx.guard: TargetGuard)
+      const turn = ctx.guard?.check(s.where, msg.params?.name) ?? {};
+      if (turn.block) return reply({ content: [{ type: "text", text: turn.block }], isError: true });
+      const result = await callTool(s, msg.params?.name, msg.params?.arguments, ctx);
+      if (turn.note) result.content = [{ type: "text", text: turn.note }, ...result.content];
+      return reply(result);
     }
     default:
       return fail(-32601, `없는 메서드입니다: ${msg.method}`);
@@ -88,7 +94,7 @@ async function main() {
     if (link?.pageConnected && session) return (live ??= new LiveSession(link, session));
     return session;
   };
-  const ctx = { link, onInitialize: (info) => link?.setName(clientName(info)) };
+  const ctx = { link, guard: new TargetGuard(), onInitialize: (info) => link?.setName(clientName(info)) };
 
   // 요청은 받은 차례대로 하나씩 처리한다(창에 보내는 명령의 순서가 섞이지 않게)
   let queue = Promise.resolve();

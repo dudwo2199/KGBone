@@ -9,6 +9,7 @@ import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { loadCore } from "./core.mjs";
 import { allowedOrigin, Link } from "./link.mjs";
+import { TargetGuard } from "./target.mjs";
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const cleanups = [];
@@ -59,6 +60,17 @@ async function fakePage(port, handler, { takeover = false } = {}) {
   cleanups.push(() => ws.close());
   return page;
 }
+
+test("mcp_target_guard_blocks_once_after_window_drops_and_notes_when_window_joins", () => {
+  const g = new TargetGuard();
+  assert.deepEqual(g.check("headless", "doc_inspect"), {});
+  assert.match(g.check("window", "command_run").note, /창의 문서를 고칩니다/);
+  assert.deepEqual(g.check("window", "command_run"), {});
+  // 상태 확인 도구는 막지 않고 판단도 바꾸지 않는다
+  assert.deepEqual(g.check("headless", "app_status"), {});
+  assert.match(g.check("headless", "command_run").block, /끊겨/);
+  assert.deepEqual(g.check("headless", "command_run"), {});
+});
 
 test("mcp_link_allowed_origins", () => {
   assert.equal(allowedOrigin(undefined), true);
@@ -233,6 +245,19 @@ test("mcp_stdio_server_edits_connected_window_document", async () => {
   assert.deepEqual(uiCalls, ["view.fit"]);
   assert.ok((await tool("command_list", { filter: "view.fit" })).data.commands.some((c) => c.scope === "ui"));
   assert.ok(page.calls.every((c) => c.client === "시험 AI"));
+
+  // 창 연결이 끊기면 첫 편집은 실행하지 않고 알린다, 그다음부터는 창 없는 문서
+  page.ws.close();
+  for (let i = 0; i < 100 && (await tool("app_status")).data.window; i++) await new Promise((r) => setTimeout(r, 30));
+  const blocked = await tool("command_run", { id: "bone.create", args: { parent: "root", name: "다리" } });
+  assert.equal(blocked.ok, false);
+  assert.match(blocked.data, /창 연결이 끊겨/);
+  const headless = await tool("command_run", { id: "bone.create", args: { parent: "root", name: "다리" } });
+  assert.ok(headless.ok, JSON.stringify(headless.data));
+  assert.deepEqual(
+    core.project().skeleton.bones.map((b) => b.name),
+    ["root", "팔"],
+  );
   child.stdin.end();
   await new Promise((r) => child.on("close", r));
 });

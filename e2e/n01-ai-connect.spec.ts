@@ -89,6 +89,11 @@ test('e_n01_ai_connect_edits_open_window', async ({ page }) => {
 
     // 화면 명령도 쓸 수 있다
     expect((await ai.tool('command_run', { id: 'view.fit' })).ok).toBe(true);
+    // 대화상자를 여는 화면 명령은 기다리지 않고 닫은 뒤 실패로 알린다
+    const dlg = await ai.tool('command_run', { id: 'help.shortcuts' });
+    expect(dlg.ok).toBe(false);
+    expect(dlg.data).toMatch(/대화상자/);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
     // 디스크의 시험 파일 열기(이미지 폴더도 중계소를 거쳐 읽는다)
     const opened = await ai.tool('doc_open', { path: join('samples', 'kgbone', 'full-4.3.kgbone') });
