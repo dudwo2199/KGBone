@@ -10,6 +10,7 @@ import {
   createSlot,
   deleteSelection,
   renameItem,
+  selectionWithImage,
 } from '../../commands/actions';
 import { hasKeyAt } from '../../anim/timeline';
 import type { AttachmentType, ConstraintType } from '../../core/types';
@@ -88,7 +89,7 @@ function Row({ n, depth, expanded, toggle, onMenu }: RowProps) {
     }
     const cur = s.ui.get().selection;
     if (e.ctrlKey || e.shiftKey) s.ui.select(isSelected ? cur.filter((x) => !sameSel(x, sel)) : [...cur, sel]);
-    else s.ui.select([sel]);
+    else s.ui.select(sel.kind === 'image' ? selectionWithImage(cur, sel) : [sel]);
   };
 
   return (
@@ -138,7 +139,7 @@ function Row({ n, depth, expanded, toggle, onMenu }: RowProps) {
         }}
         onContextMenu={(e) => {
           e.preventDefault();
-          if (sel && !isSelected) s.ui.select([sel]);
+          if (sel && !isSelected) s.ui.select(sel.kind === 'image' ? selectionWithImage(s.ui.get().selection, sel) : [sel]);
           onMenu({ x: e.clientX, y: e.clientY, items: contextItems(s, n) });
         }}
       >

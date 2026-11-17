@@ -38,11 +38,20 @@ export function contextBone(s: Services): string | null {
   return p.skeleton.bones[0]?.name ?? null;
 }
 
+/** 선택에서 가장 나중에 고른 슬롯(첨부물이면 그 슬롯). 트리에서 이미지를 고른 채여도 앞서 고른 슬롯을 찾는다 */
 export function contextSlot(s: Services): string | null {
-  const sel = primary(s);
-  if (sel?.kind === 'slot') return sel.name;
-  if (sel?.kind === 'attachment') return sel.slot ?? null;
+  const sel = s.ui.get().selection;
+  for (let i = sel.length - 1; i >= 0; i--) {
+    const x = sel[i];
+    if (x.kind === 'slot') return x.name;
+    if (x.kind === 'attachment') return x.slot ?? null;
+  }
   return null;
+}
+
+/** 트리에서 이미지를 고를 때: 붙일 곳(슬롯·첨부물) 선택은 남기고 이미지를 더한다 */
+export function selectionWithImage(current: Sel[], image: Sel): Sel[] {
+  return [...current.filter((x) => x.kind === 'slot' || x.kind === 'attachment'), image];
 }
 
 export function createBone(s: Services, extra: Record<string, unknown> = {}): string | null {
@@ -158,6 +167,8 @@ export function createSimple(s: Services, kind: 'skin' | 'event' | 'animation'):
 export function deleteSelection(s: Services): void {
   const sel = s.ui.get().selection;
   if (!sel.length) return;
+  // 이미지를 보고 있을 때(트리에서 이미지를 고름)는 붙일 곳으로 남겨 둔 슬롯을 지우지 않는다. 이미지는 지울 수 없다
+  if (sel[sel.length - 1].kind === 'image') return;
   s.doc.group('삭제', () => {
     for (const x of sel) {
       switch (x.kind) {
