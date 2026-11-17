@@ -1,4 +1,4 @@
-// AI 연결(창 쪽) 단위 테스트: 가짜 WebSocket으로 인사·명령 처리·차례·파일 작업·끊김 후 기다리기를 본다.
+// MCP 연결(창 쪽) 단위 테스트: 가짜 WebSocket으로 인사·명령 처리·차례·파일 작업·끊김 후 기다리기를 본다.
 import { describe, expect, it, vi } from 'vitest';
 import { DiskPlatform } from '../platform/diskPlatform';
 import type { Platform } from '../platform/platform';
@@ -48,7 +48,7 @@ function setup() {
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
-describe('AI 연결', () => {
+describe('MCP 연결', () => {
   it('f_n01_connect_says_hello_and_lists_clients', () => {
     const { link, sockets } = setup();
     link.connect(50000);
@@ -167,6 +167,6 @@ describe('AI 연결', () => {
     expect(await pending).toBe('디스크');
     // 끊기면 디스크 작업은 이유와 함께 실패한다
     link.disconnect();
-    await expect(p.readText('disk:D:\\work\\a.kgbone')).rejects.toThrow(/AI 연결/);
+    await expect(p.readText('disk:D:\\work\\a.kgbone')).rejects.toThrow(/MCP 연결/);
   });
 });

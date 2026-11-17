@@ -289,7 +289,7 @@ await select([{ kind: 'bone', name: '꼬리3' }]);
 await cmd('tool.rotate');
 await shot('04-bend', viewport);
 
-// ---------- 9. AI 연결 ----------
+// ---------- 9. MCP 연결 ----------
 // 이 스크립트 안에 MCP 서버 중계소를 열고(빈 포트), AI 프로그램 둘(Claude Code, Cursor)이 붙은 모습을 찍는다
 const aiPort = await new Promise((resolve) => {
   const srv = createServer();
@@ -302,10 +302,10 @@ const hub = new Link({ name: 'Claude Code', port: aiPort, origins: [] });
 const second = new Link({ name: 'Cursor', port: aiPort, origins: [] });
 await hub.start();
 await second.start();
-await openMenu('도구', 'AI 연결');
+await openMenu('도구', 'MCP 연결');
 await shot('09-tools-menu', null, { x: 0, y: 0, width: 640, height: 220 });
-await page.locator('.menu-dropdown .menu-item', { hasText: 'AI 연결' }).last().click();
-const aiDialog = page.getByRole('dialog', { name: 'AI 연결' });
+await page.locator('.menu-dropdown .menu-item', { hasText: 'MCP 연결' }).last().click();
+const aiDialog = page.getByRole('dialog', { name: 'MCP 연결' });
 await aiDialog.getByLabel('포트').fill(String(aiPort));
 await aiDialog.getByRole('button', { name: '연결', exact: true }).click();
 await aiDialog.getByTestId('ai-clients').filter({ hasText: 'Cursor' }).waitFor();

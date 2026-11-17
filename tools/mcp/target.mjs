@@ -21,7 +21,7 @@ export class TargetGuard {
       return {
         block:
           "KGBone 창 연결이 끊겨 이번 호출은 실행하지 않았습니다. 지금부터는 창 없는 문서(이 서버 안)를 고칩니다 — 창에서 고치던 내용은 여기 없습니다. " +
-          "창을 다시 이으려면 사용자에게 KGBone 창의 도구 → AI 연결을 눌러 달라고 하세요(app_status로 확인). 창 없이 계속하려면 같은 호출을 다시 하세요.",
+          "창을 다시 이으려면 사용자에게 KGBone 창의 도구 → MCP 연결을 눌러 달라고 하세요(app_status로 확인). 창 없이 계속하려면 같은 호출을 다시 하세요.",
       };
     }
     if (prev === "headless" && where === "window") {

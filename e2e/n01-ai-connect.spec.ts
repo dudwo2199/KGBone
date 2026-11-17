@@ -1,4 +1,4 @@
-// N01: 도구 → AI 연결. 실제 MCP 서버(tools/mcp/server.mjs)를 표준 입출력으로 띄우고, 창을 그 중계소에 이은 뒤
+// N01: 도구 → MCP 연결. 실제 MCP 서버(tools/mcp/server.mjs)를 표준 입출력으로 띄우고, 창을 그 중계소에 이은 뒤
 // AI 쪽 도구 호출이 열린 창의 문서를 고치는지(화면에 보임, Ctrl+Z로 되돌림), 디스크 파일 열기·저장이 되는지 본다.
 import { expect, test } from '@playwright/test';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
@@ -67,14 +67,14 @@ test('e_n01_ai_connect_edits_open_window', async ({ page }) => {
     await expect.poll(async () => (await ai.tool('app_status')).data.role).toBe('중계소');
 
     await openApp(page);
-    await menu(page, '도구', 'AI 연결');
-    const dialog = page.getByRole('dialog', { name: 'AI 연결' });
+    await menu(page, '도구', 'MCP 연결');
+    const dialog = page.getByRole('dialog', { name: 'MCP 연결' });
     await dialog.getByLabel('포트').fill(String(port));
     await dialog.getByRole('button', { name: '연결', exact: true }).click();
     await expect(dialog.getByTestId('ai-status')).toContainText('연결됨');
     await expect(dialog.getByTestId('ai-clients')).toHaveText('시험 AI');
     await dialog.getByRole('button', { name: '닫기' }).click();
-    await expect(page.getByTestId('status-ai')).toContainText('AI 연결됨');
+    await expect(page.getByTestId('status-ai')).toContainText('MCP 연결됨');
 
     // AI가 본을 만들면 창의 트리에 바로 보인다
     await expect.poll(async () => (await ai.tool('app_status')).data.window).toBe(true);

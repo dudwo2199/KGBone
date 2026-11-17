@@ -785,7 +785,7 @@ select:focus {
   font-size: 10px;
 }
 
-/* AI 연결 대화상자·상태 표시 */
+/* MCP 연결 대화상자·상태 표시 */
 .ai-connect { display: flex; flex-direction: column; gap: 6px; min-width: 420px; }
 .ai-row { display: flex; align-items: center; gap: 8px; }
 .ai-label { width: 5.5em; color: var(--muted, #9aa0a6); flex: none; }
@@ -793,5 +793,6 @@ select:focus {
 .ai-status.waiting, .ai-status.connecting, .ai-status.busy { color: #e0b050; }
 .ai-error { color: #ef6b6b; }
 .ai-help { font-size: 12px; }
+.ai-intro { margin-bottom: 4px; color: var(--muted, #9aa0a6); }
 .status-ai { border: none; background: transparent; color: #e0b050; cursor: pointer; padding: 0 6px; font: inherit; }
 .status-ai.connected { color: #6fcf6f; }

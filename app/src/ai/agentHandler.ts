@@ -1,4 +1,4 @@
-// AI 연결로 창에 온 일 처리: MCP 서버(tools/mcp/live.mjs)가 보내는 요청을 이 창의 핵심·파일 흐름·명령으로 실행한다.
+// MCP 연결로 창에 온 일 처리: MCP 서버(tools/mcp/live.mjs)가 보내는 요청을 이 창의 핵심·파일 흐름·명령으로 실행한다.
 // 편집은 모두 창의 문서·되돌리기 기록에 쌓여 화면에 바로 보이고 Ctrl+Z로 되돌릴 수 있다.
 import type { Core, PngSequenceOptions, SpineExportOptions } from '../core/bridge';
 import type { PoseRequest } from '../core/types';

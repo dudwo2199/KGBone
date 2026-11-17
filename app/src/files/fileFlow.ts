@@ -79,7 +79,7 @@ export class FileFlow {
   }
 
   /**
-   * AI 연결에서 열기·가져오기: 대화상자 없이 경고를 돌려준다. 저장하지 않은 변경이 있으면 사용자에게 묻고,
+   * MCP 연결에서 열기·가져오기: 대화상자 없이 경고를 돌려준다. 저장하지 않은 변경이 있으면 사용자에게 묻고,
    * 취소하면 예외. 실패도 예외(부른 쪽이 알린다)
    */
   async openForAgent(path: string, kind: 'kgbone' | 'spineJson'): Promise<Warning[]> {
@@ -89,7 +89,7 @@ export class FileFlow {
     return warnings;
   }
 
-  /** AI 연결에서 저장: path가 없으면 연 파일에. 저장한 경로를 돌려주고, 실패하면 예외 */
+  /** MCP 연결에서 저장: path가 없으면 연 파일에. 저장한 경로를 돌려주고, 실패하면 예외 */
   async saveForAgent(path: string | null): Promise<string> {
     const target = path ?? this.d.doc.get().filePath;
     if (!target) throw new Error('저장할 경로가 없습니다. path를 주세요.');
@@ -162,7 +162,7 @@ export class FileFlow {
     }
   }
 
-  /** 이미지 폴더의 PNG 원본을 핵심에 등록(내보내기·AI 연결의 그림용) */
+  /** 이미지 폴더의 PNG 원본을 핵심에 등록(내보내기·MCP 연결의 그림용) */
   async registerPngs(): Promise<void> {
     const dir = this.imagesDir();
     for (const e of this.d.images.get().entries) {

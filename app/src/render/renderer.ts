@@ -61,7 +61,7 @@ export class Renderer {
 
   /** WebGL2가 없으면 null */
   static create(canvas: HTMLCanvasElement, onTexture: () => void): Renderer | null {
-    const gl = canvas.getContext('webgl2', { alpha: false, antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: true }); // AI 연결 화면 찍기(view_screenshot)
+    const gl = canvas.getContext('webgl2', { alpha: false, antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: true }); // MCP 연결 화면 찍기(view_screenshot)
     if (!gl) return null;
     try {
       return new Renderer(gl, onTexture);

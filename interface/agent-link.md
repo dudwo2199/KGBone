@@ -1,4 +1,4 @@
-# AI 연결 메시지 (창 ↔ MCP 서버 중계소)
+# MCP 연결 메시지 (창 ↔ MCP 서버 중계소)
 
 구현: `tools/mcp/link.mjs`(중계소·MCP 서버 쪽), `app/src/ai/agentLink.ts`(창 쪽), `app/src/ai/agentHandler.ts`(창이 처리하는 요청), `tools/mcp/live.mjs`(MCP 도구 → 창 요청).
 

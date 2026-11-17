@@ -1,6 +1,6 @@
 // KGBone MCP 서버: 표준 입출력으로 한 줄에 JSON-RPC 메시지 하나씩 주고받는다.
 // kgbone.wasm을 Node에서 직접 돌리므로 exe가 필요 없다(스마트 앱 컨트롤에 걸리지 않는다).
-// KGBone 창(도구 → AI 연결)이 붙어 있으면 그 창의 문서를, 아니면 이 서버 안의 창 없는 문서를 고친다(link.mjs).
+// KGBone 창(도구 → MCP 연결)이 붙어 있으면 그 창의 문서를, 아니면 이 서버 안의 창 없는 문서를 고친다(link.mjs).
 // 실행: node tools/mcp/server.mjs   (등록: 저장소 루트의 .mcp.json)
 // 환경 변수: KGBONE_MCP_ROOTS(파일 허용 폴더 추가), KGBONE_MCP_PORT(창 연결 포트, 기본 47821),
 //           KGBONE_MCP_LIVE=0(창 연결 끄기), KGBONE_MCP_ORIGINS(창 연결을 허용할 웹 주소 추가), KGBONE_WASM(wasm 경로)
@@ -17,7 +17,7 @@ const PROTOCOL_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
 const INSTRUCTIONS =
   "KGBone은 2D 스켈레탈 애니메이션 에디터다. 이 서버는 문서 하나를 들고 있다. " +
   "흐름: doc_new 또는 doc_open → command_list로 명령 찾기 → command_run / command_batch로 편집 → doc_inspect·pose·render로 확인 → doc_save. " +
-  "사용자가 KGBone 창에서 도구 → AI 연결을 눌러 두면 열린 창의 문서를 고친다(화면에 바로 보임, view_screenshot으로 화면 확인). 연결 상태는 app_status. " +
+  "사용자가 KGBone 창에서 도구 → MCP 연결을 눌러 두면 열린 창의 문서를 고친다(화면에 바로 보임, view_screenshot으로 화면 확인). 연결 상태는 app_status. " +
   "좌표는 y가 위로 커지고 각도는 도(반시계)다. 파일은 서버를 띄운 폴더 안에서만 읽고 쓴다.";
 
 /**

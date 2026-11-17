@@ -1,5 +1,5 @@
-// 'disk:' 경로(AI 연결로 연 이 PC의 실제 파일)를 처리하는 Platform 감싸개.
-// 브라우저 판은 디스크를 직접 못 읽으므로 AI 연결 중계소(tools/mcp/link.mjs)를 거친다. Tauri 판은 앞머리만 떼고 바로 읽는다.
+// 'disk:' 경로(MCP 연결로 연 이 PC의 실제 파일)를 처리하는 Platform 감싸개.
+// 브라우저 판은 디스크를 직접 못 읽으므로 MCP 연결 중계소(tools/mcp/link.mjs)를 거친다. Tauri 판은 앞머리만 떼고 바로 읽는다.
 // 그 밖의 경로(메모리 '/…', File System Access 'fsa:/…')는 원래 Platform이 처리한다.
 import { base64ToBytes, bytesToBase64 } from '../files/base64';
 import type { FileFilter, ImageEntry, Platform } from './platform';

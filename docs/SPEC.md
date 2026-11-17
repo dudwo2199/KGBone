@@ -147,11 +147,11 @@
 | M15 | 물리 제약(고정 간격, reset 키, 초기화)이 연속 프레임에서 핵심과 같음 | C: `m15_*`, `m15_golden_sequences_match_core`(`spine43-physics`, `unity-stage2-physics`) |
 | M16 | 물리 월드 움직임 반영 옵션(기본 0)과 컴포넌트 물리 진행(플레이 모드, 0.1초 상한, 멈춰도 진행, `ResetPhysics`), 제약 경고 없음 | C: `m16_*`. Y: `m16_*`, `m10_importer_no_constraint_warning` |
 
-## N. AI 연결 (MCP)
+## N. MCP 연결
 MCP 서버(`tools/mcp/server.mjs`)가 열린 KGBone 창의 문서를 편집한다. 메시지: `interface/agent-link.md`. 사용 설명서 9장.
 | 번호 | 기능 | 완료 기준 |
 |---|---|---|
-| N01 | 창 쪽 연결(도구 → AI 연결): 인사, 붙은 AI 목록, 받은 차례대로 처리, AI 프로그램이 없으면 기다렸다가 다시 붙기, [연결]을 누른 창만 붙은 창의 연결을 가져가고 자동 연결·다시 붙기는 기다림, 포트·자동 연결 기억, `disk:` 경로는 연결을 거쳐 읽고 쓰기, AI가 부른 화면 명령이 대화상자를 열면 바로 닫고 실패로 알림 | U: `f_n01_*`. E: `e_n01_ai_connect_edits_open_window`(AI가 만든 본이 트리에 보이고 창의 Ctrl+Z로 되돌림, 화면 명령, 대화상자 여는 명령은 실패·대화상자 없음, 디스크 파일 열기·무편집 저장 바이트 동일, 화면 찍기, 허용 폴더 밖 거절) |
+| N01 | 창 쪽 연결(도구 → MCP 연결): 인사, 붙은 AI 목록, 받은 차례대로 처리, AI 프로그램이 없으면 기다렸다가 다시 붙기, [연결]을 누른 창만 붙은 창의 연결을 가져가고 자동 연결·다시 붙기는 기다림, 포트·자동 연결 기억, `disk:` 경로는 연결을 거쳐 읽고 쓰기, AI가 부른 화면 명령이 대화상자를 열면 바로 닫고 실패로 알림 | U: `f_n01_*`. E: `e_n01_ai_connect_edits_open_window`(AI가 만든 본이 트리에 보이고 창의 Ctrl+Z로 되돌림, 화면 명령, 대화상자 여는 명령은 실패·대화상자 없음, 디스크 파일 열기·무편집 저장 바이트 동일, 화면 찍기, 허용 폴더 밖 거절) |
 | N02 | 중계소: 먼저 뜬 MCP 서버가 열고 나중 서버는 그 중계소를 거쳐 붙음(여러 AI 동시), 중계소가 꺼지면 이어받음, 다른 웹사이트의 연결 거절(Origin), 창의 파일 작업은 허용 폴더 안만 | N: `mcp_link_allowed_origins`, `mcp_link_hub_routes_calls_from_several_clients_and_refuses_other_sites`, `mcp_link_client_takes_over_when_hub_closes`, `mcp_link_auto_connect_waits_and_explicit_connect_takes_over` |
 | N03 | MCP 도구가 창이 붙으면 창의 문서를, 아니면 창 없는 문서를 고침. 창이 붙으면 화면 명령(scope: ui)과 `view_screenshot`, 연결 상태는 `app_status`. 창 연결이 끊기면 그 뒤 첫 편집 호출은 실행하지 않고 알리고(엉뚱한 문서를 모르고 고치지 않게), 창이 붙으면 그 사실을 결과에 덧붙임 | N: `mcp_stdio_server_edits_connected_window_document`, `mcp_target_guard_blocks_once_after_window_drops_and_notes_when_window_joins` |
 

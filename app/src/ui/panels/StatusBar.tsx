@@ -42,10 +42,10 @@ export function StatusBar() {
         <button
           className={'status-ai ' + agent}
           data-testid="status-ai"
-          title={agentClients.length ? `붙은 AI: ${agentClients.join(', ')}` : 'AI 연결'}
+          title={agentClients.length ? `붙은 AI: ${agentClients.join(', ')}` : 'MCP 연결'}
           onClick={() => s.run('ai.connect')}
         >
-          {agent === 'connected' ? `AI 연결됨${agentClients.length ? ` (${agentClients.length})` : ''}` : 'AI 기다리는 중'}
+          {agent === 'connected' ? `MCP 연결됨${agentClients.length ? ` (${agentClients.length})` : ''}` : 'MCP 기다리는 중'}
         </button>
       )}
       <span className="status-warn" title="경고·오류 수">

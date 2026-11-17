@@ -120,7 +120,7 @@
 		{ "id": "option.compensate", "label": "자식 보정", "menu": "도구", "shortcut": [], "scope": "ui", "args": {} },
 
 		{ "id": "help.shortcuts", "label": "단축키 목록", "menu": "도움말", "shortcut": ["F1"], "scope": "ui", "args": {} },
-		{ "id": "ai.connect", "label": "AI 연결(MCP)…", "menu": "도구", "shortcut": [], "scope": "ui", "args": {} },
+		{ "id": "ai.connect", "label": "MCP 연결…", "menu": "도구", "shortcut": [], "scope": "ui", "args": {} },
 		{ "id": "help.about", "label": "KGBone 정보", "menu": "도움말", "shortcut": [], "scope": "ui", "args": {} }
 	],
 	"types": {

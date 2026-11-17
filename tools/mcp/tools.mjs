@@ -32,7 +32,7 @@ function checkCommand(s, id, { allowUi = true } = {}) {
       ? "파일 일은 doc_open, doc_save, export_* 도구를 쓰세요."
       : isWindow(s)
         ? "화면 명령은 command_batch에 넣을 수 없습니다. command_run으로 하나씩 실행하세요."
-        : "화면 명령이라 KGBone 창이 연결됐을 때만 쓸 수 있습니다(창의 도구 → AI 연결, app_status로 확인).";
+        : "화면 명령이라 KGBone 창이 연결됐을 때만 쓸 수 있습니다(창의 도구 → MCP 연결, app_status로 확인).";
   throw new Error(`${id}는 ${c.scope} 명령입니다. ${hint}`);
 }
 
@@ -245,7 +245,7 @@ export const TOOLS = [
     name: "app_status",
     description:
       "KGBone 창 연결 상태를 본다. window가 true면 다른 도구가 열린 KGBone 화면의 문서를 고친다(화면에 바로 보이고 Ctrl+Z로 되돌릴 수 있다). " +
-      "false면 이 서버 안의 창 없는 문서를 고친다. 창을 이으려면 KGBone에서 도구 → AI 연결을 누른다.",
+      "false면 이 서버 안의 창 없는 문서를 고친다. 창을 이으려면 KGBone에서 도구 → MCP 연결을 누른다.",
     inputSchema: schema(),
     run: (s, _a, ctx) => [text({ where: s.where, ...(ctx.link ? ctx.link.status() : { role: "꺼짐", window: false }) })],
   },
@@ -254,7 +254,7 @@ export const TOOLS = [
     description: "KGBone 창의 뷰포트(본·이미지·선택 표시 포함)를 PNG로 찍는다. 창이 연결돼 있을 때만 쓸 수 있다(app_status).",
     inputSchema: schema(),
     run: async (s) => {
-      if (!isWindow(s)) throw new Error("KGBone 창이 연결돼 있지 않습니다. 창에서 도구 → AI 연결을 누르세요. 창 없이 그림을 보려면 render를 쓰세요.");
+      if (!isWindow(s)) throw new Error("KGBone 창이 연결돼 있지 않습니다. 창에서 도구 → MCP 연결을 누르세요. 창 없이 그림을 보려면 render를 쓰세요.");
       const r = await s.screenshot();
       return [{ type: "image", data: r.base64, mimeType: "image/png" }, text({ width: r.width, height: r.height })];
     },

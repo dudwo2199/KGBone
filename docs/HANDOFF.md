@@ -1,6 +1,6 @@
 # 이어서 작업하기 (다른 PC용 인수인계)
 
-마지막 갱신: 2026-11-17(AI 연결 추가). 작업 명세 원본은 저장소 밖의 `KGBone 제작 프롬프트.txt`(0~9단계)이고, 규칙은 `CLAUDE.md`에 모두 옮겨 두었다.
+마지막 갱신: 2026-11-17(MCP 연결 추가). 작업 명세 원본은 저장소 밖의 `KGBone 제작 프롬프트.txt`(0~9단계)이고, 규칙은 `CLAUDE.md`에 모두 옮겨 두었다.
 
 ## 1. 지금 어디까지 했나
 | 단계 | 상태 |
@@ -81,7 +81,7 @@ npm run build:exe   # Tauri 실행 파일(src-tauri/target/release/KGBone.exe) �
 - `tools/mcp/server.mjs`: 창 없이 `kgbone.wasm`을 Node로 돌리는 MCP 서버. 저장소 루트의 `.mcp.json`에 등록돼 있어 이 폴더에서 Claude Code를 열면 승인 후 붙는다.
 - 도구: `doc_new`·`doc_open`·`doc_save`(파일), `doc_inspect`(구조 읽기), `command_list`·`command_run`·`command_batch`(`interface/commands.json`의 core 명령), `pose`(본 월드 값), `render`(PNG 그림), `images_reload`, `export_spine`, `export_png_sequence`.
 - 파일은 서버를 띄운 폴더 안에서만 읽고 쓴다. 다른 폴더를 더 허용하려면 환경 변수 `KGBONE_MCP_ROOTS`(`;`로 구분).
-- **AI 연결(창 잇기)**: 먼저 뜬 MCP 서버가 `127.0.0.1:47821`에 중계소(WebSocket)를 열고, 창에서 도구 → AI 연결을 누르면 창이 거기 붙는다. 그러면 도구가 창의 문서를 고친다(화면 명령·`view_screenshot`도 됨, 상태는 `app_status`). 나중에 뜬 다른 MCP 서버(Cursor·Codex 등)는 그 중계소를 거쳐 같은 창에 붙고, 중계소가 꺼지면 남은 서버가 이어받는다. 메시지 형식 `interface/agent-link.md`, 사용 설명서 9장(AI 프로그램별 설정), SPEC N, GAPS G-29. 환경 변수: `KGBONE_MCP_PORT`, `KGBONE_MCP_LIVE=0`(끄기), `KGBONE_MCP_ORIGINS`(허용 웹 주소 추가).
+- **MCP 연결(창 잇기)**: 먼저 뜬 MCP 서버가 `127.0.0.1:47821`에 중계소(WebSocket)를 열고, 창에서 도구 → MCP 연결을 누르면 창이 거기 붙는다. 그러면 도구가 창의 문서를 고친다(화면 명령·`view_screenshot`도 됨, 상태는 `app_status`). 나중에 뜬 다른 MCP 서버(Cursor·Codex 등)는 그 중계소를 거쳐 같은 창에 붙고, 중계소가 꺼지면 남은 서버가 이어받는다. 메시지 형식 `interface/agent-link.md`, 사용 설명서 9장(AI 프로그램별 설정), SPEC N, GAPS G-29. 환경 변수: `KGBONE_MCP_PORT`, `KGBONE_MCP_LIVE=0`(끄기), `KGBONE_MCP_ORIGINS`(허용 웹 주소 추가).
 - `app/public/kgbone.wasm`이 필요하다. Rust가 있으면 `npm run wasm`, 없으면 `npm run wasm:fetch`(GitHub Pages에 올라간 origin main 빌드를 받는다 — Rust 핵심을 이 PC에서 고쳤다면 쓰면 안 된다).
 - Rust 없이 화면 흐름 테스트를 돌리려면: `npm run wasm:fetch` 후 `npx vite --config app/vite.config.ts`를 띄워 두고 `npx playwright test`.
 

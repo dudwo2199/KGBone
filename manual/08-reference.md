@@ -139,4 +139,4 @@
 [docs/GAPS.md](../docs/GAPS.md)에 정리되어 있습니다.
 
 ---
-[← 7. 파일과 내보내기](07-files-export.md) · [차례](README.md) · [다음: 9. AI 연결 →](09-ai-connect.md)
+[← 7. 파일과 내보내기](07-files-export.md) · [차례](README.md) · [다음: 9. MCP 연결 →](09-ai-connect.md)

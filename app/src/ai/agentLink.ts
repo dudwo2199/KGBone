@@ -1,4 +1,4 @@
-// AI 연결: 이 창을 이 PC의 KGBone MCP 서버 중계소(ws://127.0.0.1:포트)에 잇는다.
+// MCP 연결: 이 창을 이 PC의 KGBone MCP 서버 중계소(ws://127.0.0.1:포트)에 잇는다.
 // 브라우저 페이지는 서버를 열 수 없으므로 창이 중계소에 붙으러 간다. 중계소는 AI 프로그램(Claude Code, Cursor, Codex …)이
 // 띄운 MCP 서버(tools/mcp/server.mjs)가 연다. 메시지 형식은 tools/mcp/link.mjs 머리말과 같다.
 import { Store } from '../state/store';
@@ -141,7 +141,7 @@ export class AgentLink extends Store<AgentLinkState> {
   fs<T = unknown>(op: string, args: Record<string, unknown>): Promise<T> {
     const ws = this.ws;
     if (!ws || ws.readyState !== OPEN || this.get().status !== 'connected') {
-      return Promise.reject(new Error('AI 연결이 끊겨 있어 디스크 파일을 읽고 쓸 수 없습니다(도구 → AI 연결)'));
+      return Promise.reject(new Error('MCP 연결이 끊겨 있어 디스크 파일을 읽고 쓸 수 없습니다(도구 → MCP 연결)'));
     }
     const id = this.nextFs++;
     return new Promise<T>((resolve, reject) => {
@@ -192,7 +192,7 @@ export class AgentLink extends Store<AgentLinkState> {
         // 이미 닫힘
       }
     }
-    this.failFs('AI 연결이 끊겼습니다');
+    this.failFs('MCP 연결이 끊겼습니다');
   }
 
   private failFs(message: string): void {
@@ -226,7 +226,7 @@ export class AgentLink extends Store<AgentLinkState> {
     ws.onclose = () => {
       if (this.ws !== ws) return;
       this.ws = null;
-      this.failFs('AI 연결이 끊겼습니다');
+      this.failFs('MCP 연결이 끊겼습니다');
       if (!this.want) return this.set({ status: 'off', clients: [] });
       // AI 프로그램(MCP 서버)이 아직 없거나 꺼졌다(또는 다른 창이 연결돼 있다): 기다렸다가 다시 붙는다
       this.set({ status: this.busy ? 'busy' : 'waiting', clients: [] });
@@ -255,7 +255,7 @@ export class AgentLink extends Store<AgentLinkState> {
       case 'replaced':
         this.want = false;
         this.closeSocket();
-        this.set({ status: 'off', clients: [], error: '다른 KGBone 창이 AI 연결을 가져가서 이 창의 연결을 끊었습니다' });
+        this.set({ status: 'off', clients: [], error: '다른 KGBone 창이 MCP 연결을 가져가서 이 창의 연결을 끊었습니다' });
         return;
       case 'fs-result': {
         const p = this.fsPending.get(m.id as number);

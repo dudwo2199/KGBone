@@ -39,7 +39,7 @@ async function start() {
     s.ui.notify('error', `실행 인자 파일을 열지 못했습니다: ${e instanceof Error ? e.message : String(e)}`);
   }
   s.ui.set({ ready: true });
-  // AI 연결: 자동 연결을 켜 두었으면 잇는다
+  // MCP 연결: 자동 연결을 켜 두었으면 잇는다
   s.agent.autoStart();
   // 자동 테스트·디버그용
   (window as unknown as { __kgbone?: unknown }).__kgbone = s;

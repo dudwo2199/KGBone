@@ -1,4 +1,4 @@
-// AI 연결로 온 화면 명령: 대화상자를 여는 명령은 기다리지 않고 바로 닫고 실패로 알린다.
+// MCP 연결로 온 화면 명령: 대화상자를 여는 명령은 기다리지 않고 바로 닫고 실패로 알린다.
 import { describe, expect, it } from 'vitest';
 import type { Services } from '../services';
 import { DialogService } from '../ui/dialogs/service';
@@ -10,7 +10,7 @@ function fake(run: (s: Services, id: string) => Promise<unknown>) {
   return { s, dialogs };
 }
 
-describe('AI 연결 화면 명령', () => {
+describe('MCP 연결 화면 명령', () => {
   it('f_n01_ui_command_that_opens_dialog_is_cancelled_and_fails', async () => {
     let answer: unknown = 'not set';
     const { s, dialogs } = fake(async (ctx) => {

@@ -6,7 +6,7 @@ export function base64ToBytes(b64: string): Uint8Array {
   return out;
 }
 
-/** 바이트 → base64(AI 연결로 디스크에 쓰기) */
+/** 바이트 → base64(MCP 연결로 디스크에 쓰기) */
 export function bytesToBase64(bytes: Uint8Array): string {
   let bin = '';
   const CHUNK = 0x8000;

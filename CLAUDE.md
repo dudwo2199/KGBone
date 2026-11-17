@@ -29,12 +29,12 @@ crates/kgbone-wasm/   핵심을 WebAssembly C ABI로 내보내는 얇은 층
 src-tauri/            앱 본체(Tauri 2): 파일·창·레지스트리. 계산은 kgbone-core에 맡김
 app/                  화면(React + TypeScript + Vite)
   src/core/           types.ts(모델 타입), bridge.ts(Core 인터페이스), wasm.ts(불러오기)
-  src/ai/             AI 연결: agentLink.ts(MCP 서버 중계소에 붙기), agentHandler.ts(창이 처리하는 요청) — interface/agent-link.md
-  src/platform/       Platform 인터페이스, tauri.ts, web.ts(메모리 파일, 자동 테스트용), diskPlatform.ts('disk:' 경로 = AI 연결로 연 파일)
+  src/ai/             MCP 연결: agentLink.ts(MCP 서버 중계소에 붙기), agentHandler.ts(창이 처리하는 요청) — interface/agent-link.md
+  src/platform/       Platform 인터페이스, tauri.ts, web.ts(메모리 파일, 자동 테스트용), diskPlatform.ts('disk:' 경로 = MCP 연결로 연 파일)
   src/commands/       화면 명령 등록: 메뉴·단축키·버튼이 모두 같은 명령 id를 부른다
   src/render/         WebGL2 미리보기(첨부물 종류별 그리기)
   src/ui/             패널: 메뉴, 도구 모음, 뷰포트, 트리, 속성, 도프시트, 그래프, 재생
-interface/            commands.json(명령 목록 원본), core-api.md, tauri-commands.md, agent-link.md(AI 연결 메시지)
+interface/            commands.json(명령 목록 원본), core-api.md, tauri-commands.md, agent-link.md(MCP 연결 메시지)
 docs/                 SPEC, UI_SPEC, FORMAT, SOURCES, GAPS, LOG
 manual/               사용 설명서(장별 md, images/ 스크린샷). 화면을 바꾸면 해당 장과 스크린샷도 고친다
 samples/              직접 만든 시험 파일(tools/gen-samples.mjs)
@@ -45,7 +45,7 @@ unity/                유니티 런타임
   KGBoneSandbox/      확인용 유니티 프로젝트(EditMode 테스트, 화면 찍기)
 tools/                생성기·빌드·테스트 실행 도우미
   mcp/                MCP 서버: kgbone.wasm을 Node로 돌려 편집 명령을 도구로 내보낸다. 등록은 루트 .mcp.json.
-                      창이 AI 연결로 붙으면 그 창의 문서를 고친다(link.mjs 중계소, live.mjs, ws.mjs). 외부 패키지 없음
+                      창이 MCP 연결로 붙으면 그 창의 문서를 고친다(link.mjs 중계소, live.mjs, ws.mjs). 외부 패키지 없음
 ```
 
 ## 3. 코드 구성

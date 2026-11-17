@@ -28,7 +28,7 @@ export interface Services {
   player: Player;
   pose: PoseService;
   commands: CommandRegistry<Services>;
-  /** AI 연결(MCP 서버 중계소) */
+  /** MCP 연결(KGBone MCP 서버 중계소에 창 잇기) */
   agent: AgentLink;
   /** 명령 실행(메뉴·단축키·버튼 공용). 오류는 알림으로 */
   run(id: string, args?: Record<string, unknown>): void;
@@ -37,7 +37,7 @@ export interface Services {
 export function createServices(core: Core, basePlatform: Platform, dialogs: DialogService, agent: AgentLink = new AgentLink()): Services {
   const ui = new UiStore();
   const notify = ui.notify;
-  // 'disk:' 경로(AI가 연 이 PC의 파일)는 AI 연결을 거쳐 읽고 쓴다
+  // 'disk:' 경로(AI가 연 이 PC의 파일)는 MCP 연결을 거쳐 읽고 쓴다
   const platform = new DiskPlatform(basePlatform, agent);
   const doc = new DocStore(core, notify, basePlatform instanceof WebPlatform ? SAMPLE_DIR : '');
   const images = new ImageLibrary(platform, core, notify);

@@ -57,7 +57,7 @@ export class DialogService extends Store<{ stack: OpenDialog[] }> implements App
       case 'shortcuts':
         return '단축키 목록';
       case 'aiConnect':
-        return 'AI 연결';
+        return 'MCP 연결';
       case 'pickImage':
         return '이미지 고르기';
       case 'exportSpine':

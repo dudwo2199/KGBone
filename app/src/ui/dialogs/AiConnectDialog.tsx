@@ -1,4 +1,4 @@
-// 도구 → AI 연결: 이 창을 AI 프로그램(Claude Code, Cursor, Codex …)이 띄운 KGBone MCP 서버에 잇는다.
+// 도구 → MCP 연결: 이 창을 AI 프로그램(Claude Code, Cursor, Codex …)이 띄운 KGBone MCP 서버에 잇는다.
 import { useState } from 'react';
 import type { AgentLinkState } from '../../ai/agentLink';
 import { useServices } from '../../services';
@@ -25,7 +25,7 @@ export function AiConnectDialog({ done }: { done(): void }) {
   const on = st.status !== 'off';
   return (
     <Modal
-      title="AI 연결"
+      title="MCP 연결"
       onCancel={done}
       buttons={
         <>
@@ -41,6 +41,7 @@ export function AiConnectDialog({ done }: { done(): void }) {
       }
     >
       <div className="ai-connect" data-testid="ai-connect">
+        <div className="ai-intro">AI 프로그램(Claude Code·Cursor·Codex 등)이 MCP로 이 창의 문서를 편집하게 잇습니다.</div>
         <div className="ai-row">
           <span className="ai-label">상태</span>
           <span className={'ai-status ' + st.status} data-testid="ai-status">
@@ -76,7 +77,7 @@ export function AiConnectDialog({ done }: { done(): void }) {
         <div className="pre ai-help">
           {'1. AI 프로그램에 KGBone MCP 서버를 등록한다(한 번만):\n' +
             '   명령 node, 인자 <KGBone 폴더>/tools/mcp/server.mjs\n' +
-            '   Claude Code·Cursor·Codex·VS Code별 설정은 사용 설명서 "AI 연결" 장.\n' +
+            '   Claude Code·Cursor·Codex·VS Code별 설정은 사용 설명서 "MCP 연결" 장.\n' +
             '2. 여기서 [연결]을 누른다. AI가 고친 것은 화면에 바로 보이고 Ctrl+Z로 되돌린다.\n' +
             '여러 AI가 함께 붙으면 받은 차례대로 하나씩 실행한다.'}
         </div>
