@@ -1,12 +1,12 @@
 # 이어서 작업하기 (다른 PC용 인수인계)
 
-마지막 갱신: 2026-11-17(MCP 연결 추가). 작업 명세 원본은 저장소 밖의 `KGBone 제작 프롬프트.txt`(0~9단계)이고, 규칙은 `CLAUDE.md`에 모두 옮겨 두었다.
+마지막 갱신: 2026-11-17(9단계 마무리). 작업 명세 원본은 저장소 밖의 `KGBone 제작 프롬프트.txt`(0~9단계)이고, 규칙은 `CLAUDE.md`에 모두 옮겨 두었다.
 
 ## 1. 지금 어디까지 했나
 | 단계 | 상태 |
 |---|---|
 | 0~8단계 | 끝남 (docs/LOG.md에 단계별 끝난 시각) |
-| 9단계 마무리 | **남음**: 최신 커밋의 실행 파일 받기, LOG 기록, 최종 보고(시간·파일 수·코드 줄 수·테스트 수 표, 3분 시연 순서, exe 경로) |
+| 9단계 마무리 | 끝남(2026-11-17): 최종 보고 `docs/REPORT.md`(시간·규모·테스트 787개·실행 파일·3분 시연 순서) |
 | 9단계 뒤 추가 | 웹 판(설치형 웹 앱, GitHub Pages), MCP 서버, 뷰포트 그림 끌어 옮기기(D14), README — 끝남 |
 | 유니티 런타임 1단계 | 끝남(배포 전, 아래 1-1) |
 
@@ -146,11 +146,11 @@ npm run build:exe   # Tauri 실행 파일(src-tauri/target/release/KGBone.exe) �
 - `app`: React 화면. 플랫폼 3종(`platform/tauri.ts`, `browser-fs.ts`(File System Access), `web.ts`(메모리, 테스트용)).
 - 명령 원본: `interface/commands.json` (메뉴·단축키·버튼 공용, Rust 테스트가 등록 누락을 잡음).
 
-## 6. 9단계에서 할 일 (체크리스트)
-- [ ] `build-output`에서 최신 커밋(9c2e837 이후) 빌드 결과 확인, `KGBone.exe` 받기(`dist-exe/`는 .gitignore에 추가하거나 커밋하지 않기)
-- [ ] `docs/LOG.md`에 9단계 끝난 시각 기록
-- [ ] 최종 보고: 걸린 시간(LOG 기준), 파일 수, Rust/TS 줄 수, 테스트 수, 3분 시연 순서, exe 경로, 서명 없음 경고 안내
-- [ ] 커밋(`[ADD]/[CHG]/[DEL]/[FIX]` + 한국어, 공동 작업자 줄 금지) 후 `git push origin main` (`--force` 금지)
+## 6. 9단계에서 할 일 (체크리스트, 끝남)
+- [x] `build-output`에서 최신 커밋(9c2e837 이후) 빌드 결과 확인, `KGBone.exe` 받기(`dist-exe/`는 .gitignore에 추가하거나 커밋하지 않기)
+- [x] `docs/LOG.md`에 9단계 끝난 시각 기록
+- [x] 최종 보고(`docs/REPORT.md`): 걸린 시간(LOG 기준), 파일 수, Rust/TS 줄 수, 테스트 수, 3분 시연 순서, exe 경로, 서명 없음 경고 안내
+- [x] 커밋(`[ADD]/[CHG]/[DEL]/[FIX]` + 한국어, 공동 작업자 줄 금지) 후 `git push origin main` (`--force` 금지)
 
 ## 7. 참고
 - 루트의 `AGENTS.md`는 이 작업에서 만든 파일이 아니다(누가 만들었는지 확인 전이라 커밋하지 않음).

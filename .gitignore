@@ -35,3 +35,6 @@ unity/KGBoneSandbox/Assets/Scenes.meta
 
 # MCP 서버 배포 묶음(tools/pack-mcp.mjs)
 dist-mcp/
+
+# 9단계: CI에서 받은 실행 파일
+dist-exe/
