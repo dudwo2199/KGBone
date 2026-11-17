@@ -21,6 +21,8 @@ const TARGETS = [
   ["spine43-events", "samples/spine43/events.json"],
   ["spine43-ik", "samples/spine43/ik.json"],
   ["spine43-transform", "samples/spine43/transform.json"],
+  ["unity-stage2-slider", "samples/kgbone/unity-stage2-slider.kgbone"],
+  ["unity-stage2-mixed", "samples/kgbone/unity-stage2-mixed.kgbone"],
 ];
 
 /** 애니메이션 길이 d에 대한 요청들(시점, 반복 재생, 이벤트 구간) */

@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: 965a89e9c3addf34d8f16b9da6c18b1d
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: b9889f1719a566041a446eeab295ee31, type: 3}
+  pixelsPerUnit: 100
+  maxTextureSize: 4096
+  filterMode: 1

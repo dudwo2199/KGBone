@@ -38,7 +38,7 @@ namespace KGBone.Editor
             }
 
             var warnings = new List<string>();
-            if (model.ConstraintCount > 0) warnings.Add($"제약 {model.ConstraintCount}개는 1단계 런타임에서 계산하지 않습니다");
+            warnings.AddRange(model.ConstraintWarnings());
             if (model.HasClipping) warnings.Add("클리핑은 1단계 런타임에서 자르지 않고 그립니다");
             if (model.HasSequence) warnings.Add("시퀀스는 1단계 런타임에서 셋업 프레임으로 그립니다");
 

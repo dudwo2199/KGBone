@@ -398,6 +398,48 @@ namespace KGBone.Tests
             Assert.AreEqual(0f, o.Bones[2].RotationX, 1e-3f);
         }
 
+        // ---------- M13 슬라이더 (핵심 pose/slider.rs 테스트와 같은 값) ----------
+        static string Sl(string opts, float dialY, string extraAnims = "") =>
+            $@"{{""formatVersion"":1,""skeleton"":{{""bones"":[{{""name"":""root""}},{{""name"":""arm"",""parent"":""root"",""length"":10,""rotation"":10}},{{""name"":""dial"",""parent"":""root"",""y"":{F(dialY)}}}],
+                ""constraints"":[{{""type"":""slider"",""name"":""sl"",""animation"":""swing"",""time"":0.5,""mix"":0.75,""property"":""y"",""propertyFrom"":0,""propertyTo"":100{opts}}}],
+                ""animations"":[{{""name"":""swing"",""bones"":{{""arm"":{{""rotate"":[{{""time"":0,""v"":[0]}},{{""time"":2,""v"":[80]}}]}}}}}}{extraAnims}]}}}}";
+
+        [Test]
+        public void m13_slider_f_f06_slider_equals_animation_with_mix()
+        {
+            Assert.AreEqual(25f, Pose(Sl("", 0)).Locals[1].Rotation, 1e-3f);
+            Assert.AreEqual(40f, Pose(Sl(@",""bone"":""dial""", 50)).Locals[1].Rotation, 1e-3f);
+            Assert.AreEqual(70f, Pose(Sl(@",""bone"":""dial""", 300)).Locals[1].Rotation, 1e-3f);
+            Assert.AreEqual(10f, Pose(Sl(@",""bone"":""dial"",""loop"":true", 300)).Locals[1].Rotation, 1e-3f);
+            Assert.AreEqual(25f, Pose(Sl(@",""additive"":true", 0)).Locals[1].Rotation, 1e-3f);
+            var poser = new SkeletonPoser(KGBoneLoader.Load(Sl("", 0, @",{""name"":""drive"",""constraints"":{""sl"":{""time"":[{""time"":0,""v"":[1.5]}]}}}")));
+            Assert.AreEqual(55f, poser.Compute(new PoseRequest { Animation = "drive" }).Locals[1].Rotation, 1e-3f);
+        }
+
+        [Test]
+        public void m13_slider_skips_own_keys()
+        {
+            // 적용하는 애니메이션 swing 안에 sl 자신의 time·mix 키가 있다: 순환 없이 건너뛰고 본 키만 적용된다
+            var text = Sl("", 0).Replace(@"""rotate"":[{""time"":0,""v"":[0]},{""time"":2,""v"":[80]}]}}",
+                @"""rotate"":[{""time"":0,""v"":[0]},{""time"":2,""v"":[80]}]}},""constraints"":{""sl"":{""time"":[{""time"":0,""v"":[1.9]}],""mix"":[{""time"":0,""v"":[0]}]}}");
+            var m = KGBoneLoader.Load(text);
+            Assert.AreEqual(2, m.FindAnimation("swing").Constraints.Count);
+            var o = new SkeletonPoser(m).Compute(new PoseRequest());
+            Assert.AreEqual(25f, o.Locals[1].Rotation, 1e-3f);
+            // swing 자체를 재생하면 자기 키(time 1.9, mix 0)가 제약 값을 바꾼다: 그 뒤 슬라이더는 mix 0이라 아무것도 안 함
+            o = new SkeletonPoser(m).Compute(new PoseRequest { Animation = "swing", Time = 1 });
+            Assert.AreEqual(50f, o.Locals[1].Rotation, 1e-3f);
+        }
+
+        [Test]
+        public void m10_constraint_warnings_only_unsupported_types()
+        {
+            var m = KGBoneLoader.Load(System.IO.File.ReadAllText(System.IO.Path.Combine(GoldenFile.RepoRoot(), "samples/kgbone/full-4.3.kgbone")));
+            CollectionAssert.AreEqual(new[] { "물리 제약 1개는 아직 계산하지 않습니다" }, m.ConstraintWarnings());
+            var ik = KGBoneLoader.Load(System.IO.File.ReadAllText(System.IO.Path.Combine(GoldenFile.RepoRoot(), "unity/com.kgbone.runtime/Tests/Golden/spine43-ik.kgbone")));
+            CollectionAssert.IsEmpty(ik.ConstraintWarnings());
+        }
+
         [Test]
         public void m14_loads_path_attachment()
         {

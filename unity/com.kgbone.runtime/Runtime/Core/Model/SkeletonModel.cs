@@ -72,6 +72,31 @@ namespace KGBone.Core
             return list;
         }
 
+        /// <summary>가져오기 경고: 아직 계산하지 않는 제약 종류마다 "{종류} 제약 {n}개는 아직 계산하지 않습니다".</summary>
+        public List<string> ConstraintWarnings()
+        {
+            var list = new List<string>();
+            foreach (var t in UnsupportedConstraintTypes())
+            {
+                int n = 0;
+                foreach (var c in Constraints) if (c.Type == t) n++;
+                list.Add($"{TypeLabel(t)} 제약 {n}개는 아직 계산하지 않습니다");
+            }
+            return list;
+        }
+
+        public static string TypeLabel(ConstraintType t)
+        {
+            switch (t)
+            {
+                case ConstraintType.Ik: return "IK";
+                case ConstraintType.Transform: return "트랜스폼";
+                case ConstraintType.Path: return "패스";
+                case ConstraintType.Physics: return "물리";
+                default: return "슬라이더";
+            }
+        }
+
         /// <summary>계산하는 제약 종류인지(2단계 묶음마다 늘어난다).</summary>
         public static bool IsSupported(ConstraintType t)
         {
@@ -79,6 +104,7 @@ namespace KGBone.Core
             {
                 case ConstraintType.Ik:
                 case ConstraintType.Transform:
+                case ConstraintType.Slider:
                     return true;
                 default: return false;
             }

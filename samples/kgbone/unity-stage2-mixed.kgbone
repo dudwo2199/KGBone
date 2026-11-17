@@ -1,0 +1,235 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone sample",
+	"imagesPath": "../images",
+	"skeleton": {
+		"fps": 30,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "어깨",
+				"parent": "root",
+				"length": 40,
+				"y": 50
+			},
+			{
+				"name": "팔꿈치",
+				"parent": "어깨",
+				"length": 35,
+				"x": 40
+			},
+			{
+				"name": "목표",
+				"parent": "root",
+				"x": 60,
+				"y": 10
+			},
+			{
+				"name": "따라쟁이",
+				"parent": "root",
+				"length": 20,
+				"x": -40,
+				"y": 20
+			},
+			{
+				"name": "모자",
+				"parent": "root",
+				"length": 15,
+				"y": 100
+			},
+			{
+				"name": "장식",
+				"parent": "root",
+				"length": 10,
+				"x": -60,
+				"skinRequired": true
+			}
+		],
+		"constraints": [
+			{
+				"type": "ik",
+				"name": "팔IK",
+				"bones": [
+					"어깨",
+					"팔꿈치"
+				],
+				"target": "목표",
+				"bendPositive": false,
+				"softness": 4
+			},
+			{
+				"type": "transform",
+				"name": "따라하기",
+				"bones": [
+					"따라쟁이"
+				],
+				"source": "팔꿈치",
+				"mixX": 0,
+				"mixY": 0,
+				"mixScaleX": 0,
+				"mixScaleY": 0,
+				"mixShearY": 0
+			},
+			{
+				"type": "slider",
+				"name": "모자기울기",
+				"animation": "모자",
+				"bone": "따라쟁이",
+				"property": "rotate",
+				"propertyFrom": -90,
+				"propertyTo": 90,
+				"mix": 1
+			},
+			{
+				"type": "transform",
+				"name": "장식따라",
+				"skinRequired": true,
+				"bones": [
+					"장식"
+				],
+				"source": "모자",
+				"localSource": true,
+				"localTarget": true,
+				"mixRotate": 0.5,
+				"mixX": 0,
+				"mixY": 0,
+				"mixScaleX": 0,
+				"mixScaleY": 0,
+				"mixShearY": 0
+			}
+		],
+		"skins": [
+			{
+				"name": "default"
+			},
+			{
+				"name": "장식",
+				"bones": [
+					"장식"
+				],
+				"constraints": [
+					"장식따라"
+				]
+			}
+		],
+		"animations": [
+			{
+				"name": "모자",
+				"bones": {
+					"모자": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									-30
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									30
+								]
+							}
+						]
+					}
+				}
+			},
+			{
+				"name": "뻗기",
+				"bones": {
+					"목표": {
+						"translate": [
+							{
+								"time": 0,
+								"v": [
+									0,
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									20,
+									50
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									-50,
+									30
+								]
+							}
+						]
+					}
+				},
+				"constraints": {
+					"팔IK": {
+						"ik": [
+							{
+								"time": 0,
+								"v": [
+									1,
+									4,
+									-1,
+									0,
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0.5,
+									0,
+									1,
+									0,
+									1
+								],
+								"curve": "stepped"
+							},
+							{
+								"time": 2,
+								"v": [
+									1,
+									10,
+									1,
+									0,
+									0
+								]
+							}
+						]
+					},
+					"따라하기": {
+						"transform": [
+							{
+								"time": 0,
+								"v": [
+									1,
+									0,
+									0,
+									0,
+									0,
+									0
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									0.2,
+									0,
+									0,
+									0,
+									0,
+									0
+								]
+							}
+						]
+					}
+				}
+			}
+		]
+	},
+	"editor": {}
+}

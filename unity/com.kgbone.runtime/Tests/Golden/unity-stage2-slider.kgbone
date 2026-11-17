@@ -1,0 +1,322 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone sample",
+	"imagesPath": "../images",
+	"skeleton": {
+		"fps": 30,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "팔",
+				"parent": "root",
+				"length": 40,
+				"rotation": 10
+			},
+			{
+				"name": "다리",
+				"parent": "root",
+				"length": 30,
+				"x": 20,
+				"rotation": -20
+			},
+			{
+				"name": "꼬리",
+				"parent": "root",
+				"length": 25,
+				"x": -20,
+				"rotation": 180
+			},
+			{
+				"name": "목",
+				"parent": "root",
+				"length": 20,
+				"y": 30,
+				"rotation": 90
+			},
+			{
+				"name": "다이얼",
+				"parent": "root",
+				"x": 100,
+				"y": 40
+			},
+			{
+				"name": "다이얼-자식",
+				"parent": "다이얼",
+				"x": 10,
+				"rotation": 30
+			}
+		],
+		"constraints": [
+			{
+				"type": "slider",
+				"name": "시점값",
+				"animation": "휘두르기",
+				"time": 0.4,
+				"mix": 0.75
+			},
+			{
+				"type": "slider",
+				"name": "본월드",
+				"animation": "차기",
+				"bone": "다이얼",
+				"property": "y",
+				"propertyFrom": 0,
+				"propertyTo": 100,
+				"mix": 1
+			},
+			{
+				"type": "slider",
+				"name": "본로컬반복",
+				"animation": "흔들기",
+				"bone": "다이얼-자식",
+				"property": "rotate",
+				"local": true,
+				"propertyFrom": 0,
+				"propertyTo": 20,
+				"loop": true,
+				"mix": 0.5
+			},
+			{
+				"type": "slider",
+				"name": "더하기",
+				"animation": "끄덕",
+				"time": 5,
+				"additive": true,
+				"mix": 0.6
+			}
+		],
+		"animations": [
+			{
+				"name": "휘두르기",
+				"bones": {
+					"팔": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									90
+								]
+							}
+						]
+					}
+				},
+				"constraints": {
+					"시점값": {
+						"mix": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							}
+						]
+					}
+				}
+			},
+			{
+				"name": "차기",
+				"bones": {
+					"다리": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									-60
+								]
+							}
+						],
+						"translate": [
+							{
+								"time": 0,
+								"v": [
+									0,
+									0
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									10,
+									5
+								]
+							}
+						]
+					}
+				}
+			},
+			{
+				"name": "흔들기",
+				"bones": {
+					"꼬리": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 0.5,
+								"v": [
+									40
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									-40
+								]
+							}
+						]
+					}
+				}
+			},
+			{
+				"name": "끄덕",
+				"bones": {
+					"목": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									25
+								]
+							}
+						],
+						"scale": [
+							{
+								"time": 0,
+								"v": [
+									1,
+									1
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									1.2,
+									0.9
+								]
+							}
+						]
+					}
+				}
+			},
+			{
+				"name": "조종",
+				"bones": {
+					"다이얼": {
+						"translate": [
+							{
+								"time": 0,
+								"v": [
+									0,
+									-40
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0,
+									30
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									0,
+									120
+								]
+							}
+						]
+					},
+					"다이얼-자식": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									50
+								]
+							}
+						]
+					}
+				},
+				"constraints": {
+					"시점값": {
+						"time": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									1.2
+								]
+							}
+						],
+						"mix": [
+							{
+								"time": 0,
+								"v": [
+									1
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									0.3
+								]
+							}
+						]
+					},
+					"더하기": {
+						"mix": [
+							{
+								"time": 0,
+								"v": [
+									0.2
+								]
+							},
+							{
+								"time": 2,
+								"v": [
+									1
+								]
+							}
+						]
+					}
+				}
+			}
+		]
+	},
+	"editor": {}
+}

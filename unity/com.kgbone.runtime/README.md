@@ -26,7 +26,7 @@ https://github.com/dudwo2199/KGBone.git?path=/unity/com.kgbone.runtime#main
 - 슬롯이 쓰는 블렌드 모드(normal, additive, multiply, screen)마다 머티리얼(셰이더 `KGBone/Unlit`)
 
 인스펙터(.kgbone 파일 선택): **Pixels Per Unit**(기본 100), **Max Texture Size**, **Filter Mode**.
-1단계에서 지원하지 않는 기능(제약, 클리핑, 시퀀스)이나 없는 이미지는 경고로 알려 준다.
+아직 계산하지 않는 기능(패스·물리 제약, 클리핑, 시퀀스)이나 없는 이미지는 경고로 알려 준다.
 KGBone에서 고쳐 저장한 `.kgbone`으로 덮어쓰면 다시 가져오고, 씬의 캐릭터도 재생하지 않은 상태에서 바로 새 내용으로 그려진다.
 
 ## 재생: KGBoneAnimation
@@ -73,11 +73,12 @@ if (anim.TryGetBone("손", out Vector3 position, out float rotation, out Vector2
 
 코드 없이 붙이려면 이펙트·무기 GameObject에 **KGBoneBoneFollower**를 붙이고 Target과 Bone Name을 고른다(Follow Rotation을 켜면 회전도 따라간다).
 
-## 지원 범위 (1단계)
+## 지원 범위 (1단계 + 2단계 진행 중)
 
 | 지원 | 아직 없음 |
 |---|---|
-| 본(상속 5종), 이미지·메시·가중치 메시·링크드 메시, 메시 변형 키 | 제약(IK, 트랜스폼, 패스, 물리, 슬라이더) — 2단계 |
+| 본(상속 5종), 이미지·메시·가중치 메시·링크드 메시, 메시 변형 키 | 패스·물리 제약 — 2단계 |
+| 제약: IK(1본·2본, 부드러움·늘이기·줄이기·부피), 트랜스폼(속성 매핑), 슬라이더, 제약 값 키, 스킨 전용 제약 | |
 | 슬롯 색·어두운 색, 첨부물 키, 그리기 순서 키, 블렌드 4종 | 클리핑, 시퀀스 — 3단계 |
 | 스킨 1개 + 스킨 전용 본, 이벤트, 선형·계단·베지어 곡선 | 애니메이션 섞기·전환, 여러 트랙, 실행 중 스킨 바꾸기, 본 덮어쓰기, Animator 연동 — 3단계 |
 

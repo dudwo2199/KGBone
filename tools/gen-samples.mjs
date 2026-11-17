@@ -481,4 +481,76 @@ const unityStage1 = {
   ],
 };
 write("kgbone/unity-stage1.kgbone", k(unityStage1));
+
+// 유니티 런타임 2단계 시험 파일: 슬라이더(시점 값·본 연결 월드/로컬·loop/clamp·additive·자기 키 건너뛰기·time/mix 키)
+const lin = (pairs) => pairs.map(([time, v]) => ({ time, v: Array.isArray(v) ? v : [v] }));
+const unityStage2Slider = {
+  fps: 30,
+  bones: [
+    { name: "root" },
+    { name: "팔", parent: "root", length: 40, rotation: 10 },
+    { name: "다리", parent: "root", length: 30, x: 20, rotation: -20 },
+    { name: "꼬리", parent: "root", length: 25, x: -20, rotation: 180 },
+    { name: "목", parent: "root", length: 20, y: 30, rotation: 90 },
+    { name: "다이얼", parent: "root", x: 100, y: 40 },
+    { name: "다이얼-자식", parent: "다이얼", x: 10, rotation: 30 },
+  ],
+  constraints: [
+    // ① 본 없이 time 값(키로 움직임)
+    { type: "slider", name: "시점값", animation: "휘두르기", time: 0.4, mix: 0.75 },
+    // ② 본 연결: 월드 y(부모 이동이 섞임)
+    { type: "slider", name: "본월드", animation: "차기", bone: "다이얼", property: "y", propertyFrom: 0, propertyTo: 100, mix: 1 },
+    // ③ 본 연결: 로컬 회전, loop(범위 넘는 값이 감김)
+    { type: "slider", name: "본로컬반복", animation: "흔들기", bone: "다이얼-자식", property: "rotate", local: true, propertyFrom: 0, propertyTo: 20, loop: true, mix: 0.5 },
+    // ④ additive, 범위 밖은 잘림
+    { type: "slider", name: "더하기", animation: "끄덕", time: 5, additive: true, mix: 0.6 },
+  ],
+  animations: [
+    // 휘두르기 안에 자기 자신(시점값)의 키: 슬라이더가 적용할 때는 건너뛴다
+    { name: "휘두르기", bones: { "팔": { rotate: lin([[0, 0], [1, 90]]) } }, constraints: { "시점값": { mix: lin([[0, 0]]) } } },
+    { name: "차기", bones: { "다리": { rotate: lin([[0, 0], [2, -60]]), translate: lin([[0, [0, 0]], [2, [10, 5]]]) } } },
+    { name: "흔들기", bones: { "꼬리": { rotate: lin([[0, 0], [0.5, 40], [1, -40]]) } } },
+    { name: "끄덕", bones: { "목": { rotate: lin([[0, 0], [1, 25]]), scale: lin([[0, [1, 1]], [1, [1.2, 0.9]]]) } } },
+    // 재생하는 애니메이션: 슬라이더 값·본을 움직인다
+    {
+      name: "조종",
+      bones: { "다이얼": { translate: lin([[0, [0, -40]], [1, [0, 30]], [2, [0, 120]]]) }, "다이얼-자식": { rotate: lin([[0, 0], [2, 50]]) } },
+      constraints: { "시점값": { time: lin([[0, 0], [2, 1.2]]), mix: lin([[0, 1], [2, 0.3]]) }, "더하기": { mix: lin([[0, 0.2], [2, 1]]) } },
+    },
+  ],
+};
+write("kgbone/unity-stage2-slider.kgbone", k(unityStage2Slider));
+
+// 유니티 런타임 2단계 시험 파일: 제약 순서(IK → 트랜스폼 → 슬라이더, 뒤가 앞 결과를 읽음), 스킨 전용 제약, 제약 키
+const unityStage2Mixed = {
+  fps: 30,
+  bones: [
+    { name: "root" },
+    { name: "어깨", parent: "root", length: 40, y: 50 },
+    { name: "팔꿈치", parent: "어깨", length: 35, x: 40 },
+    { name: "목표", parent: "root", x: 60, y: 10 },
+    { name: "따라쟁이", parent: "root", length: 20, x: -40, y: 20 },
+    { name: "모자", parent: "root", length: 15, y: 100 },
+    { name: "장식", parent: "root", length: 10, x: -60, skinRequired: true },
+  ],
+  constraints: [
+    { type: "ik", name: "팔IK", bones: ["어깨", "팔꿈치"], target: "목표", bendPositive: false, softness: 4 },
+    // 팔꿈치(IK 결과)의 월드 회전을 따라쟁이가 따라간다
+    { type: "transform", name: "따라하기", bones: ["따라쟁이"], source: "팔꿈치", mixX: 0, mixY: 0, mixScaleX: 0, mixScaleY: 0, mixShearY: 0 },
+    // 따라쟁이(트랜스폼 결과) 월드 회전으로 모자 애니메이션 시점을 정한다
+    { type: "slider", name: "모자기울기", animation: "모자", bone: "따라쟁이", property: "rotate", propertyFrom: -90, propertyTo: 90, mix: 1 },
+    // 스킨 전용 제약: "장식" 스킨에서만
+    { type: "transform", name: "장식따라", skinRequired: true, bones: ["장식"], source: "모자", localSource: true, localTarget: true, mixRotate: 0.5, mixX: 0, mixY: 0, mixScaleX: 0, mixScaleY: 0, mixShearY: 0 },
+  ],
+  skins: [{ name: "default" }, { name: "장식", bones: ["장식"], constraints: ["장식따라"] }],
+  animations: [
+    { name: "모자", bones: { "모자": { rotate: lin([[0, -30], [1, 30]]) } } },
+    {
+      name: "뻗기",
+      bones: { "목표": { translate: lin([[0, [0, 0]], [1, [20, 50]], [2, [-50, 30]]]) } },
+      constraints: { "팔IK": { ik: [{ time: 0, v: [1, 4, -1, 0, 0] }, { time: 1, v: [0.5, 0, 1, 0, 1], curve: "stepped" }, { time: 2, v: [1, 10, 1, 0, 0] }] }, "따라하기": { transform: lin([[0, [1, 0, 0, 0, 0, 0]], [2, [0.2, 0, 0, 0, 0, 0]]]) } },
+    },
+  ],
+};
+write("kgbone/unity-stage2-mixed.kgbone", k(unityStage2Mixed));
 console.log("samples 생성 완료:", root);

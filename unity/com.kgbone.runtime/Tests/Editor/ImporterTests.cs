@@ -99,7 +99,9 @@ namespace KGBone.Tests
             File.Copy(Path.Combine(Repo, "samples", "kgbone", "full-4.3.kgbone"), Path.Combine(Tmp, "k3", "full.kgbone"), true);
             var data = Import(Tmp + "/k3/full.kgbone");
             Assert.IsNotNull(data);
-            CollectionAssert.Contains(data.Warnings, "제약 4개는 1단계 런타임에서 계산하지 않습니다");
+            // 2단계 ①: IK·트랜스폼·슬라이더는 계산하므로 경고하지 않고, 물리만 경고한다
+            CollectionAssert.Contains(data.Warnings, "물리 제약 1개는 아직 계산하지 않습니다");
+            foreach (var w in data.Warnings) Assert.IsFalse(w.StartsWith("IK") || w.StartsWith("트랜스폼") || w.StartsWith("슬라이더"), w);
         }
     }
 }

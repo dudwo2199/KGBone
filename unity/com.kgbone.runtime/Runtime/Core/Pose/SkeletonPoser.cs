@@ -32,6 +32,7 @@ namespace KGBone.Core
             {
                 case ConstraintType.Ik: return new IkSolver();
                 case ConstraintType.Transform: return new TransformSolver();
+                case ConstraintType.Slider: return new SliderSolver();
                 default: return null;
             }
         }
