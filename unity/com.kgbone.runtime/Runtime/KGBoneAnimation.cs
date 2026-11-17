@@ -22,6 +22,10 @@ namespace KGBone
         [Tooltip("MeshRenderer는 인스펙터에 Sorting Layer를 보여 주지 않으므로 여기서 정한다")]
         public string sortingLayerName = "Default";
         public int sortingOrder;
+        [Range(0, 1), Tooltip("물리 제약: GameObject가 이동한 만큼 흔들림에 반영할 비율(0이면 에디터와 같음)")]
+        public float physicsMoveFactor;
+        [Range(0, 1), Tooltip("물리 제약: GameObject가 회전한 만큼 흔들림에 반영할 비율(0이면 에디터와 같음)")]
+        public float physicsRotateFactor;
 
         /// <summary>애니메이션 이벤트가 날 때(키 하나에 한 번, 반복이면 바퀴마다).</summary>
         public event Action<KGBoneEvent> EventFired;
@@ -49,6 +53,10 @@ namespace KGBone
         KGBoneSkeletonData drawnData;
         string drawnSkin, drawnAnimationName;
         bool drawnFlipX, drawnFlipY;
+        // 물리: 지난 프레임의 GameObject 변환(월드 움직임 반영용)과 마지막으로 계산한 스킨(바뀌면 물리를 초기화)
+        Matrix4x4 lastMatrix;
+        bool hasLastMatrix;
+        string physicsSkin;
 
         void Awake()
         {
@@ -64,6 +72,7 @@ namespace KGBone
 
         void OnEnable()
         {
+            ResetPhysics();
             Refresh();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.update -= EditorTick;
@@ -155,6 +164,34 @@ namespace KGBone
             Refresh();
         }
 
+        /// <summary>물리 한 프레임 진행 시간: 0~0.1초(에디터 재생과 같은 상한). 컴포넌트 timeScale은 곱하지 않는다.</summary>
+        internal static float PhysicsDt(float dt) => Mathf.Min(0.1f, Mathf.Max(dt, 0f));
+
+        /// <summary>물리 흔들림을 처음 상태로(순간이동 뒤 튀지 않게). 지난 위치 기록도 지금 위치로 맞춘다.</summary>
+        public void ResetPhysics()
+        {
+            poser?.ResetPhysics();
+            hasLastMatrix = false;
+        }
+
+        /// <summary>지난 프레임 대비 GameObject 움직임을 뼈대 좌표로 바꿔 반영 비율을 곱한다(반영 0이면 0).</summary>
+        WorldMotion TakeWorldMotion()
+        {
+            var cur = transform.localToWorldMatrix;
+            var prev = hasLastMatrix ? lastMatrix : cur;
+            lastMatrix = cur;
+            hasLastMatrix = true;
+            if (physicsMoveFactor <= 0f && physicsRotateFactor <= 0f) return default;
+            // 지난 프레임 좌표계에서 본 이번 프레임 좌표계: 유니티 로컬 단위 → 뼈대 단위(픽셀, 뒤집기)
+            var d = prev.inverse * cur;
+            float fx = flipX ? -1f : 1f, fy = flipY ? -1f : 1f, ppu = skeletonData.PixelsPerUnit;
+            // 뼈대 점 s → 로컬 S·s(S = 뒤집기/ppu) → d → S⁻¹. 회전은 그 2x2의 첫 열 각도, 평행 이동은 S⁻¹·d.t(크기 변화는 무시)
+            float a = d.m00, c = d.m10 * fx / fy;
+            float tx = d.m03 * ppu * fx, ty = d.m13 * ppu * fy;
+            float rotation = Mathf.Atan2(c, a) * Mathf.Rad2Deg;
+            return new WorldMotion { X = tx * physicsMoveFactor, Y = ty * physicsMoveFactor, Rotation = rotation * physicsRotateFactor };
+        }
+
         /// <summary>dt초만큼 진행하고 다시 그린다(Update가 부른다. 테스트·직접 제어용으로 열어 둔다).</summary>
         public void Advance(float dt)
         {
@@ -163,6 +200,12 @@ namespace KGBone
             {
                 ClearMesh();
                 return;
+            }
+            // 물리는 플레이 모드에서 컴포넌트가 켜져 있으면 재생 여부와 상관없이 진행한다(멈춰도 흔들림이 가라앉는다)
+            if (Application.isPlaying)
+            {
+                request.Physics = PhysicsStep.Advance(PhysicsDt(dt));
+                request.WorldMotion = TakeWorldMotion();
             }
             float last = Time;
             float delta = dt * timeScale;
@@ -186,6 +229,8 @@ namespace KGBone
                 }
             }
             Compute(fireEvents ? last : (float?)null);
+            request.Physics = PhysicsStep.None;
+            request.WorldMotion = default;
 
             // 처리기가 Play·Stop을 불러 포즈가 다시 계산돼도 안전하도록 이벤트를 따로 담아 두고 내보낸다
             pending.Clear();
@@ -227,6 +272,7 @@ namespace KGBone
         /// <summary>데이터 에셋을 다시 가져왔을 때 가져오기 도구(에디터)가 부른다. 에디터 모드에서는 Update가 계산하지 않기 때문이다.</summary>
         internal void OnDataReimported()
         {
+            ResetPhysics();
             if (isActiveAndEnabled) Refresh();
         }
 
@@ -245,6 +291,7 @@ namespace KGBone
                 poser = new SkeletonPoser(skeletonData.Model);
                 poserData = skeletonData;
                 LastPose = null;
+                hasLastMatrix = false;
             }
             return poser;
         }
@@ -268,6 +315,12 @@ namespace KGBone
             request.Time = Time;
             request.LastTime = lastTime;
             request.Skin = string.IsNullOrEmpty(skin) ? null : skin;
+            if (request.Skin != physicsSkin)
+            {
+                // 스킨이 바뀌면 켜지는 본·제약이 달라지므로 물리를 처음부터
+                poser.ResetPhysics();
+                physicsSkin = request.Skin;
+            }
             request.Looping = loop;
             LastPose = poser.Compute(request);
             builder.Build(LastPose, skeletonData, flipX, flipY, EnsureMesh(), materials);

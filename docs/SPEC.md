@@ -138,5 +138,14 @@
 | M11 | 재생 컴포넌트(재생·정지·속도·반복·이벤트·끝·뒤집기·Sorting, 다시 가져오거나 스크립트로 바꾸면 에디터 모드에서도 다시 그림, 코드로 만든 캐릭터 자동 재생) | Y: `m11_*` |
 | M12 | 본 위치 읽기와 본 따라가기 | Y: `m12_try_get_bone_with_flip`, `m12_follower_tracks_bone` |
 
+### M. 유니티 런타임 2단계 (제약)
+설계: `docs/superpowers/specs/2026-11-17-unity-runtime-stage2-design.md`.
+| 번호 | 기능 | 완료 기준 |
+|---|---|---|
+| M13 | 제약 불러오기(5종·옛 배열 합치기·제약 키), 제약 값·키·비율/더하기 적용, 적용 순서·스킨 전용 제약, IK·트랜스폼·슬라이더 | C: `m13_*` + 정답(`spine43-ik`, `spine43-transform`, `unity-stage2-slider`, `unity-stage2-mixed`) |
+| M14 | 패스 제약(패스 첨부물, 열림·닫힘, 일정 속도, 가중치, 변형 키, 위치·간격·회전 방식) | C: `m14_*` + 정답(`spine43-path`, `unity-stage2-path`) |
+| M15 | 물리 제약(고정 간격, reset 키, 초기화)이 연속 프레임에서 핵심과 같음 | C: `m15_*`, `m15_golden_sequences_match_core`(`spine43-physics`, `unity-stage2-physics`) |
+| M16 | 물리 월드 움직임 반영 옵션(기본 0)과 컴포넌트 물리 진행(플레이 모드, 0.1초 상한, 멈춰도 진행, `ResetPhysics`), 제약 경고 없음 | C: `m16_*`. Y: `m16_*`, `m10_importer_no_constraint_warning` |
+
 ## 이번에 제외 (→ docs/GAPS.md)
 바이너리 .skel 입출력, PSD 직접 관리, HTML/웹 컴포넌트 내보내기, 스킨별 아틀라스 패킹, 프로젝트 ZIP 패키징, GIF/동영상 내보내기, 문제(Issues) 뷰 자동 해결.

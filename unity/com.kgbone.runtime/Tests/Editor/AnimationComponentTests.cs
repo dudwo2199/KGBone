@@ -298,6 +298,150 @@ namespace KGBone.Tests
             Assert.AreEqual(-before.x, after.x, 1e-4f);
         }
 
+        // ---------- M16 컴포넌트 물리 ----------
+        const string PhysicsJson = @"{""skeleton"":{""bones"":[{""name"":""root""},{""name"":""tail"",""parent"":""root"",""length"":50}],
+            ""constraints"":[{""type"":""physics"",""name"":""p"",""bone"":""tail"",""x"":1,""y"":1,""rotate"":1,""gravity"":GRAVITY}],
+            ""animations"":[{""name"":""흔들"",""bones"":{""root"":{""rotate"":[{""time"":0,""v"":[0]},{""time"":0.5,""v"":[30]}]}}}]}}";
+
+        static KGBoneSkeletonData PhysicsData(float gravity = 30)
+        {
+            var data = ScriptableObject.CreateInstance<KGBoneSkeletonData>();
+            data.Initialize(PhysicsJson.Replace("GRAVITY", gravity.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                null, new Material[4], new ImageEntry[0], 100, new string[0]);
+            return data;
+        }
+
+        // 플레이 모드 안에서 만든 캐릭터는 Update가 끼어들지 않도록 한 프레임 안에서 Advance로만 진행한다
+        static KGBoneAnimation Spawn(KGBoneSkeletonData data, string name = "물리")
+        {
+            var a = new GameObject(name).AddComponent<KGBoneAnimation>();
+            a.playOnAwake = false;
+            a.skeletonData = data;
+            return a;
+        }
+
+        static WorldBone Tail(KGBoneAnimation a) => a.LastPose.Bones[1];
+
+        [UnityTest]
+        public System.Collections.IEnumerator m16_physics_advances_in_play_mode()
+        {
+            yield return new EnterPlayMode();
+            var a = Spawn(PhysicsData());
+            a.Advance(0);
+            float setupY = Tail(a).Y;
+            for (int i = 0; i < 30; i++) a.Advance(1 / 60f);
+            float y = Tail(a).Y;
+            yield return new ExitPlayMode();
+            Assert.Less(y, setupY - 0.01f);
+        }
+
+        [Test]
+        public void m16_no_physics_in_edit_mode()
+        {
+            var a = Make(PhysicsData());
+            a.Advance(0);
+            float setupY = Tail(a).Y;
+            for (int i = 0; i < 30; i++) a.Advance(1 / 60f);
+            Assert.AreEqual(setupY, Tail(a).Y, 1e-6f);
+        }
+
+        [UnityTest]
+        public System.Collections.IEnumerator m16_physics_continues_after_stop()
+        {
+            yield return new EnterPlayMode();
+            var a = Spawn(PhysicsData(0));
+            a.Play("흔들", false);
+            for (int i = 0; i < 20; i++) a.Advance(1 / 60f);
+            a.Stop();
+            var stopped = Tail(a);
+            for (int i = 0; i < 5; i++) a.Advance(1 / 60f);
+            var later = Tail(a);
+            // 애니메이션은 멈췄지만(셋업 포즈) 흔들림은 계속 움직이다 가라앉는다
+            for (int i = 0; i < 600; i++) a.Advance(1 / 60f);
+            var settled = Tail(a);
+            yield return new ExitPlayMode();
+            // 꼬리 원점은 뼈대 원점이라 흔들림은 회전으로 나타난다
+            Assert.Greater(Mathf.Abs(Mathf.DeltaAngle(later.RotationX, stopped.RotationX)), 1e-2f);
+            Assert.AreEqual(0f, settled.RotationX, 1e-2f);
+        }
+
+        [UnityTest]
+        public System.Collections.IEnumerator m16_move_factor_zero_ignores_transform_move()
+        {
+            yield return new EnterPlayMode();
+            var data = PhysicsData(0);
+            var still = Spawn(data, "제자리");
+            var moved = Spawn(data, "이동");
+            var reacting = Spawn(data, "반응");
+            reacting.physicsMoveFactor = 1;
+            reacting.physicsRotateFactor = 1;
+            float maxDiff0 = 0, maxDiff1 = 0;
+            for (int i = 0; i < 30; i++)
+            {
+                moved.transform.position += new Vector3(0.2f, 0, 0);
+                reacting.transform.position += new Vector3(0.2f, 0, 0);
+                reacting.transform.Rotate(0, 0, 2);
+                still.Advance(1 / 60f);
+                moved.Advance(1 / 60f);
+                reacting.Advance(1 / 60f);
+                maxDiff0 = Mathf.Max(maxDiff0, Mathf.Abs(Tail(moved).X - Tail(still).X), Mathf.Abs(Tail(moved).Y - Tail(still).Y));
+                maxDiff1 = Mathf.Max(maxDiff1, Mathf.Abs(Tail(reacting).X - Tail(still).X), Mathf.Abs(Tail(reacting).Y - Tail(still).Y));
+            }
+            yield return new ExitPlayMode();
+            Assert.AreEqual(0f, maxDiff0, 1e-6f, "반영 0이면 GameObject 이동은 물리에 들어가지 않는다");
+            Assert.Greater(maxDiff1, 0.1f, "반영 1이면 뒤처진다");
+        }
+
+        [UnityTest]
+        public System.Collections.IEnumerator m16_reset_physics_after_teleport_has_no_jump()
+        {
+            yield return new EnterPlayMode();
+            var data = PhysicsData(0);
+            var a = Spawn(data);
+            a.physicsMoveFactor = 1;
+            a.Advance(1 / 60f);
+            a.transform.position = new Vector3(50, 0, 0);
+            a.ResetPhysics();
+            a.Advance(1 / 60f);
+            var w = Tail(a);
+            yield return new ExitPlayMode();
+            Assert.AreEqual(0f, w.X, 1e-6f);
+            Assert.AreEqual(0f, w.Y, 1e-6f);
+        }
+
+        [UnityTest]
+        public System.Collections.IEnumerator m16_large_first_frame_clamped()
+        {
+            yield return new EnterPlayMode();
+            var data = PhysicsData();
+            var big = Spawn(data, "큰 프레임");
+            var cap = Spawn(data, "0.1초");
+            big.Advance(0); cap.Advance(0);
+            big.Advance(1f);
+            cap.Advance(0.1f);
+            var wb = Tail(big);
+            var wc = Tail(cap);
+            yield return new ExitPlayMode();
+            Assert.AreEqual(0.1f, KGBoneAnimation.PhysicsDt(1f));
+            Assert.AreEqual(0f, KGBoneAnimation.PhysicsDt(-1f));
+            Assert.AreEqual(wc.X, wb.X, 1e-6f);
+            Assert.AreEqual(wc.Y, wb.Y, 1e-6f);
+            Assert.Less(wc.Y, -1e-3f);
+        }
+
+        [Test]
+        public void m10_importer_no_constraint_warning()
+        {
+            // 제약 5종이 든 파일(물리 포함)을 가져와도 제약 경고가 없다
+            var dir = ImporterTests.Tmp + "/k5";
+            Directory.CreateDirectory(dir);
+            ImporterTests.CopySampleImages(ImporterTests.Tmp + "/images");
+            File.Copy(Path.Combine(GoldenFile.RepoRoot(), "samples", "kgbone", "unity-stage2-physics.kgbone"), dir + "/phys.kgbone", true);
+            var data = ImporterTests.Import(dir + "/phys.kgbone");
+            Assert.IsNotNull(data);
+            foreach (var w in data.Warnings) StringAssert.DoesNotContain("제약", w);
+        }
+
         [Test]
         public void m12_follower_tracks_bone()
         {

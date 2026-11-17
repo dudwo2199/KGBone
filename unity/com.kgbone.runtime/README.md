@@ -26,7 +26,7 @@ https://github.com/dudwo2199/KGBone.git?path=/unity/com.kgbone.runtime#main
 - 슬롯이 쓰는 블렌드 모드(normal, additive, multiply, screen)마다 머티리얼(셰이더 `KGBone/Unlit`)
 
 인스펙터(.kgbone 파일 선택): **Pixels Per Unit**(기본 100), **Max Texture Size**, **Filter Mode**.
-아직 계산하지 않는 기능(물리 제약, 클리핑, 시퀀스)이나 없는 이미지는 경고로 알려 준다.
+아직 계산하지 않는 기능(클리핑, 시퀀스)이나 없는 이미지는 경고로 알려 준다.
 KGBone에서 고쳐 저장한 `.kgbone`으로 덮어쓰면 다시 가져오고, 씬의 캐릭터도 재생하지 않은 상태에서 바로 새 내용으로 그려진다.
 
 ## 재생: KGBoneAnimation
@@ -41,6 +41,7 @@ KGBone에서 고쳐 저장한 `.kgbone`으로 덮어쓰면 다시 가져오고, 
 | Loop / Time Scale / Play On Awake | 반복 / 속도 / 시작하자마자 재생 |
 | Flip X / Flip Y | 뒤집기 |
 | Sorting Layer Name / Sorting Order | 다른 스프라이트와 그리기 순서 |
+| Physics Move Factor / Physics Rotate Factor | 물리 제약이 GameObject 이동·회전에 반응하는 비율(0~1, 기본 0 = 에디터와 같음) |
 
 ```csharp
 var anim = GetComponent<KGBoneAnimation>();
@@ -64,6 +65,26 @@ golem.animationName = "idle";
 
 선형 색 공간(URP 기본)에서도 불투명한 부분은 KGBone과 같은 색이다. additive·screen 블렌드와 반투명 가장자리는 조금 다를 수 있다.
 
+## 제약과 물리
+
+제약 5종(IK, 트랜스폼, 패스, 물리, 슬라이더)과 제약 키는 KGBone 에디터와 같게 계산된다.
+
+물리 제약(머리카락·옷자락 흔들림)은 플레이 모드에서 매 프레임 진행한다.
+- 진행 시간은 실제 프레임 시간(`Time.deltaTime`, 한 프레임 최대 0.1초)이다. 유니티 전체 `Time.timeScale`을 낮추면 같이 느려지고, 컴포넌트의 `timeScale`(애니메이션 속도)과는 상관없다.
+- 애니메이션이 멈춰도(`Stop()` 뒤, 반복 아닌 애니메이션이 끝난 뒤) 흔들림은 계속 진행해 가라앉는다. 에디터는 재생을 멈추면 물리도 멈추므로 이 부분만 다르다.
+- 에디터 모드(플레이 아님)에서는 진행하지 않는다.
+- `Play()`로 애니메이션을 바꾸거나 `Stop()`해도 흔들림을 초기화하지 않는다. 컴포넌트가 켜질 때, 데이터를 다시 가져올 때, 스킨을 바꿀 때는 초기화한다.
+
+에디터에는 "캐릭터 자체가 움직이는" 상황이 없어서, GameObject를 옮기거나 돌려도 기본으로는 흔들림에 들어가지 않는다(에디터와 같은 결과).
+걷기 이동처럼 GameObject를 움직일 때 흔들리게 하려면 **Physics Move Factor**(이동)와 **Physics Rotate Factor**(회전)를 0~1로 올린다.
+이 움직임은 애니메이션이 본을 움직인 것과 똑같이 다뤄진다(물리 제약의 관성 inertia가 곱해진다). 0보다 큰 값의 흔들림은 에디터에서 미리 볼 수 없으므로 유니티에서 보면서 고른다.
+
+```csharp
+anim.physicsMoveFactor = 1f;
+anim.transform.position = spawnPoint;   // 순간이동
+anim.ResetPhysics();                    // 튀지 않게 흔들림과 지난 위치 기록을 처음으로
+```
+
 ## 본 위치 읽기
 
 ```csharp
@@ -73,12 +94,12 @@ if (anim.TryGetBone("손", out Vector3 position, out float rotation, out Vector2
 
 코드 없이 붙이려면 이펙트·무기 GameObject에 **KGBoneBoneFollower**를 붙이고 Target과 Bone Name을 고른다(Follow Rotation을 켜면 회전도 따라간다).
 
-## 지원 범위 (1단계 + 2단계 진행 중)
+## 지원 범위 (2단계까지)
 
 | 지원 | 아직 없음 |
 |---|---|
-| 본(상속 5종), 이미지·메시·가중치 메시·링크드 메시, 메시 변형 키 | 물리 제약 — 2단계 |
-| 제약: IK(1본·2본, 부드러움·늘이기·줄이기·부피), 트랜스폼(속성 매핑), 패스(열림·닫힘, 가중치, 변형 키, 위치·간격·회전 방식), 슬라이더, 제약 값 키, 스킨 전용 제약 | |
+| 본(상속 5종), 이미지·메시·가중치 메시·링크드 메시, 메시 변형 키 | |
+| 제약: IK(1본·2본, 부드러움·늘이기·줄이기·부피), 트랜스폼(속성 매핑), 패스(열림·닫힘, 가중치, 변형 키, 위치·간격·회전 방식), 물리(reset 키, 월드 움직임 반영 옵션), 슬라이더, 제약 값 키, 스킨 전용 제약 | |
 | 슬롯 색·어두운 색, 첨부물 키, 그리기 순서 키, 블렌드 4종 | 클리핑, 시퀀스 — 3단계 |
 | 스킨 1개 + 스킨 전용 본, 이벤트, 선형·계단·베지어 곡선 | 애니메이션 섞기·전환, 여러 트랙, 실행 중 스킨 바꾸기, 본 덮어쓰기, Animator 연동 — 3단계 |
 
