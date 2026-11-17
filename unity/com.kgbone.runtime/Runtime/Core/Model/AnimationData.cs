@@ -23,6 +23,14 @@ namespace KGBone.Core
         public Key[] Keys;
     }
 
+    /// <summary>제약 타임라인(FORMAT.md 3.7 표: 채널 이름 mix, softness, position, reset …).</summary>
+    public sealed class ConstraintTimeline
+    {
+        public int Constraint;
+        public string Name;
+        public Key[] Keys;
+    }
+
     public sealed class DrawOrderKey
     {
         public float Time;
@@ -45,6 +53,7 @@ namespace KGBone.Core
         public List<BoneTimeline> Bones = new List<BoneTimeline>();
         public List<SlotTimeline> Slots = new List<SlotTimeline>();
         public List<DeformTimeline> Deform = new List<DeformTimeline>();
+        public List<ConstraintTimeline> Constraints = new List<ConstraintTimeline>();
         public List<DrawOrderKey> DrawOrder = new List<DrawOrderKey>();
         public List<EventKey> Events = new List<EventKey>();
         /// <summary>모든 타임라인의 마지막 키 중 가장 늦은 시간(핵심 model/animation.rs의 duration).</summary>

@@ -50,7 +50,18 @@ namespace KGBone.Core
         public bool Timelines = true;
     }
 
-    /// <summary>그리지 않는 종류(boundingbox, point, clipping, path).</summary>
+    /// <summary>패스 첨부물(패스 제약 계산용, 그리지 않음).</summary>
+    public sealed class PathAttachmentData : AttachmentData
+    {
+        public bool Closed, ConstantSpeed = true, Weighted;
+        public int VertexCount;
+        public float[] Vertices = new float[0];
+        /// <summary>곡선 구간별 누적 길이.</summary>
+        public float[] Lengths = new float[0];
+        public override string ImagePath(string key) => null;
+    }
+
+    /// <summary>그리지 않는 종류(boundingbox, point, clipping).</summary>
     public sealed class OtherAttachment : AttachmentData
     {
         public string Type;

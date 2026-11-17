@@ -20,9 +20,17 @@ namespace KGBone.Core
             };
             foreach (var b in Items(sk.Get("bones"))) m.Bones.Add(ReadBone(b, m));
             foreach (var s in Items(sk.Get("slots"))) m.Slots.Add(ReadSlot(s, m));
-            m.ConstraintCount = Items(sk.Get("constraints")).Count;
-            // formatVersion 0(초기 시험판): 제약이 종류별 배열로 따로 있다(FORMAT.md 7장).
-            foreach (var legacy in new[] { "ik", "transform", "path", "physics" }) m.ConstraintCount += Items(sk.Get(legacy)).Count;
+            foreach (var c in Items(sk.Get("constraints"))) m.Constraints.Add(ReadConstraint(c, S(c, "type") ?? "", m));
+            // formatVersion 0(초기 시험판): 제약이 종류별 배열로 따로 있다. order 순으로 합쳐 뒤에 잇는다(핵심 migrate.rs).
+            var legacy = new List<(float order, int kind, int index, JsonValue v)>();
+            for (int kind = 0; kind < LegacyKinds.Length; kind++)
+            {
+                var arr = Items(sk.Get(LegacyKinds[kind]));
+                for (int i = 0; i < arr.Count; i++)
+                    if (arr[i].Kind == JsonKind.Object) legacy.Add((F(arr[i], "order", 0), kind, i, arr[i]));
+            }
+            legacy.Sort((x, y) => x.order != y.order ? x.order.CompareTo(y.order) : x.kind != y.kind ? x.kind.CompareTo(y.kind) : x.index.CompareTo(y.index));
+            foreach (var l in legacy) m.Constraints.Add(ReadConstraint(l.v, LegacyKinds[l.kind], m));
             foreach (var s in Items(sk.Get("skins"))) m.Skins.Add(ReadSkin(s, m));
             foreach (var e in Items(sk.Get("events"))) m.Events.Add(ReadEvent(e));
             foreach (var a in Items(sk.Get("animations"))) m.Animations.Add(ReadAnimation(a, m));
@@ -39,6 +47,133 @@ namespace KGBone.Core
                     string p = att.ImagePath(name);
                     if (p != null && seen.Add(p)) yield return p;
                 }
+        }
+
+        static readonly string[] LegacyKinds = { "ik", "transform", "path", "physics" };
+
+        static int[] BoneList(JsonValue v, SkeletonModel m)
+        {
+            var list = Items(v);
+            var r = new int[list.Count];
+            for (int i = 0; i < r.Length; i++) r[i] = m.BoneIndex(list[i].AsString());
+            return r;
+        }
+
+        static BoneProperty Property(JsonValue o, string k)
+        {
+            switch (S(o, k))
+            {
+                case "rotate": return BoneProperty.Rotate;
+                case "y": return BoneProperty.Y;
+                case "scaleX": return BoneProperty.ScaleX;
+                case "scaleY": return BoneProperty.ScaleY;
+                case "shearY": return BoneProperty.ShearY;
+                default: return BoneProperty.X;
+            }
+        }
+
+        static SpacingMode Spacing(string s)
+        {
+            switch (s)
+            {
+                case "fixed": return SpacingMode.Fixed;
+                case "percent": return SpacingMode.Percent;
+                case "proportional": return SpacingMode.Proportional;
+                default: return SpacingMode.Length;
+            }
+        }
+
+        static RotateMode Rotate(string s)
+        {
+            switch (s)
+            {
+                case "chain": return RotateMode.Chain;
+                case "chainScale": return RotateMode.ChainScale;
+                default: return RotateMode.Tangent;
+            }
+        }
+
+        static ConstraintData ReadConstraint(JsonValue v, string type, SkeletonModel m)
+        {
+            ConstraintData c;
+            switch (type)
+            {
+                case "ik":
+                    c = new IkConstraintData
+                    {
+                        Bones = BoneList(v.Get("bones"), m),
+                        Target = m.BoneIndex(S(v, "target")),
+                        Mix = F(v, "mix", 1), Softness = F(v, "softness", 0),
+                        BendPositive = B(v, "bendPositive", true), Compress = B(v, "compress", false), Stretch = B(v, "stretch", false),
+                        Uniform = B(v, "uniform", false), Volume = B(v, "volume", false),
+                    };
+                    break;
+                case "transform":
+                    var t = new TransformConstraintData
+                    {
+                        Bones = BoneList(v.Get("bones"), m),
+                        Source = m.BoneIndex(S(v, "source")),
+                        LocalSource = B(v, "localSource", false), LocalTarget = B(v, "localTarget", false),
+                        Additive = B(v, "additive", false), Clamp = B(v, "clamp", false),
+                        MixRotate = F(v, "mixRotate", 1), MixX = F(v, "mixX", 1), MixY = F(v, "mixY", 1),
+                        MixScaleX = F(v, "mixScaleX", 1), MixScaleY = F(v, "mixScaleY", 1), MixShearY = F(v, "mixShearY", 1),
+                    };
+                    foreach (var p in Items(v.Get("properties")))
+                    {
+                        var map = new TransformMapping { From = Property(p, "from"), Offset = F(p, "offset", 0) };
+                        foreach (var to in Items(p.Get("to")))
+                            map.To.Add(new TransformTo { Property = Property(to, "property"), Offset = F(to, "offset", 0), Max = F(to, "max", 0), Scale = F(to, "scale", 1) });
+                        t.Properties.Add(map);
+                    }
+                    // 비어 있으면 6개 속성의 같은 속성 기본 매핑(핵심 effective_properties)
+                    if (t.Properties.Count == 0)
+                        for (int i = 0; i < 6; i++)
+                        {
+                            var map = new TransformMapping { From = (BoneProperty)i };
+                            map.To.Add(new TransformTo { Property = (BoneProperty)i });
+                            t.Properties.Add(map);
+                        }
+                    c = t;
+                    break;
+                case "path":
+                    c = new PathConstraintData
+                    {
+                        Bones = BoneList(v.Get("bones"), m),
+                        Target = m.SlotIndex(S(v, "target")),
+                        PositionMode = S(v, "positionMode") == "fixed" ? PositionMode.Fixed : PositionMode.Percent,
+                        SpacingMode = Spacing(S(v, "spacingMode")),
+                        RotateMode = Rotate(S(v, "rotateMode")),
+                        OffsetRotation = F(v, "offsetRotation", 0), Position = F(v, "position", 0), Spacing = F(v, "spacing", 0),
+                        MixRotate = F(v, "mixRotate", 1), MixX = F(v, "mixX", 1), MixY = F(v, "mixY", 1),
+                    };
+                    break;
+                case "physics":
+                    c = new PhysicsConstraintData
+                    {
+                        Bone = m.BoneIndex(S(v, "bone")),
+                        X = F(v, "x", 0), Y = F(v, "y", 0), Rotate = F(v, "rotate", 0), ScaleX = F(v, "scaleX", 0), ShearX = F(v, "shearX", 0),
+                        Limit = F(v, "limit", 5000), Fps = F(v, "fps", 60), Inertia = F(v, "inertia", 1), Strength = F(v, "strength", 100),
+                        Damping = F(v, "damping", 1), Mass = F(v, "mass", 1), Wind = F(v, "wind", 0), Gravity = F(v, "gravity", 0),
+                        Mix = F(v, "mix", 1), Volume = B(v, "volume", false),
+                    };
+                    break;
+                case "slider":
+                    c = new SliderConstraintData
+                    {
+                        Animation = S(v, "animation") ?? "",
+                        Time = F(v, "time", 0), Mix = F(v, "mix", 1),
+                        Loop = B(v, "loop", false), Additive = B(v, "additive", false), Local = B(v, "local", false),
+                        Bone = m.BoneIndex(S(v, "bone")),
+                        Property = Property(v, "property"),
+                        PropertyFrom = F(v, "propertyFrom", 0), PropertyTo = F(v, "propertyTo", 1),
+                    };
+                    break;
+                default:
+                    throw new KGBoneFormatException($"모르는 제약 종류: '{type}'");
+            }
+            c.Name = S(v, "name") ?? "";
+            c.SkinRequired = B(v, "skinRequired", false);
+            return c;
         }
 
         static readonly IReadOnlyList<JsonValue> Empty = new JsonValue[0];
@@ -133,6 +268,16 @@ namespace KGBone.Core
                         Weighted = B(v, "weighted", false),
                     };
                     break;
+                case "path":
+                    a = new PathAttachmentData
+                    {
+                        Closed = B(v, "closed", false), ConstantSpeed = B(v, "constantSpeed", true),
+                        VertexCount = v.Get("vertexCount")?.AsInt(0) ?? 0,
+                        Weighted = B(v, "weighted", false),
+                        Vertices = v.Get("vertices")?.AsFloatArray() ?? new float[0],
+                        Lengths = v.Get("lengths")?.AsFloatArray() ?? new float[0],
+                    };
+                    break;
                 case "linkedmesh":
                     a = new LinkedMeshAttachment
                     {
@@ -223,9 +368,15 @@ namespace KGBone.Core
                     if (si >= 0) a.Slots.Add(new SlotTimeline { Slot = si, Name = tl.Key, Keys = keys });
                 }
             }
-            // 제약 타임라인은 1단계에서 쓰지 않지만 길이에는 들어간다
             foreach (var c in v.Get("constraints")?.Members ?? new KeyValuePair<string, JsonValue>[0])
-                foreach (var tl in c.Value.Members) ReadKeys(tl.Value, ref d);
+            {
+                int ci = m.ConstraintIndex(c.Key);
+                foreach (var tl in c.Value.Members)
+                {
+                    var keys = ReadKeys(tl.Value, ref d);
+                    if (ci >= 0) a.Constraints.Add(new ConstraintTimeline { Constraint = ci, Name = tl.Key, Keys = keys });
+                }
+            }
             foreach (var skin in v.Get("deform")?.Members ?? new KeyValuePair<string, JsonValue>[0])
                 foreach (var slot in skin.Value.Members)
                     foreach (var att in slot.Value.Members)

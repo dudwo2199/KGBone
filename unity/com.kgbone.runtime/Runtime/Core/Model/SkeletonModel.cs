@@ -21,8 +21,9 @@ namespace KGBone.Core
         public List<SkinData> Skins = new List<SkinData>();
         public List<EventData> Events = new List<EventData>();
         public List<AnimationData> Animations = new List<AnimationData>();
-        /// <summary>제약 개수(1단계는 계산하지 않고 경고만).</summary>
-        public int ConstraintCount;
+        /// <summary>제약(적용 순서).</summary>
+        public List<ConstraintData> Constraints = new List<ConstraintData>();
+        public int ConstraintCount => Constraints.Count;
         public bool HasClipping;
         public bool HasSequence;
 
@@ -55,10 +56,30 @@ namespace KGBone.Core
         static readonly System.Func<SkinData, string> SkinName = s => s.Name;
         static readonly System.Func<AnimationData, string> AnimationName = a => a.Name;
         static readonly System.Func<EventData, string> EventName = e => e.Name;
-        readonly NameIndex bones = new NameIndex(), slots = new NameIndex(), skins = new NameIndex(), animations = new NameIndex(), events = new NameIndex();
+        static readonly System.Func<ConstraintData, string> ConstraintName = c => c.Name;
+        readonly NameIndex bones = new NameIndex(), slots = new NameIndex(), skins = new NameIndex(), animations = new NameIndex(), events = new NameIndex(), constraints = new NameIndex();
 
         public int BoneIndex(string name) => bones.Find(Bones, BoneName, name);
         public int SlotIndex(string name) => slots.Find(Slots, SlotName, name);
+        public int ConstraintIndex(string name) => constraints.Find(Constraints, ConstraintName, name);
+
+        /// <summary>이 런타임이 아직 계산하지 않는 제약 종류(가져오기 경고용, 중복 없음, 처음 나온 순서).</summary>
+        public List<ConstraintType> UnsupportedConstraintTypes()
+        {
+            var list = new List<ConstraintType>();
+            foreach (var c in Constraints)
+                if (!IsSupported(c.Type) && !list.Contains(c.Type)) list.Add(c.Type);
+            return list;
+        }
+
+        /// <summary>계산하는 제약 종류인지(2단계 묶음마다 늘어난다).</summary>
+        public static bool IsSupported(ConstraintType t)
+        {
+            switch (t)
+            {
+                default: return false;
+            }
+        }
 
         public SkinData FindSkin(string name)
         {
