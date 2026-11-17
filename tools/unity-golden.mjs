@@ -10,7 +10,7 @@ import { loadCore } from "./mcp/core.mjs";
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(repo, "unity", "com.kgbone.runtime", "Tests", "Golden");
 
-// 1단계 대상: 제약·클리핑·시퀀스가 없는 시험 파일(설계 문서 5.6)
+// 대상: 클리핑·시퀀스가 없는 시험 파일. 제약은 유니티 런타임이 계산하는 종류만(2단계 설계 문서 5.6)
 const TARGETS = [
   ["bones-only", "samples/kgbone/bones-only.kgbone"],
   ["notation", "samples/kgbone/notation.kgbone"],
@@ -19,6 +19,8 @@ const TARGETS = [
   ["spine43-mesh-weights", "samples/spine43/mesh-weights.json"],
   ["spine43-skins", "samples/spine43/skins.json"],
   ["spine43-events", "samples/spine43/events.json"],
+  ["spine43-ik", "samples/spine43/ik.json"],
+  ["spine43-transform", "samples/spine43/transform.json"],
 ];
 
 /** 애니메이션 길이 d에 대한 요청들(시점, 반복 재생, 이벤트 구간) */

@@ -1,0 +1,82 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone 0.1.0",
+	"imagesPath": "../images",
+	"skeleton": {
+		"x": -100,
+		"width": 200,
+		"height": 300,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "thigh",
+				"parent": "root",
+				"length": 50,
+				"rotation": -90
+			},
+			{
+				"name": "shin",
+				"parent": "thigh",
+				"length": 50,
+				"x": 50
+			},
+			{
+				"name": "target",
+				"parent": "root",
+				"x": 30,
+				"y": -60,
+				"color": "FF3F00FF"
+			},
+			{
+				"name": "single",
+				"parent": "root",
+				"length": 40,
+				"x": -50
+			},
+			{
+				"name": "aim",
+				"parent": "root",
+				"x": -50,
+				"y": 40
+			}
+		],
+		"constraints": [
+			{
+				"type": "ik",
+				"name": "leg-ik",
+				"bones": ["thigh", "shin"],
+				"target": "target",
+				"bendPositive": false
+			},
+			{
+				"type": "ik",
+				"name": "aim-ik",
+				"bones": ["single"],
+				"target": "aim",
+				"mix": 0.5,
+				"compress": true,
+				"stretch": true
+			}
+		],
+		"animations": [
+			{
+				"name": "reach",
+				"constraints": {
+					"leg-ik": {
+						"ik": [
+							{
+								"v": [1, 0, 1, 0, 0]
+							},
+							{
+								"time": 1,
+								"v": [0, 5, -1, 0, 0]
+							}
+						]
+					}
+				}
+			}
+		]
+	}
+}

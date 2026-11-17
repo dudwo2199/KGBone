@@ -77,6 +77,9 @@ namespace KGBone.Core
         {
             switch (t)
             {
+                case ConstraintType.Ik:
+                case ConstraintType.Transform:
+                    return true;
                 default: return false;
             }
         }

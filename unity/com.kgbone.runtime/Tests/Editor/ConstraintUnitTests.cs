@@ -303,6 +303,101 @@ namespace KGBone.Tests
             Assert.AreEqual(10f, WorldMath.WorldShearY(w), 1e-3f);
         }
 
+        // ---------- M13 IK (핵심 pose/ik.rs 테스트와 같은 값) ----------
+        static PoseResult Pose(string kgbone) => new SkeletonPoser(KGBoneLoader.Load(kgbone)).Compute(new PoseRequest());
+
+        static string IkOne(string opts, float len, float tx, float ty) =>
+            $@"{{""formatVersion"":1,""skeleton"":{{""bones"":[{{""name"":""root""}},{{""name"":""a"",""parent"":""root"",""length"":{F(len)}}},{{""name"":""t"",""parent"":""root"",""x"":{F(tx)},""y"":{F(ty)}}}],
+                ""constraints"":[{{""type"":""ik"",""name"":""ik"",""bones"":[""a""],""target"":""t""{opts}}}]}}}}";
+
+        static string IkTwo(string opts, float tx, float ty) =>
+            $@"{{""formatVersion"":1,""skeleton"":{{""bones"":[{{""name"":""root""}},{{""name"":""p"",""parent"":""root"",""length"":10}},{{""name"":""c"",""parent"":""p"",""x"":10,""length"":10}},
+                {{""name"":""t"",""parent"":""root"",""x"":{F(tx)},""y"":{F(ty)}}}],
+                ""constraints"":[{{""type"":""ik"",""name"":""ik"",""bones"":[""p"",""c""],""target"":""t""{opts}}}]}}}}";
+
+        static string F(float v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        [Test]
+        public void m13_ik_f_f01_one_bone_ik()
+        {
+            var o = Pose(IkOne("", 2, 3, 4));
+            Assert.AreEqual(53.1301f, o.Locals[1].Rotation, 1e-3f);
+            Assert.AreEqual(1f, o.Locals[1].ScaleX, 1e-3f);
+            Assert.AreEqual(26.5651f, Pose(IkOne(@",""mix"":0.5", 2, 3, 4)).Locals[1].Rotation, 1e-3f);
+            o = Pose(IkOne(@",""stretch"":true,""uniform"":true", 2, 3, 4));
+            Assert.AreEqual(2.5f, o.Locals[1].ScaleX, 1e-3f);
+            Assert.AreEqual(2.5f, o.Locals[1].ScaleY, 1e-3f);
+            Assert.AreEqual(0.5f, Pose(IkOne(@",""compress"":true", 10, 3, 4)).Locals[1].ScaleX, 1e-3f);
+            Assert.AreEqual(1f, Pose(IkOne(@",""stretch"":true", 10, 3, 4)).Locals[1].ScaleX, 1e-3f);
+        }
+
+        [Test]
+        public void m13_ik_f_f02_ik_volume()
+        {
+            var o = Pose(IkOne(@",""stretch"":true,""volume"":true", 10, 20, 0));
+            Assert.AreEqual(2f, o.Locals[1].ScaleX, 1e-3f);
+            Assert.AreEqual(0.5f, o.Locals[1].ScaleY, 1e-3f);
+            var (x, y) = o.Bones[1].LocalToWorld(10, 0);
+            Assert.AreEqual(20f, x, 1e-3f);
+            Assert.AreEqual(0f, y, 1e-3f);
+        }
+
+        [Test]
+        public void m13_ik_f_f01_two_bone_ik()
+        {
+            var o = Pose(IkTwo("", 10, 10));
+            Assert.AreEqual(0f, o.Locals[1].Rotation, 1e-3f);
+            Assert.AreEqual(90f, o.Locals[2].Rotation, 1e-3f);
+            var (x, y) = o.Bones[2].LocalToWorld(10, 0);
+            Assert.AreEqual(10f, x, 1e-3f);
+            Assert.AreEqual(10f, y, 1e-3f);
+            o = Pose(IkTwo(@",""bendPositive"":false", 10, 10));
+            Assert.AreEqual(90f, o.Locals[1].Rotation, 1e-3f);
+            Assert.AreEqual(-90f, o.Locals[2].Rotation, 1e-3f);
+            Assert.AreEqual(0f, o.Bones[2].X, 1e-3f);
+            Assert.AreEqual(10f, o.Bones[2].Y, 1e-3f);
+            o = Pose(IkTwo("", 30, 0));
+            Assert.AreEqual(0f, o.Locals[1].Rotation, 1e-3f);
+            Assert.AreEqual(0f, o.Locals[2].Rotation, 1e-3f);
+            o = Pose(IkTwo(@",""stretch"":true", 30, 0));
+            Assert.AreEqual(1.5f, o.Locals[1].ScaleX, 1e-3f);
+            Assert.AreEqual(30f, o.Bones[2].LocalToWorld(10, 0).x, 1e-3f);
+            o = Pose(IkTwo(@",""softness"":5", 20, 0));
+            Assert.AreEqual(-24.766f, o.Locals[1].Rotation, 1e-2f);
+            (x, y) = o.Bones[2].LocalToWorld(10, 0);
+            Assert.AreEqual(18.1606f, x, 1e-2f);
+            Assert.AreEqual(0f, y, 1e-2f);
+        }
+
+        // ---------- M13 트랜스폼 (핵심 pose/transform.rs 테스트와 같은 값) ----------
+        static string Tc(bool local, bool clamp, float dialX, string extra = @",""mixX"":0,""mixY"":0,""mixScaleX"":0,""mixScaleY"":0,""mixShearY"":0",
+            string props = @",""properties"":[{""from"":""x"",""to"":[{""property"":""rotate"",""max"":90,""scale"":2}]}]") =>
+            $@"{{""formatVersion"":1,""skeleton"":{{""bones"":[{{""name"":""root"",""x"":100}},{{""name"":""dial"",""parent"":""root"",""x"":{F(dialX)}}},{{""name"":""gem"",""parent"":""root"",""rotation"":10}}],
+                ""constraints"":[{{""type"":""transform"",""name"":""tc"",""bones"":[""gem""],""source"":""dial"",""localSource"":{(local ? "true" : "false")},""localTarget"":{(local ? "true" : "false")},""clamp"":{(clamp ? "true" : "false")}{extra}{props}}}]}}}}";
+
+        [Test]
+        public void m13_transform_f_f03_translate_x_to_rotate()
+        {
+            Assert.AreEqual(60f, Pose(Tc(true, false, 30)).Locals[2].Rotation, 1e-3f);
+            Assert.AreEqual(90f, Pose(Tc(true, true, 60)).Locals[2].Rotation, 1e-3f);
+            Assert.AreEqual(90f, Pose(Tc(false, true, 0.2f)).Bones[2].RotationX, 1e-3f);
+            var o = Pose(Tc(false, false, -80));
+            Assert.AreEqual(40f, o.Bones[2].RotationX, 1e-3f);
+            Assert.AreEqual(100f, o.Bones[2].X, 1e-3f);
+            Assert.AreEqual(0f, o.Bones[2].Y, 1e-3f);
+        }
+
+        [Test]
+        public void m13_transform_f_f03_mix_and_additive_and_default_mapping()
+        {
+            const string zero = @",""mixX"":0,""mixY"":0,""mixScaleX"":0,""mixScaleY"":0,""mixShearY"":0";
+            Assert.AreEqual(35f, Pose(Tc(true, false, 30, zero + @",""mixRotate"":0.5")).Locals[2].Rotation, 1e-3f);
+            Assert.AreEqual(40f, Pose(Tc(true, false, 30, zero + @",""mixRotate"":0.5,""additive"":true")).Locals[2].Rotation, 1e-3f);
+            var o = Pose(Tc(false, false, 30, @",""mixScaleX"":0,""mixScaleY"":0,""mixShearY"":0", ""));
+            Assert.AreEqual(130f, o.Bones[2].X, 1e-3f);
+            Assert.AreEqual(0f, o.Bones[2].RotationX, 1e-3f);
+        }
+
         [Test]
         public void m14_loads_path_attachment()
         {

@@ -1,0 +1,128 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone 0.1.0",
+	"imagesPath": "../images",
+	"skeleton": {
+		"x": -100,
+		"width": 200,
+		"height": 300,
+		"bones": [
+			{
+				"name": "root"
+			},
+			{
+				"name": "src",
+				"parent": "root",
+				"x": 20,
+				"y": 30,
+				"rotation": 45
+			},
+			{
+				"name": "follow",
+				"parent": "root",
+				"x": -20
+			},
+			{
+				"name": "follow-local",
+				"parent": "root",
+				"x": -40
+			}
+		],
+		"constraints": [
+			{
+				"type": "transform",
+				"name": "tc-world",
+				"bones": ["follow"],
+				"source": "src",
+				"mixX": 0.5,
+				"mixY": 0.5,
+				"mixScaleX": 0,
+				"mixScaleY": 0,
+				"mixShearY": 0,
+				"properties": [
+					{
+						"from": "rotate",
+						"to": [
+							{
+								"property": "rotate",
+								"offset": 10
+							}
+						]
+					},
+					{
+						"to": [
+							{
+								"offset": 5
+							}
+						]
+					},
+					{
+						"from": "y",
+						"to": [
+							{
+								"property": "y"
+							}
+						]
+					},
+					{
+						"from": "scaleX",
+						"to": [
+							{
+								"property": "scaleX"
+							}
+						]
+					},
+					{
+						"from": "scaleY",
+						"to": [
+							{
+								"property": "scaleY"
+							}
+						]
+					},
+					{
+						"from": "shearY",
+						"to": [
+							{
+								"property": "shearY"
+							}
+						]
+					}
+				]
+			},
+			{
+				"type": "transform",
+				"name": "tc-local",
+				"bones": ["follow-local"],
+				"source": "src",
+				"localSource": true,
+				"localTarget": true,
+				"additive": true,
+				"mixRotate": 0.5,
+				"mixX": 0,
+				"mixY": 0,
+				"mixScaleX": 0,
+				"mixScaleY": 0,
+				"mixShearY": 0
+			}
+		],
+		"animations": [
+			{
+				"name": "mixing",
+				"constraints": {
+					"tc-world": {
+						"transform": [
+							{
+								"v": [1, 1, 1, 1, 1, 1]
+							},
+							{
+								"time": 1,
+								"v": [0, 0, 0, 1, 1, 1]
+							}
+						]
+					}
+				}
+			}
+		]
+	}
+}

@@ -19,6 +19,7 @@ namespace KGBone.Core
             state = new PoseState(model);
             result.Bones = state.World;
             result.Active = state.Active;
+            result.Locals = state.Locals;
             constraintOn = new bool[model.Constraints.Count];
             solvers = new IConstraintSolver[model.Constraints.Count];
             for (int i = 0; i < solvers.Length; i++) solvers[i] = SolverFor(model.Constraints[i].Type);
@@ -29,6 +30,8 @@ namespace KGBone.Core
         {
             switch (t)
             {
+                case ConstraintType.Ik: return new IkSolver();
+                case ConstraintType.Transform: return new TransformSolver();
                 default: return null;
             }
         }

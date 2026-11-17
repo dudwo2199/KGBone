@@ -38,6 +38,8 @@ namespace KGBone.Core
     {
         /// <summary>skeleton.bones 순서의 월드 변환.</summary>
         public WorldBone[] Bones;
+        /// <summary>본마다 제약까지 반영된 로컬 값.</summary>
+        public LocalTransform[] Locals;
         /// <summary>계산에 포함된 본인가(스킨 전용 본이 꺼져 있으면 false).</summary>
         public bool[] Active;
         /// <summary>그리기 순서대로.</summary>
