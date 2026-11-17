@@ -64,7 +64,6 @@ namespace KGBone.Core
         public override string ImagePath(string key, int? frame) => null;
     }
 
-    /// <summary>그리지 않는 종류(boundingbox, point, clipping).</summary>
     /// <summary>클리핑(그리지 않음): 이 슬롯부터 End 슬롯(포함, 없으면 끝까지)까지 그려지는 것을 다각형으로 자른다.</summary>
     public sealed class ClippingAttachmentData : AttachmentData
     {
@@ -75,6 +74,7 @@ namespace KGBone.Core
         public override string ImagePath(string key, int? frame) => null;
     }
 
+    /// <summary>그리지 않는 종류(boundingbox, point).</summary>
     public sealed class OtherAttachment : AttachmentData
     {
         public string Type;

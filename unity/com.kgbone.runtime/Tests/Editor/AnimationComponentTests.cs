@@ -429,6 +429,42 @@ namespace KGBone.Tests
             Assert.IsNull(a.GetTrackAnimation(0));
         }
 
+        [Test]
+        public void m20_track_index_warns()
+        {
+            var a = Make(ImportTracks());
+            LogAssert.Expect(LogType.Warning, "트랙 번호는 0~" + (AnimationTracks.MaxTracks - 1) + "입니다: -1");
+            Assert.IsNull(a.SetAnimation(-1, "걷기", true));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void m20_edit_mode_advance_no_preview_events()
+        {
+            // 작은 지적 5: 트랙 없이(미리보기) Advance를 직접 불러도 이벤트를 내지 않는다
+            var a = Make(ImportTracks());
+            int count = 0;
+            a.EventFired += e => count++;
+            a.animationName = "공격";
+            a.Time = 0.3f;
+            a.Advance(0.1f);
+            Assert.AreEqual(0, count);
+        }
+
+        [Test]
+        public void m20_loop_toggle_after_complete_stays_stopped()
+        {
+            // 작은 지적 6: 끝난 뒤 loop를 켜도 다시 재생하지 않는다(2단계와 같음)
+            var a = Make(ImportTracks());
+            a.Play("공격", false);
+            a.Advance(0.5f);
+            Assert.IsFalse(a.IsPlaying);
+            a.loop = true;
+            a.Advance(0.1f);
+            Assert.IsFalse(a.IsPlaying);
+            Assert.AreEqual(0.4f, a.Time, 1e-5f);
+        }
+
         static int KGBoneMeshCount()
         {
             int n = 0;

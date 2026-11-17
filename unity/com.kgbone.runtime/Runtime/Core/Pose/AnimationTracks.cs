@@ -14,16 +14,28 @@ namespace KGBone.Core
     {
         /// <summary>애니메이션 이름(비우기 항목이면 null).</summary>
         public string Name;
-        public bool Loop;
-        /// <summary>애니메이션 시간(초, 반복이면 바퀴를 더한 누적 시간).</summary>
-        public float Time;
+        /// <summary>반복 재생. 바꾸면 예약 시작 시점을 다시 계산한다.</summary>
+        public bool Loop
+        {
+            get => loop;
+            set { loop = value; TriggerDirty = true; }
+        }
+        /// <summary>애니메이션 시간(초, 반복이면 바퀴를 더한 누적 시간). 옮기면 예약 시작 시점도 이 시간 기준으로 다시 계산한다.</summary>
+        public float Time
+        {
+            get => time;
+            set { time = value; Elapsed = value; TriggerDirty = true; }
+        }
         /// <summary>이 항목으로 섞어 들어오는 시간(초).</summary>
         public float MixDuration;
         /// <summary>예약 항목: 앞 항목 끝에서 기다리는 시간(초).</summary>
         public float Delay;
         internal AnimationData Data;
-        internal float LastTime, MixTime, Elapsed;
-        internal bool Completed;
+        internal bool loop;
+        internal float time, LastTime, MixTime, Elapsed;
+        /// <summary>빈 트랙에서 기다리는 예약 항목의 남은 시간(Delay는 그대로 둔다).</summary>
+        internal float Wait;
+        internal bool Completed, TriggerDirty;
         internal bool IsEmpty => Data == null;
         /// <summary>반복 아닌 항목이 끝에 닿았는가(끝 프레임에 멈춰 있음).</summary>
         public bool IsComplete => !Loop && Completed;
@@ -62,6 +74,9 @@ namespace KGBone.Core
         KeyedMask tmpMask;
         SkinSet skin;
 
+        /// <summary>트랙 번호 상한(0 ~ MaxTracks−1).</summary>
+        public const int MaxTracks = 64;
+
         public AnimationTracks(SkeletonModel model) { this.model = model; }
 
         public int TrackCount => tracks.Count;
@@ -75,6 +90,8 @@ namespace KGBone.Core
                 return false;
             }
         }
+
+        static bool Valid(int track) => track >= 0 && track < MaxTracks;
 
         Track Get(int track)
         {
@@ -93,7 +110,7 @@ namespace KGBone.Core
         /// <summary>트랙의 지금 항목을 바꾼다(mix초 동안 섞기, 0이면 바로). 예약은 비운다. 없는 애니메이션이면 null, 트랙 그대로.</summary>
         public TrackEntry SetAnimation(int track, string name, bool loop, float mix)
         {
-            var data = track >= 0 ? model.FindAnimation(name) : null;
+            var data = Valid(track) ? model.FindAnimation(name) : null;
             if (data == null) return null;
             var tr = Get(track);
             tr.Queue.Clear();
@@ -106,7 +123,7 @@ namespace KGBone.Core
         /// <summary>지금 항목이 끝나면(반복이면 이번 바퀴 끝) delay초 뒤 시작할 항목을 예약한다. 트랙이 비어 있으면 delay 뒤 바로 시작.</summary>
         public TrackEntry AddAnimation(int track, string name, bool loop, float delay, float mix)
         {
-            var data = track >= 0 ? model.FindAnimation(name) : null;
+            var data = Valid(track) ? model.FindAnimation(name) : null;
             if (data == null) return null;
             var e = new TrackEntry { Name = name, Loop = loop, Data = data, Delay = delay, MixDuration = mix };
             Enqueue(Get(track), e);
@@ -127,7 +144,7 @@ namespace KGBone.Core
         /// <summary>트랙 비우기를 예약한다(지금 항목 끝 + delay에 mix초 동안 빠짐).</summary>
         public void AddEmpty(int track, float delay, float mix)
         {
-            if (track < 0) return;
+            if (!Valid(track)) return;
             Enqueue(Get(track), new TrackEntry { Delay = delay, MixDuration = mix });
         }
 
@@ -136,7 +153,7 @@ namespace KGBone.Core
 
         public void SetAlpha(int track, float alpha)
         {
-            if (track < 0) return;
+            if (!Valid(track)) return;
             Get(track).Alpha = Math.Min(Math.Max(alpha, 0f), 1f);
         }
 
@@ -149,6 +166,7 @@ namespace KGBone.Core
 
         void Enqueue(Track tr, TrackEntry e)
         {
+            e.Wait = e.Delay;
             tr.Queue.Add(e);
             if (tr.Queue.Count == 1) tr.Trigger = float.NaN;
         }
@@ -210,22 +228,30 @@ namespace KGBone.Core
                 {
                     if (tr.Queue.Count == 0) continue;
                     var head = tr.Queue[0];
-                    head.Delay -= adv;
-                    if (head.Delay > 0f) continue;
+                    head.Wait -= adv;
+                    if (head.Wait > 0f) continue;
                     tr.Queue.RemoveAt(0);
                     tr.Trigger = float.NaN;
-                    Start(i, tr, head, -head.Delay, dt, completed);
+                    Start(i, tr, head, -head.Wait, dt, completed);
                     continue;
                 }
+                if (cur.TriggerDirty)
+                {
+                    cur.TriggerDirty = false;
+                    tr.Trigger = float.NaN;
+                }
                 if (tr.Queue.Count > 0 && float.IsNaN(tr.Trigger)) tr.Trigger = TriggerFor(cur, tr.Queue[0]);
-                Advance(i, cur, dt, completed, true);
+                // 이번 진행에서 예약 시점을 넘으면 지금 항목은 그 시점까지만 진행한다(넘어간 뒤 구간의 이벤트를 내지 않게)
+                float step = dt;
+                if (tr.Queue.Count > 0 && adv > 0f && cur.Elapsed + adv > tr.Trigger) step = Math.Max(tr.Trigger - cur.Elapsed, 0f);
+                Advance(i, cur, step, completed, true);
                 if (tr.From != null) Advance(i, tr.From, dt, null, false);
                 if (cur.MixDuration > 0f) cur.MixTime += adv;
                 if (tr.Queue.Count > 0 && cur.Elapsed >= tr.Trigger)
                 {
                     var head = tr.Queue[0];
                     tr.Queue.RemoveAt(0);
-                    float overflow = cur.Elapsed - tr.Trigger;
+                    float overflow = (adv - Math.Max(step, 0f)) + Math.Max(cur.Elapsed - tr.Trigger, 0f);
                     tr.Trigger = float.NaN;
                     Start(i, tr, head, overflow, dt, completed);
                 }
@@ -251,10 +277,11 @@ namespace KGBone.Core
 
         void Start(int track, Track tr, TrackEntry e, float overflow, float dt, List<TrackCompletion> completed)
         {
-            e.Time = 0f;
+            e.time = 0f;
             e.LastTime = 0f;
             e.Elapsed = 0f;
             e.Completed = false;
+            e.TriggerDirty = false;
             Transition(tr, e, e.MixDuration);
             if (overflow > 0f && tr.Cur == e)
             {
@@ -269,27 +296,27 @@ namespace KGBone.Core
             e.Elapsed += adv;
             if (e.IsEmpty) return;
             // 끝난 반복 아닌 항목은 멈춘 채로 둔다(2단계: 끝나면 재생 멈춤). 예약은 Elapsed로 계속 센다.
-            if (!e.Loop && e.Completed)
+            if (!e.loop && e.Completed)
             {
-                e.LastTime = e.Time;
+                e.LastTime = e.time;
                 return;
             }
-            e.LastTime = e.Time;
-            e.Time += dt;
+            e.LastTime = e.time;
+            e.time += dt;
             float d = e.Data.Duration;
             bool reached = false;
-            if (!e.Loop)
+            if (!e.loop)
             {
-                if (e.Time >= d)
+                if (e.time >= d)
                 {
-                    e.Time = d;
+                    e.time = d;
                     if (!e.Completed)
                     {
                         e.Completed = true;
                         reached = true;
                     }
                 }
-                else if (e.Time < 0f) e.Time = 0f;
+                else if (e.time < 0f) e.time = 0f;
             }
             // 시간을 거꾸로 돌릴 때는 이벤트를 내지 않는다(구간 규칙이 앞으로 가는 시간만 전제)
             if (fire && dt >= 0f)

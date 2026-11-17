@@ -41,7 +41,8 @@ namespace KGBone.Core
         {
             if (bone < 0) return;
             if (value == null) locals.Remove(bone);
-            else locals[bone] = value;
+            // 값을 복사해 둔다(넘긴 뒤 고쳐도 다시 부르기 전에는 바뀌지 않음)
+            else locals[bone] = new BoneOverride { Rotation = value.Rotation, X = value.X, Y = value.Y, ScaleX = value.ScaleX, ScaleY = value.ScaleY, Mix = value.Mix };
         }
 
         /// <summary>본 원점의 목표 위치(뼈대 좌표). mix(0~1)로 지금 위치와 섞는다.</summary>

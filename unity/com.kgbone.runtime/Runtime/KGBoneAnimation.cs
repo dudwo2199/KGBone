@@ -201,7 +201,7 @@ namespace KGBone
         /// </summary>
         public TrackEntry SetAnimation(int track, string name, bool loop, float mix = -1)
         {
-            if (EnsurePoser() == null) return null;
+            if (!TrackOk(track) || EnsurePoser() == null) return null;
             controlled = true;
             var e = tracks.SetAnimation(track, name, loop, mix < 0 ? defaultMix : mix);
             if (e == null)
@@ -217,7 +217,7 @@ namespace KGBone
         /// <summary>지금 애니메이션이 끝나면(반복이면 이번 바퀴 끝) delay초 뒤 시작하도록 예약한다. mix &lt; 0이면 defaultMix.</summary>
         public TrackEntry AddAnimation(int track, string name, bool loop, float delay = 0, float mix = -1)
         {
-            if (EnsurePoser() == null) return null;
+            if (!TrackOk(track) || EnsurePoser() == null) return null;
             controlled = true;
             var e = tracks.AddAnimation(track, name, loop, delay, mix < 0 ? defaultMix : mix);
             if (e == null) WarnMissing(name);
@@ -235,19 +235,26 @@ namespace KGBone
         /// <summary>지금 애니메이션이 끝나면 delay초 뒤 트랙을 mix초 동안 비우도록 예약한다.</summary>
         public void AddEmpty(int track, float delay = 0, float mix = -1)
         {
-            if (EnsurePoser() == null) return;
+            if (!TrackOk(track) || EnsurePoser() == null) return;
             tracks.AddEmpty(track, delay, mix < 0 ? defaultMix : mix);
         }
 
         /// <summary>트랙 비율(0~1). 1보다 작으면 아랫 트랙 결과와 그 비율로 섞인다.</summary>
         public void SetTrackAlpha(int track, float alpha)
         {
-            if (EnsurePoser() == null) return;
+            if (!TrackOk(track) || EnsurePoser() == null) return;
             tracks.SetAlpha(track, alpha);
         }
 
         /// <summary>트랙의 지금 애니메이션 이름(비어 있거나 비우는 중이면 null).</summary>
         public string GetTrackAnimation(int track) => tracks?.Current(track)?.Name;
+
+        bool TrackOk(int track)
+        {
+            if (track >= 0 && track < AnimationTracks.MaxTracks) return true;
+            Warn($"트랙 번호는 0~{AnimationTracks.MaxTracks - 1}입니다: {track}");
+            return false;
+        }
 
         void WarnMissing(string name) => Warn($"애니메이션을 찾을 수 없습니다: {name}");
 
@@ -440,13 +447,15 @@ namespace KGBone
                     && tracks.SetAnimation(0, animationName, loop, defaultMix) == null) WarnMissing(animationName);
             }
             var t0 = Track0;
-            if (t0 != null && t0.Loop != loop) t0.Loop = loop;
+            // loop 필드를 바꾸면 트랙 0도 따른다. 이미 끝난 반복 아닌 애니메이션은 멈춘 채로 둔다(2단계와 같음)
+            if (t0 != null && t0.Loop != loop && !t0.IsComplete) t0.Loop = loop;
             float delta = dt * timeScale;
             // 반복 아닌 애니메이션은 끝에서 멈추고, 끝 시간 키(길이 0이면 0초 키)도 끝에 도달할 때 낸다(AnimationTracks)
             completions.Clear();
             tracks.Update(delta, completions);
             // 시간을 거꾸로 돌릴 때는 이벤트를 내지 않는다(구간 규칙이 앞으로 가는 시간만 전제한다)
-            Compute(delta >= 0 ? 0f : (float?)null);
+            // 트랙이 없으면(에디터 미리보기) 이벤트를 내지 않는다
+            Compute(delta >= 0 && tracks.TrackCount > 0 ? 0f : (float?)null);
             request.Physics = PhysicsStep.None;
             request.WorldMotion = default;
 

@@ -6,6 +6,7 @@
 - 클리핑: 클리핑 슬롯부터 end 슬롯까지 그려지는 삼각형을 다각형으로 자른다(반전·볼록, 오목 다각형, 가중치·변형 키 클립 다각형).
 - 번호 트랙: `SetAnimation`·`AddAnimation`·`ClearTrack`·`AddEmpty`·`SetTrackAlpha`·`GetTrackAnimation`, 섞는 시간(`defaultMix`, 기본 0), 윗 트랙은 키 있는 값만 덮음, `TrackCompleted`. 이벤트(`KGBoneEvent`)에 `Track`·`Animation`.
 - `Play`·`Stop`·`Time`·`IsPlaying`·`CurrentAnimation`은 트랙 0 기준으로 지금과 같게 동작한다.
+- 트랙 번호는 0~63(밖이면 경고 한 번). 예약 시작 시점은 `Time`을 옮기면 다시 잡고, 넘어가는 프레임에 옛 애니메이션은 넘어가는 지점까지만 이벤트를 낸다.
 - 무기 바꾸기: `SetAttachment`·`ClearAttachment`, 스킨 합치기 `SetSkins`(뒤 스킨 우선).
 - 코드로 본 움직이기: `SetBoneLocal`(`BoneOverride`), `SetBoneWorldPosition`·`SetBoneWorldRotation`(유니티 월드 값, 제약 앞에 적용 — IK 대상을 옮기면 IK가 따라옴), `ClearBone`·`ClearAllBones`.
 - 클리핑·시퀀스 가져오기 경고를 없앴다. 정답 비교에 `spine43-clipping`, `unity-stage3-clipping`, `unity-stage3-sequence`를 더했다.

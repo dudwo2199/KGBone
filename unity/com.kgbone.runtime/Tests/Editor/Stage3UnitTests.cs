@@ -564,6 +564,76 @@ namespace KGBone.Tests
 #endif
 
         [Test]
+        public void m19_seek_moves_queue_trigger()
+        {
+            // 작은 지적 1: 시간을 옮기면 예약 시작 시점도 그 시간 기준
+            var r = new TrackRig();
+            r.T.SetAnimation(0, "짧은", false, 0);
+            r.T.AddAnimation(0, "걷기", true, 0.2f, 0);
+            r.Step(0.05f);
+            r.T.Current(0).Time = 0f;
+            r.Step(0.25f);
+            Assert.AreEqual("짧은", r.T.Current(0).Name, "끝(0.1) + 0.2 = 0.3초 전");
+            r.Step(0.1f);
+            Assert.AreEqual("걷기", r.T.Current(0).Name);
+            Assert.AreEqual(0.05f, r.T.Current(0).Time, 1e-4f);
+        }
+
+        [Test]
+        public void m19_old_entry_events_stop_at_trigger()
+        {
+            // 작은 지적 2: 예약 항목으로 넘어가는 프레임에 옛 항목은 넘어가는 지점까지만 이벤트를 낸다
+            var r = new TrackRig();
+            var events = new List<FiredEvent>();
+            r.T.SetAnimation(0, "걷기", true, 0);
+            r.Step(0.3f);
+            r.T.AddAnimation(0, "달리기", true, 0, 0); // 이번 바퀴 끝(1초)에 시작
+            r.Step(1.3f); // 걷기 0.3→1.0(0.5초 이벤트 하나), 달리기 0→0.6(0.05초 이벤트)
+            r.T.CollectEvents(events);
+            CollectionAssert.AreEqual(new[] { "걷기", "달리기" }, events.Select(e => e.Animation).ToArray());
+            Assert.AreEqual(0.6f, r.T.Current(0).Time, 1e-4f);
+        }
+
+        [Test]
+        public void m19_queued_delay_not_changed()
+        {
+            // 작은 지적 3: 빈 트랙에서 기다리는 동안 공개 Delay 값은 그대로
+            var r = new TrackRig();
+            var e = r.T.AddAnimation(1, "팔", true, 0.5f, 0);
+            r.Step(0.2f);
+            Assert.AreEqual(0.5f, e.Delay);
+            Assert.IsNull(r.T.Current(1));
+            r.Step(0.4f);
+            Assert.AreEqual("팔", r.T.Current(1).Name);
+        }
+
+        [Test]
+        public void m19_track_index_limits()
+        {
+            // 작은 지적 4: 음수·너무 큰 트랙 번호는 거절(트랙을 만들지 않음)
+            var r = new TrackRig();
+            Assert.IsNull(r.T.SetAnimation(-1, "걷기", true, 0));
+            Assert.IsNull(r.T.SetAnimation(AnimationTracks.MaxTracks, "걷기", true, 0));
+            Assert.IsNull(r.T.AddAnimation(1000000, "걷기", true, 0, 0));
+            r.T.AddEmpty(1000000, 0, 0);
+            r.T.SetAlpha(1000000, 0.5f);
+            Assert.AreEqual(0, r.T.TrackCount);
+            Assert.IsNotNull(r.T.SetAnimation(AnimationTracks.MaxTracks - 1, "걷기", true, 0));
+        }
+
+        [Test]
+        public void m22_bone_override_copied()
+        {
+            // 작은 지적 7: 넘긴 BoneOverride를 나중에 고쳐도 다시 부르기 전에는 반영되지 않는다
+            var m = KGBoneLoader.Load(@"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},{""name"":""b"",""parent"":""root""}]}}");
+            var o = new PoseOverrides();
+            var v = new BoneOverride { Rotation = 20 };
+            o.SetBoneLocal(1, v);
+            v.Rotation = 80;
+            Assert.AreEqual(20f, Pose(m, new PoseRequest { Overrides = o }).Locals[1].Rotation, 1e-4f);
+        }
+
+        [Test]
         public void m19_unknown_name_returns_null()
         {
             var r = new TrackRig();
