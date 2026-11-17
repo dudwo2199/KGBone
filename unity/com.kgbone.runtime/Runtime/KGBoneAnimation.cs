@@ -56,6 +56,8 @@ namespace KGBone
 
         SkeletonPoser poser;
         AnimationTracks tracks;
+        // 트랙·덮어쓰기를 만든 모델(OnValidate가 poser만 버릴 때는 그대로 둔다)
+        SkeletonModel tracksModel;
         float idleTime;
         string observedName;
         readonly List<TrackCompletion> completions = new List<TrackCompletion>();
@@ -504,18 +506,22 @@ namespace KGBone
             // 같은 데이터 에셋이라도 다시 가져오면 모델이 바뀐다(객체는 그대로일 수 있음)
             if (poser == null || poserData != skeletonData || poser.Model != skeletonData.Model)
             {
-                // 트랙은 새 모델로 다시 만들고 트랙 0의 애니메이션·시간만 이어 간다
-                var old0 = Track0;
-                tracks = new AnimationTracks(skeletonData.Model);
-                if (old0 != null)
+                if (tracksModel != skeletonData.Model)
                 {
-                    var e = tracks.SetAnimation(0, old0.Name, old0.Loop, 0);
-                    if (e != null) e.Time = old0.Time;
+                    // 모델이 바뀌면(다시 가져오기) 트랙은 새 모델로 다시 만들고 트랙 0의 애니메이션·시간만 이어 간다
+                    var old0 = Track0;
+                    tracks = new AnimationTracks(skeletonData.Model);
+                    tracksModel = skeletonData.Model;
+                    if (old0 != null)
+                    {
+                        var e = tracks.SetAnimation(0, old0.Name, old0.Loop, 0);
+                        if (e != null) e.Time = old0.Time;
+                    }
+                    // 덮어쓰기는 본·슬롯 번호로 들고 있으므로 비운다
+                    overrides = new PoseOverrides();
+                    worldPositions.Clear();
+                    worldRotations.Clear();
                 }
-                // 덮어쓰기는 본·슬롯 번호로 들고 있으므로 모델이 바뀌면 비운다
-                overrides = new PoseOverrides();
-                worldPositions.Clear();
-                worldRotations.Clear();
                 poser = new SkeletonPoser(skeletonData.Model);
                 poserData = skeletonData;
                 LastPose = null;
@@ -537,7 +543,8 @@ namespace KGBone
 
         void Compute(float? lastTime)
         {
-            if (tracks.HasAny)
+            // 트랙을 한 번이라도 썼으면(Stop 전까지) 트랙 경로: 같은 프레임에 모든 트랙이 비어도 그 프레임 이벤트를 낸다
+            if (tracks.TrackCount > 0)
             {
                 request.Tracks = tracks;
                 request.Animation = null;

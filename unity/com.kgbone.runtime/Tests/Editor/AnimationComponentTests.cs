@@ -396,6 +396,39 @@ namespace KGBone.Tests
             }
         }
 
+        [Test]
+        public void m20_onvalidate_keeps_tracks()
+        {
+            // 검토 I2: 플레이 중 인스펙터를 고쳐도(OnValidate) 트랙·덮어쓰기가 남고 Completed를 다시 내지 않는다
+            var a = Make(ImportTracks());
+            int completed = 0;
+            a.Completed += () => completed++;
+            a.Play("공격", false);
+            a.Advance(0.5f);
+            Assert.AreEqual(1, completed);
+            a.SetAnimation(1, "걷기", true);
+            a.SetAttachment("무기", "도끼");
+            typeof(KGBoneAnimation).GetMethod("OnValidate", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(a, null);
+            a.Advance(0.1f);
+            Assert.AreEqual(1, completed);
+            Assert.AreEqual("걷기", a.GetTrackAnimation(1));
+            Assert.AreEqual("hat-blue", DrawnImage(a, "무기"));
+        }
+
+        [Test]
+        public void m20_last_frame_events_when_tracks_empty()
+        {
+            // 검토 I3: 끝나는 프레임에 트랙이 모두 비어도 그 프레임 이벤트(끝 시간 키 포함)를 낸다
+            var a = Make(ImportTracks());
+            var got = new List<string>();
+            a.EventFired += e => got.Add(e.Name);
+            a.Play("공격", false);
+            a.AddEmpty(0, 0, 0);
+            a.Advance(0.5f);
+            CollectionAssert.AreEqual(new[] { "타격", "끝" }, got);
+            Assert.IsNull(a.GetTrackAnimation(0));
+        }
+
         static int KGBoneMeshCount()
         {
             int n = 0;

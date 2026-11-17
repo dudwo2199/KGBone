@@ -18,6 +18,7 @@ namespace KGBone.Core
 
         readonly List<DrawItem> pool = new List<DrawItem>();
         readonly List<float> clipPolygon = new List<float>();
+        readonly Clipper clipper = new Clipper();
 
         /// <summary>첨부물 찾기: 켠 스킨(뒤가 이김) → 기본 스킨(핵심 find_attachment).</summary>
         public static AttachmentData FindAttachment(SkeletonModel m, SkinSet skins, string slot, string name) => SkinSet.Find(skins, m, slot, name);
@@ -63,7 +64,7 @@ namespace KGBone.Core
                     clipPolygon.Clear();
                     MeshVertices.WorldPositions(ca.Weighted, ca.Vertices, bone, pose.World, cdeform, clipPolygon);
                     // 점이 3개 미만이면 자르기를 끈다(핵심 Clipper::new가 None)
-                    clip = Clipper.Create(clipPolygon, ca.Convex, ca.Inverse);
+                    clip = clipper.Reset(clipPolygon, ca.Convex, ca.Inverse) ? clipper : null;
                     clipEnd = ca.End;
                     clipping = clip != null;
                     return true;

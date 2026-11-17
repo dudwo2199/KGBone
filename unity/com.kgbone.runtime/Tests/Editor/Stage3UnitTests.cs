@@ -529,6 +529,41 @@ namespace KGBone.Tests
         }
 
         [Test]
+        public void m19_completed_entry_stays_put()
+        {
+            // 검토 I1: 끝난 반복 아닌 항목은 시간을 옮겨도 다시 흐르지 않는다(2단계: 끝나면 멈춤)
+            var r = new TrackRig();
+            var events = new List<FiredEvent>();
+            r.T.SetAnimation(0, "짧은", false, 0);
+            r.Step(0.2f);
+            Assert.IsTrue(r.T.Current(0).IsComplete);
+            r.T.Current(0).Time = 0.05f;
+            Assert.AreEqual(15f, r.Step(0.1f).b2, 1e-3f);
+            Assert.AreEqual(0.05f, r.T.Current(0).Time, 1e-6f);
+            r.T.CollectEvents(events);
+            Assert.AreEqual(0, events.Count);
+            r.Step(-0.05f);
+            Assert.AreEqual(0.05f, r.T.Current(0).Time, 1e-6f);
+            Assert.AreEqual(1, r.Done.Count);
+        }
+
+#if !UNITY_5_3_OR_NEWER
+        [Test]
+        public void m18_clipping_no_per_frame_allocation()
+        {
+            // 검토 I4: 클리핑은 매 프레임 새로 할당하지 않는다(버퍼 재사용)
+            var m = KGBoneLoader.Load(System.IO.File.ReadAllText(System.IO.Path.Combine(GoldenFile.GoldenDir(), "unity-stage3-clipping.kgbone")));
+            var poser = new SkeletonPoser(m);
+            var req = new PoseRequest { Animation = "흔들기", Looping = true };
+            for (int i = 0; i < 5; i++) { req.Time = i * 0.21f; poser.Compute(req); }
+            long before = System.GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 20; i++) { req.Time = 0.05f + i * 0.13f; poser.Compute(req); }
+            long bytes = System.GC.GetAllocatedBytesForCurrentThread() - before;
+            Assert.Less(bytes, 4096, "20프레임 할당 바이트");
+        }
+#endif
+
+        [Test]
         public void m19_unknown_name_returns_null()
         {
             var r = new TrackRig();

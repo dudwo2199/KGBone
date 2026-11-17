@@ -779,11 +779,11 @@ const unityStage3Tracks = {
     { name: "몸", attachments: { "갑옷": { 갑옷: { path: "gem", x: 30, width: 32, height: 32 } } } },
     { name: "칼", attachments: { "무기": { 칼: { path: "tail", x: 60, width: 128, height: 32 } } } },
   ],
-  events: [{ name: "발" }, { name: "타격", int: 3 }],
+  events: [{ name: "발" }, { name: "타격", int: 3 }, { name: "끝" }],
   animations: [
     { name: "걷기", bones: { "다리": { rotate: lin([[0, 0], [0.5, 30], [1, 0]]) }, "팔": { rotate: lin([[0, 0], [0.5, -20], [1, 0]]) } }, events: [{ time: 0.5, name: "발" }] },
     { name: "달리기", bones: { "다리": { rotate: lin([[0, 0], [0.3, 60], [0.6, 0]]) }, "팔": { rotate: lin([[0, 0], [0.3, -40], [0.6, 0]]) } } },
-    { name: "공격", bones: { "팔": { rotate: lin([[0, 0], [0.2, 90], [0.4, 90]]) } }, events: [{ time: 0.2, name: "타격" }] },
+    { name: "공격", bones: { "팔": { rotate: lin([[0, 0], [0.2, 90], [0.4, 90]]) } }, events: [{ time: 0.2, name: "타격" }, { time: 0.4, name: "끝" }] },
     { name: "대기", bones: { "몸": { translate: lin([[0, [0, 0]], [1, [0, 4]]]) } } },
   ],
 };

@@ -268,6 +268,12 @@ namespace KGBone.Core
             float adv = Math.Max(dt, 0f);
             e.Elapsed += adv;
             if (e.IsEmpty) return;
+            // 끝난 반복 아닌 항목은 멈춘 채로 둔다(2단계: 끝나면 재생 멈춤). 예약은 Elapsed로 계속 센다.
+            if (!e.Loop && e.Completed)
+            {
+                e.LastTime = e.Time;
+                return;
+            }
             e.LastTime = e.Time;
             e.Time += dt;
             float d = e.Data.Duration;
