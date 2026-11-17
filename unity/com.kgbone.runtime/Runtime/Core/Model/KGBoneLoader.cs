@@ -238,7 +238,6 @@ namespace KGBone.Core
                 foreach (var a in slot.Value.Members)
                 {
                     var att = ReadAttachment(a.Value);
-                    if (att is OtherAttachment o && o.Type == "clipping") m.HasClipping = true;
                     map[a.Key] = att;
                 }
                 skin.Attachments[slot.Key] = map;
@@ -283,6 +282,17 @@ namespace KGBone.Core
                         Weighted = B(v, "weighted", false),
                         Vertices = v.Get("vertices")?.AsFloatArray() ?? new float[0],
                         Lengths = v.Get("lengths")?.AsFloatArray() ?? new float[0],
+                    };
+                    break;
+                case "clipping":
+                    a = new ClippingAttachmentData
+                    {
+                        End = S(v, "end"),
+                        VertexCount = v.Get("vertexCount")?.AsInt(0) ?? 0,
+                        Weighted = B(v, "weighted", false),
+                        Inverse = B(v, "inverse", false),
+                        Convex = B(v, "convex", false),
+                        Vertices = v.Get("vertices")?.AsFloatArray() ?? new float[0],
                     };
                     break;
                 case "linkedmesh":

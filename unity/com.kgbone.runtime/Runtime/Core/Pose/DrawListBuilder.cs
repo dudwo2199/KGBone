@@ -2,7 +2,9 @@
 // - region: 슬롯 본 기준 (x, y, rotation, scaleX, scaleY)로 놓인 width × height 사각형. 모서리 순서 왼아래, 오른아래, 오른위, 왼위,
 //   uv (0,1)(1,1)(1,0)(0,0), 삼각형 [0,1,2, 2,3,0].
 // - mesh: 가중치/비가중치 정점 + deform. linkedmesh: 부모 메시의 uv·삼각형·정점(Timelines면 부모의 deform).
-// - 비활성 본에 붙은 슬롯, 찾지 못한 첨부물, 그림이 없는 종류는 그리지 않는다. 클리핑은 아직 자르지 않는다. 시퀀스는 키로 정한 프레임(없으면 셋업 프레임) 이미지.
+// - 비활성 본에 붙은 슬롯, 찾지 못한 첨부물, 그림이 없는 종류는 그리지 않는다. 시퀀스는 키로 정한 프레임(없으면 셋업 프레임) 이미지.
+// - clipping: 그 슬롯부터 end 슬롯(포함)까지 그려지는 것을 자른다(Clipper). 클리핑 슬롯 자체는 그리지 않고, 다음 클리핑이 오면 바뀐다.
+//   end 검사는 첨부물이 없거나 비활성인 슬롯에서도 하고, 클리핑 슬롯 자신에서는 하지 않는다(핵심과 같음).
 using System;
 using System.Collections.Generic;
 
@@ -15,6 +17,7 @@ namespace KGBone.Core
         static readonly int[] RegionIndices = { 0, 1, 2, 2, 3, 0 };
 
         readonly List<DrawItem> pool = new List<DrawItem>();
+        readonly List<float> clipPolygon = new List<float>();
 
         /// <summary>첨부물 찾기: 켠 스킨 → 기본 스킨(핵심 find_attachment).</summary>
         public static AttachmentData FindAttachment(SkeletonModel m, string skin, string slot, string name)
@@ -29,18 +32,48 @@ namespace KGBone.Core
         {
             output.Clear();
             int used = 0;
+            Clipper clip = null;
+            string clipEnd = null;
+            bool clipping = false;
             foreach (int si in pose.DrawOrder)
             {
                 if (si < 0 || si >= m.Slots.Count) continue;
                 var slot = m.Slots[si];
+                if (AddSlot(m, pose, skin, si, output, ref used, ref clip, ref clipEnd, ref clipping)) continue;
+                if (clipping && clipEnd == slot.Name)
+                {
+                    clip = null;
+                    clipEnd = null;
+                    clipping = false;
+                }
+            }
+        }
+
+        /// <summary>슬롯 하나를 그리기 목록에 더한다. 클리핑 슬롯이면 자르기를 시작하고 true(그 슬롯은 end 검사를 하지 않음).</summary>
+        bool AddSlot(SkeletonModel m, PoseState pose, string skin, int si, List<DrawItem> output, ref int used,
+            ref Clipper clip, ref string clipEnd, ref bool clipping)
+        {
+            {
+                var slot = m.Slots[si];
                 int bi = slot.Bone;
                 bool active = bi >= 0 && pose.Active[bi];
-                if (!active) continue;
+                if (!active) return false;
                 string name = pose.SlotAttachments[si];
-                if (name == null) continue;
+                if (name == null) return false;
                 var att = FindAttachment(m, skin, slot.Name, name);
-                if (att == null) continue;
+                if (att == null) return false;
                 var bone = pose.World[bi];
+                if (att is ClippingAttachmentData ca)
+                {
+                    pose.Deform.TryGetValue((slot.Name, name), out float[] cdeform);
+                    clipPolygon.Clear();
+                    MeshVertices.WorldPositions(ca.Weighted, ca.Vertices, bone, pose.World, cdeform, clipPolygon);
+                    // 점이 3개 미만이면 자르기를 끈다(핵심 Clipper::new가 None)
+                    clip = Clipper.Create(clipPolygon, ca.Convex, ca.Inverse);
+                    clipEnd = ca.End;
+                    clipping = clip != null;
+                    return true;
+                }
 
                 DrawItem item = Take(ref used);
                 item.Slot = slot.Name;
@@ -60,7 +93,7 @@ namespace KGBone.Core
                 else
                 {
                     var mesh = MeshVertices.ResolveMesh(m, slot.Name, name, att, out string deformName);
-                    if (mesh == null) { used--; continue; }
+                    if (mesh == null) { used--; return false; }
                     item.Image = att.ImagePath(name, Frame(pose, slot.Name, name));
                     item.Color = slotColor * (att is LinkedMeshAttachment l ? l.Color : mesh.Color);
                     pose.Deform.TryGetValue((slot.Name, deformName), out float[] deform);
@@ -68,9 +101,11 @@ namespace KGBone.Core
                     item.Uvs.AddRange(mesh.Uvs);
                     item.Indices.AddRange(mesh.Triangles);
                 }
-                if (item.Indices.Count == 0) { used--; continue; }
+                if (clip != null) clip.Clip(item.Positions, item.Uvs, item.Indices);
+                if (item.Indices.Count == 0) { used--; return false; }
                 output.Add(item);
             }
+            return false;
         }
 
         static int? Frame(PoseState pose, string slot, string name) =>

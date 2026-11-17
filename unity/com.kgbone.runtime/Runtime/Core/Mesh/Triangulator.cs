@@ -8,8 +8,12 @@ namespace KGBone.Core
 {
     public static class Triangulator
     {
-        static float Cross(float ox, float oy, float ax, float ay, float bx, float by) =>
-            (ax - ox) * (by - oy) - (ay - oy) * (bx - ox);
+        // 셈마다 (float)로 반올림한다(Mono의 높은 정밀도 셈에서도 핵심 f32와 같은 판정, Clipper.cs 머리말 참고)
+        static float Cross(float ox, float oy, float ax, float ay, float bx, float by)
+        {
+            float dx1 = (float)(ax - ox), dy1 = (float)(ay - oy), dx2 = (float)(bx - ox), dy2 = (float)(by - oy);
+            return (float)((float)(dx1 * dy2) - (float)(dy1 * dx2));
+        }
 
         /// <summary>다각형 [x0, y0, x1, y1, …](시계·반시계 무관) → 삼각형 정점 번호 3개씩(반시계).</summary>
         public static int[] Triangulate(IReadOnlyList<float> polygon)
@@ -19,14 +23,14 @@ namespace KGBone.Core
             float X(int i) => polygon[2 * i];
             float Y(int i) => polygon[2 * i + 1];
             float area = 0f;
-            for (int i = 0; i < n; i++) area += Cross(0, 0, X(i), Y(i), X((i + 1) % n), Y((i + 1) % n));
+            for (int i = 0; i < n; i++) area = (float)(area + Cross(0, 0, X(i), Y(i), X((i + 1) % n), Y((i + 1) % n)));
             var idx = new List<int>(n);
             for (int i = 0; i < n; i++) idx.Add(i);
             if (area < 0f) idx.Reverse();
             float scale = 0f;
             for (int i = 0; i < n; i++) scale = Math.Max(Math.Max(scale, MathF.Abs(X(i))), MathF.Abs(Y(i)));
             scale = Math.Max(scale, 1f);
-            float eps = 1e-7f * scale * scale;
+            float eps = (float)((float)(1e-7f * scale) * scale);
             bool Same(int a, int b) => X(a) == X(b) && Y(a) == Y(b);
             float Corner(int i, int m) => Cross(X(idx[(i + m - 1) % m]), Y(idx[(i + m - 1) % m]), X(idx[i]), Y(idx[i]), X(idx[(i + 1) % m]), Y(idx[(i + 1) % m]));
             bool InTriangle(int p, int a, int b, int c) =>

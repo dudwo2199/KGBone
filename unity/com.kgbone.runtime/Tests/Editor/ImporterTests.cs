@@ -119,6 +119,18 @@ namespace KGBone.Tests
             return Import(Tmp + "/kg/" + name + ".kgbone");
         }
 
+        // ---------- M18 클리핑 ----------
+        [Test]
+        public void m18_importer_no_clipping_warning()
+        {
+            var data = ImportGolden("unity-stage3-clipping");
+            Assert.IsNotNull(data);
+            CollectionAssert.IsEmpty(data.Warnings);
+            var full = ImportGolden("spine43-clipping");
+            Assert.IsNotNull(full);
+            foreach (var w in full.Warnings) StringAssert.DoesNotContain("클리핑", w);
+        }
+
         // ---------- M17 시퀀스 ----------
         [Test]
         public void m17_import_packs_all_sequence_frames()

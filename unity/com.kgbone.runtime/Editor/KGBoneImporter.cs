@@ -39,7 +39,6 @@ namespace KGBone.Editor
 
             var warnings = new List<string>();
             warnings.AddRange(model.ConstraintWarnings());
-            if (model.HasClipping) warnings.Add("클리핑은 1단계 런타임에서 자르지 않고 그립니다");
 
             // 이미지 폴더(프로젝트 기준 경로로 정리)
             string projectRoot = Path.GetFullPath(".").Replace('\\', '/').TrimEnd('/') + "/";

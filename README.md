@@ -75,7 +75,7 @@ Windows 11용이고 화면은 한국어다.
 2. `.kgbone` 파일과 그 이미지 폴더를 `Assets` 아래에 넣으면 데이터 에셋·텍스처·머티리얼이 자동으로 생긴다.
 3. 빈 GameObject에 **KGBoneAnimation**을 붙이고 데이터와 애니메이션을 고른다.
 
-지금은 2단계(재생, 본 위치 읽기, 제약 5종과 물리)까지 된다. 클리핑·시퀀스·애니메이션 섞기는 아직 없다(3단계). 자세한 사용법: [unity/com.kgbone.runtime/README.md](unity/com.kgbone.runtime/README.md)
+지금은 재생, 본 위치 읽기, 제약 5종과 물리, 클리핑·시퀀스까지 된다. 애니메이션 섞기·트랙은 3단계에서 진행 중이다. 자세한 사용법: [unity/com.kgbone.runtime/README.md](unity/com.kgbone.runtime/README.md)
 아직 버전 태그와 라이선스가 없다(배포 전).
 
 ## 개발

@@ -695,4 +695,58 @@ const unityStage3Sequence = {
 };
 write("kgbone/unity-stage3-sequence.kgbone", k(unityStage3Sequence));
 
+// 유니티 런타임 3단계 시험 파일: 클리핑(보통·반전·볼록, 오목 다각형, 가중치 메시·가중치 클립 다각형, end 지정·미지정, 클립 정점 deform 키)
+const unityStage3Clipping = {
+  fps: 30,
+  bones: [
+    { name: "root" },
+    { name: "팔", parent: "root", length: 60, x: -40, rotation: 20 },
+    { name: "손", parent: "팔", length: 40, x: 60, rotation: -30 },
+  ],
+  slots: [
+    { name: "클립-보통", bone: "root", attachment: "클립" },
+    { name: "몸1", bone: "root", attachment: "body" },
+    { name: "다리1", bone: "팔", attachment: "가중치" },
+    { name: "클립-볼록", bone: "root", attachment: "클립" },
+    { name: "머리1", bone: "root", attachment: "head" },
+    { name: "꼬리1", bone: "팔", attachment: "tail" },
+    { name: "끝없음전", bone: "root" },
+    { name: "클립-반전", bone: "root", attachment: "클립" },
+    { name: "몸2", bone: "손", attachment: "body" },
+    { name: "머리2", bone: "root", attachment: "head" },
+  ],
+  skins: [
+    {
+      name: "default",
+      attachments: {
+        // 오목(L자) 다각형, 다리1까지
+        "클립-보통": { 클립: { type: "clipping", end: "다리1", vertexCount: 6, vertices: [-30, -40, 40, -40, 40, -10, 0, -10, 0, 50, -30, 50] } },
+        "몸1": { body: { x: 10, y: 0, rotation: 15, width: 48, height: 96 } },
+        "다리1": {
+          가중치: { type: "mesh", path: "leg", width: 72, height: 24, weighted: true, hull: 4,
+            uvs: [0, 1, 1, 1, 1, 0, 0, 0], triangles: [0, 1, 2, 0, 2, 3],
+            vertices: [...W(1, 0, -12, 1, 2, -60, -12, 0), ...W(1, 60, -12, 0.3, 2, 0, -12, 0.7), ...W(1, 60, 12, 0.3, 2, 0, 12, 0.7), ...W(1, 0, 12, 1, 2, -60, 12, 0)] },
+        },
+        // 가중치 클립 다각형 + 볼록 옵션(오목한 오각형의 껍질로 자름), 꼬리1까지
+        "클립-볼록": { 클립: { type: "clipping", end: "꼬리1", convex: true, weighted: true, vertexCount: 5,
+          vertices: [...W(0, -50, -30, 0.5, 1, -10, -50, 0.5), ...W(0, 50, -30, 1, 1, 90, -50, 0), ...W(0, 50, 40, 1, 1, 90, 20, 0), ...W(0, 0, 10, 0.5, 1, 40, -10, 0.5), ...W(0, -50, 40, 1, 1, -10, 20, 0)] } },
+        "머리1": { head: { x: 20, y: 20 } },
+        "꼬리1": { tail: { x: 30, rotation: -10 } },
+        // 반전 + 볼록(조각 하나), end 없음(마지막 슬롯까지). 오목 다각형 반전은 조각 경계에 넓이≈0 조각이 생겨 유니티(Mono)와 끝자리가 갈리므로 dotnet 단위 테스트(m18)로만 본다
+        "클립-반전": { 클립: { type: "clipping", inverse: true, convex: true, vertexCount: 4, vertices: [-15, -15, 15, -15, 15, 15, -15, 15] } },
+        "몸2": { body: { x: 0, y: 0, width: 48, height: 96 } },
+        "머리2": { head: { x: -10, y: 5 } },
+      },
+    },
+  ],
+  animations: [
+    {
+      name: "흔들기",
+      bones: { "팔": { rotate: lin([[0, 0], [0.5, 40], [1, -20]]) }, "손": { rotate: lin([[0, 0], [1, 60]]) } },
+      deform: { default: { "클립-보통": { 클립: [{ time: 0 }, { time: 1, offset: 2, v: [10, 5, 0, 20] }] } } },
+    },
+  ],
+};
+write("kgbone/unity-stage3-clipping.kgbone", k(unityStage3Clipping));
+
 console.log("samples 생성 완료:", root);

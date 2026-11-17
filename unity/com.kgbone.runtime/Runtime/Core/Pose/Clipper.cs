@@ -3,6 +3,8 @@
 // - 보통: 그려질 삼각형 × 각 조각을 반평면으로 차례로 잘라 교집합.
 // - 반전(inverse): 삼각형에서 각 조각을 차례로 빼낸다(앞 변들의 안쪽이면서 그 변의 바깥쪽인 부분들 = 겹치지 않는 볼록 조각들).
 // - 결과 다각형은 부채꼴로 삼각형화하고, uv는 원래 삼각형의 무게중심 좌표로 다시 구한다. 넓이 0인 삼각형은 버린다.
+// 정밀도: 넓이 기준(1e-6) 근처의 가는 조각이 남을지 갈리므로, 셈마다 (float)로 반올림해 핵심(Rust f32)과 같게 한다.
+// 유니티의 Mono는 float 셈을 더 높은 정밀도로 할 수 있어, 명시적 (float) 변환(conv.r4)이 없으면 결과가 달라진다.
 using System;
 using System.Collections.Generic;
 
@@ -31,7 +33,11 @@ namespace KGBone.Core
             this.inverse = inverse;
         }
 
-        static float Cross(P o, P a, P b) => (a.X - o.X) * (b.Y - o.Y) - (a.Y - o.Y) * (b.X - o.X);
+        static float Cross(P o, P a, P b)
+        {
+            float ax = (float)(a.X - o.X), ay = (float)(a.Y - o.Y), bx = (float)(b.X - o.X), by = (float)(b.Y - o.Y);
+            return (float)((float)(ax * by) - (float)(ay * bx));
+        }
 
         static float SignedArea(IReadOnlyList<P> poly)
         {
@@ -40,9 +46,9 @@ namespace KGBone.Core
             for (int i = 0; i < n; i++)
             {
                 P a = poly[i], b = poly[(i + 1) % n];
-                s += a.X * b.Y - b.X * a.Y;
+                s = (float)(s + (float)((float)(a.X * b.Y) - (float)(b.X * a.Y)));
             }
-            return s * 0.5f;
+            return (float)(s * 0.5f);
         }
 
         /// <summary>볼록 껍질(반시계, 단조 사슬).</summary>
@@ -85,8 +91,8 @@ namespace KGBone.Core
                 if (sc >= 0f) output.Add(cur);
                 if ((sc >= 0f) != (sn >= 0f))
                 {
-                    float t = sc / (sc - sn);
-                    output.Add(new P(cur.X + (nxt.X - cur.X) * t, cur.Y + (nxt.Y - cur.Y) * t));
+                    float t = (float)(sc / (float)(sc - sn));
+                    output.Add(new P((float)(cur.X + (float)((float)(nxt.X - cur.X) * t)), (float)(cur.Y + (float)((float)(nxt.Y - cur.Y) * t))));
                 }
             }
             return output;
@@ -187,13 +193,13 @@ namespace KGBone.Core
                     foreach (var p in poly)
                     {
                         // 무게중심 좌표(원래 순서 a, b, c 기준)
-                        float wa = Cross(p, b, c) / area;
-                        float wb = Cross(a, p, c) / area;
-                        float wc = 1f - wa - wb;
+                        float wa = (float)(Cross(p, b, c) / area);
+                        float wb = (float)(Cross(a, p, c) / area);
+                        float wc = (float)((float)(1f - wa) - wb);
                         outPos.Add(p.X);
                         outPos.Add(p.Y);
-                        outUv.Add(uax * wa + ubx * wb + ucx * wc);
-                        outUv.Add(uay * wa + uby * wb + ucy * wc);
+                        outUv.Add((float)((float)((float)(uax * wa) + (float)(ubx * wb)) + (float)(ucx * wc)));
+                        outUv.Add((float)((float)((float)(uay * wa) + (float)(uby * wb)) + (float)(ucy * wc)));
                     }
                     for (int k = 1; k < poly.Count - 1; k++)
                         if (MathF.Abs(Cross(poly[0], poly[k], poly[k + 1])) > AreaEps)

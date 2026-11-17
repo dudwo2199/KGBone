@@ -215,9 +215,10 @@ namespace KGBone.Core
                 if (tl.Skin != SkinData.DefaultName && tl.Skin != skin) continue;
                 var att = m.FindSkin(tl.Skin)?.Get(tl.Slot, tl.Attachment);
                 if (att == null) continue;
-                // 정점 데이터가 있는 첨부물(패스) 또는 그리는 메시(메시·링크드 메시)
+                // 정점 데이터가 있는 첨부물(패스·클리핑) 또는 그리는 메시(메시·링크드 메시)
                 int len;
                 if (att is PathAttachmentData path) len = MeshVertices.DeformLength(path.Weighted, path.Vertices);
+                else if (att is ClippingAttachmentData clipAtt) len = MeshVertices.DeformLength(clipAtt.Weighted, clipAtt.Vertices);
                 else
                 {
                     var mesh = MeshVertices.ResolveMesh(m, tl.Slot, tl.Attachment, att, out _);

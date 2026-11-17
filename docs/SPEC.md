@@ -147,6 +147,13 @@
 | M15 | 물리 제약(고정 간격, reset 키, 초기화)이 연속 프레임에서 핵심과 같음 | C: `m15_*`, `m15_golden_sequences_match_core`(`spine43-physics`, `unity-stage2-physics`) |
 | M16 | 물리 월드 움직임 반영 옵션(기본 0)과 컴포넌트 물리 진행(플레이 모드, 0.1초 상한, 멈춰도 진행, `ResetPhysics`), 제약 경고 없음 | C: `m16_*`. Y: `m16_*`, `m10_importer_no_constraint_warning` |
 
+### M. 유니티 런타임 3단계 (그리기 마무리와 게임용 재생 조작)
+설계: `docs/superpowers/specs/2026-11-18-unity-runtime-stage3-design.md`.
+| 번호 | 기능 | 완료 기준 |
+|---|---|---|
+| M17 | 시퀀스: 키(모드 7종·간격)로 프레임 이미지 넘기기, 가져올 때 모든 프레임 이미지 묶기, 없는 프레임은 경고 후 그 항목만 빠짐 | C: `m17_*` + 정답(`unity-stage3-sequence`). Y: `m17_import_packs_all_sequence_frames`, `m17_missing_frame_image_skipped` |
+| M18 | 클리핑: 클리핑 슬롯부터 end 슬롯까지 자르기(보통·반전·볼록, 오목 다각형, 가중치·변형 키 클립 다각형), 경고 없음 | C: `m18_*` + 정답(`spine43-clipping`, `unity-stage3-clipping`). Y: `m18_importer_no_clipping_warning` |
+
 ## N. MCP 연결
 MCP 서버(`tools/mcp/server.mjs`)가 열린 KGBone 창의 문서를 편집한다. 메시지: `interface/agent-link.md`. 사용 설명서 9장.
 | 번호 | 기능 | 완료 기준 |

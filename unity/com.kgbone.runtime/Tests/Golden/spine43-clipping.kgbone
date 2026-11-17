@@ -1,0 +1,60 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone 0.1.0",
+	"imagesPath": "../images",
+	"skeleton": {
+		"x": -100,
+		"width": 200,
+		"height": 300,
+		"bones": [
+			{
+				"name": "root"
+			}
+		],
+		"slots": [
+			{
+				"name": "clip",
+				"bone": "root",
+				"attachment": "clip"
+			},
+			{
+				"name": "body",
+				"bone": "root",
+				"attachment": "body"
+			},
+			{
+				"name": "after",
+				"bone": "root",
+				"attachment": "gem"
+			}
+		],
+		"skins": [
+			{
+				"name": "default",
+				"attachments": {
+					"clip": {
+						"clip": {
+							"type": "clipping",
+							"end": "body",
+							"vertexCount": 4,
+							"vertices": [-20, -20, 20, -20, 20, 20, -20, 20]
+						}
+					},
+					"body": {
+						"body": {
+							"type": "region",
+							"width": 48,
+							"height": 96
+						}
+					},
+					"after": {
+						"gem": {
+							"type": "region",
+							"x": 40
+						}
+					}
+				}
+			}
+		]
+	}
+}

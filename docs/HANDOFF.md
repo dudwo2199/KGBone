@@ -20,7 +20,7 @@
 - 확인용 프로젝트 `unity/KGBoneSandbox/`: `npm run unity:sandbox -- <폴더>`로 파일을 넣고, 메뉴 KGBone > 화면 찍기(또는 배치 모드 `-executeMethod KGBoneSandbox.SandboxTools.CaptureBatch`)로 `Logs/capture-*.png`를 만든다.
 - 이 PC: Unity 6000.3.17f1, .NET SDK 10. `dotnet test`는 스마트 앱 컨트롤에 막히지 않는다.
 - 2단계(제약 5종, 물리, 월드 움직임 반영 옵션) 끝남: 설계 `docs/superpowers/specs/2026-11-17-unity-runtime-stage2-design.md`, 계획 `docs/superpowers/plans/2026-11-17-unity-runtime-stage2.md`, SPEC M13~M16. 정답 912개(물리 연속 포함), EditMode 274개 통과(1개 건너뜀).
-- 다음 단계 후보: 3단계(클리핑·시퀀스·섞기·스킨 바꾸기·본 덮어쓰기). 미확인 사항은 GAPS G-26~G-28.
+- 3단계 진행 중: 설계 `docs/superpowers/specs/2026-11-18-unity-runtime-stage3-design.md`, 계획 `docs/superpowers/plans/2026-11-18-unity-runtime-stage3.md`. 묶음 ①(시퀀스·클리핑, SPEC M17·M18) 끝, ②(트랙)·③(첨부물·스킨 합치기·본 덮어쓰기) 남음. 미확인 사항은 GAPS G-26~G-28.
 - **배포 전 할 일: 저장소 라이선스 정하기.** 유니티 패키지가 완성되면 배포(버전 태그·설치 주소 안내) 전에 라이선스 파일을 추가한다(사용자 결정, 2026-11-16). 지금은 라이선스가 없어 공개 저장소지만 남이 코드를 가져다 쓸 수 없는 상태다.
 - 시험용 골렘(유료 에셋 미리보기에서 잘라 만든 것)은 원래 폴더의 `local/golem/`에만 있고 커밋하지 않는다(`local/`은 로컬 git 제외 목록에 있음).
 

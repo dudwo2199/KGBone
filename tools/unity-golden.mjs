@@ -29,6 +29,8 @@ const TARGETS = [
   ["spine43-physics", "samples/spine43/physics.json", { stateful: true }],
   ["unity-stage2-physics", "samples/kgbone/unity-stage2-physics.kgbone", { stateful: true }],
   // 시퀀스: 프레임 경계를 지나도록 0.05초 간격 시점을 더한다
+  ["spine43-clipping", "samples/spine43/clipping.json"],
+  ["unity-stage3-clipping", "samples/kgbone/unity-stage3-clipping.kgbone"],
   ["unity-stage3-sequence", "samples/kgbone/unity-stage3-sequence.kgbone", { times: Array.from({ length: 25 }, (_, i) => Math.fround(i * 0.05)) }],
 ];
 

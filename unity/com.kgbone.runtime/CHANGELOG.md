@@ -1,5 +1,11 @@
 # 변경 기록
 
+## 0.3.0 (개발 중)
+
+- 시퀀스: 시퀀스 키(hold, once, loop, pingpong, onceReverse, loopReverse, pingpongReverse, 프레임 간격)로 프레임 이미지를 넘긴다. 가져올 때 모든 프레임 이미지를 묶는다.
+- 클리핑: 클리핑 슬롯부터 end 슬롯까지 그려지는 삼각형을 다각형으로 자른다(반전·볼록, 오목 다각형, 가중치·변형 키 클립 다각형).
+- 클리핑·시퀀스 가져오기 경고를 없앴다. 정답 비교에 `spine43-clipping`, `unity-stage3-clipping`, `unity-stage3-sequence`를 더했다.
+
 ## 0.2.0 (개발 중)
 
 - 제약 계산: IK(1본·2본, 부드러움·늘이기·줄이기·부피 보존), 트랜스폼(속성 매핑, 로컬·월드, 가산, 자르기), 슬라이더(본 연결·반복·가산), 패스(열림·닫힘 베지어, 일정 속도, 가중치 패스, 패스 변형 키, 위치 percent·fixed, 간격 length·fixed·percent·proportional, 회전 tangent·chain·chainScale).

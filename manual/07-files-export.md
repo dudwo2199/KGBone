@@ -94,7 +94,7 @@
 3. 빈 GameObject에 **KGBoneAnimation**을 붙이고 데이터와 애니메이션을 고릅니다.
 4. KGBone에서 고쳐 저장한 파일로 덮어쓰면 유니티에 바로 반영됩니다.
 
-지금은 재생, 본 위치 읽기, 제약 5종(물리 포함)까지 됩니다(클리핑·시퀀스·애니메이션 섞기는 아직 없음). 물리 흔들림은 기본으로 캐릭터 GameObject를 옮겨도 반응하지 않으며(에디터와 같음), 컴포넌트의 **Physics Move/Rotate Factor**로 켤 수 있습니다. 자세한 사용법: [unity/com.kgbone.runtime/README.md](../unity/com.kgbone.runtime/README.md)
+지금은 재생, 본 위치 읽기, 제약 5종(물리 포함), 클리핑·시퀀스까지 됩니다(애니메이션 섞기·트랙은 아직 없음). 물리 흔들림은 기본으로 캐릭터 GameObject를 옮겨도 반응하지 않으며(에디터와 같음), 컴포넌트의 **Physics Move/Rotate Factor**로 켤 수 있습니다. 자세한 사용법: [unity/com.kgbone.runtime/README.md](../unity/com.kgbone.runtime/README.md)
 
 ---
 [← 6. 스킨과 이벤트](06-skins-events.md) · [차례](README.md) · [다음: 8. 참고표 →](08-reference.md)
