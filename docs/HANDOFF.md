@@ -89,7 +89,25 @@ npm run build:exe   # Tauri 실행 파일(src-tauri/target/release/KGBone.exe) �
 ### 4-3. Claude에서 MCP 쓰는 법 (사용자용 요약)
 처음 한 번 등록하고, 쓸 때는 KGBone에서 [연결]을 누르고 말로 시키면 된다. Cursor·Codex·VS Code·Gemini CLI 설정은 사용 설명서 9장.
 
-**받기(다른 PC)**: 저장소 대신 GitHub 릴리스의 `kgbone-mcp-<버전>.zip`을 받아 풀면 된다(서버 코드 + commands.json + kgbone.wasm + README). 묶음은 `npm run pack:mcp`(→ `dist-mcp/`), 릴리스는 `mcp-v0.2.0` 같은 태그를 push하면 `.github/workflows/release-mcp.yml`이 올린다. 아래 경로의 `D:/workspace/KGSpine/KGBone`은 푼 폴더(`…/kgbone-mcp`)로 바꾼다.
+**한 번만 하는 것 / 매번 하는 것**
+| 언제 | 할 일 |
+|---|---|
+| 처음 한 번 | Node.js 22 이상 설치 → 릴리스 zip 받아 풀기 → AI 프로그램에 등록(아래 "등록") |
+| 쓸 때마다 | AI 프로그램 켜기 → KGBone에서 [연결] ("창을 열 때 자동으로 연결"을 켜 두면 이것도 생략) → 말로 시키기 |
+| 새 판이 나왔을 때 | 새 zip을 **같은 폴더에 덮어 풀기** → AI 프로그램의 MCP 서버 다시 켜기. 폴더가 같으면 등록은 다시 할 필요 없음 |
+
+압축 풀기와 README의 등록은 **처음 한 번만** 한다. 폴더를 옮기면 등록의 경로만 고친다.
+
+**릴리스 받기(다른 PC, git·npm·Rust 필요 없음)**
+1. 브라우저로 https://github.com/dudwo2199/KGBone/releases 를 열고 최신 "KGBone MCP 서버 x.y.z"의 `kgbone-mcp-x.y.z.zip`을 받는다.
+   - 명령으로 받기(0.2.0 예):
+     ```bash
+     curl -L -o kgbone-mcp.zip https://github.com/dudwo2199/KGBone/releases/download/mcp-v0.2.0/kgbone-mcp-0.2.0.zip
+     ```
+2. 원하는 곳에 푼다(예: `D:/tools/` → `D:/tools/kgbone-mcp/`). 안의 폴더 구조는 바꾸지 않는다(서버가 `interface/`, `app/public/`을 찾음).
+3. 안의 `README.md`대로 AI 프로그램에 등록한다. 아래 "등록"의 경로 `D:/workspace/KGSpine/KGBone`을 푼 폴더(`D:/tools/kgbone-mcp`)로 바꾸면 된다.
+
+**릴리스 만들기(개발자)**: `npm run pack:mcp`로 `dist-mcp/kgbone-mcp-<버전>.zip`을 만들어 볼 수 있다. 실제 릴리스는 `mcp-v0.2.1`처럼 버전을 올린 태그를 push하면 `.github/workflows/release-mcp.yml`이 빌드·테스트 후 올린다(첫 릴리스 `mcp-v0.2.0`, 2026-11-17, 라이선스 없이 올림 — 사용자 결정). `tools/mcp/`나 핵심(wasm)을 고쳤으면 새 태그로 다시 올린다.
 
 **등록**
 - **Claude Code, KGBone 저장소 폴더에서 열 때**: 할 일 없음. `.mcp.json`으로 자동 등록되고, 처음에 MCP 서버를 쓸지 물으면 허용한다.
