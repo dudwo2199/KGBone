@@ -93,7 +93,9 @@ namespace KGBone.Core
         public string Animation = "";
         public float Time, Mix = 1;
         public bool Loop, Additive, Local;
-        /// <summary>시점을 읽어 올 본(-1이면 time 값을 쓴다).</summary>
+        /// <summary>본 이름이 있는데 뼈대에 없음(제약을 계산하지 않는다).</summary>
+        public const int MissingBone = -2;
+        /// <summary>시점을 읽어 올 본(-1이면 time 값을 쓴다, MissingBone이면 비활성).</summary>
         public int Bone = -1;
         public BoneProperty Property = BoneProperty.X;
         public float PropertyFrom, PropertyTo = 1;

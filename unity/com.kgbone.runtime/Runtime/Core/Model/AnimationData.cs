@@ -26,6 +26,8 @@ namespace KGBone.Core
     /// <summary>제약 타임라인(FORMAT.md 3.7 표: 채널 이름 mix, softness, position, reset …).</summary>
     public sealed class ConstraintTimeline
     {
+        /// <summary>제약 이름이 ""인 타임라인: 모든 물리 제약에 적용.</summary>
+        public const int AllPhysics = -2;
         public int Constraint;
         public string Name;
         public Key[] Keys;

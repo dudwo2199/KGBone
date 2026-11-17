@@ -30,7 +30,7 @@ namespace KGBone.Core
         }
 
         /// <summary>상속 종류에 따라 자식이 물려받을 부모 행렬. θ = atan2(c, a), 반사 = det &lt; 0.</summary>
-        static void InheritedMatrix(in WorldBone p, Inherit inherit, out float a, out float b, out float c, out float d)
+        internal static void InheritedMatrix(in WorldBone p, Inherit inherit, out float a, out float b, out float c, out float d)
         {
             float theta = MathF.Atan2(p.C, p.A);
             float cs = MathF.Cos(theta), sn = MathF.Sin(theta);
@@ -88,6 +88,49 @@ namespace KGBone.Core
                 WorldBone? parent = pi >= 0 && pi < i ? outWorld[pi] : (WorldBone?)null;
                 outWorld[i] = WorldOf(locals[i], inherits[i], parent);
             }
+        }
+
+        /// <summary>본 i의 부모 월드(부모가 자기보다 앞에 있을 때만, 핵심 parent_indices).</summary>
+        public static WorldBone? ParentWorld(SkeletonModel m, WorldBone[] world, int i)
+        {
+            int pi = m.Bones[i].Parent;
+            return pi >= 0 && pi < i ? world[pi] : (WorldBone?)null;
+        }
+
+        /// <summary>from번 본부터 끝까지 월드를 다시 계산한다(핵심 update_world).</summary>
+        public static void UpdateFrom(SkeletonModel m, PoseState pose, int from)
+        {
+            for (int i = from; i < m.Bones.Count; i++)
+                pose.World[i] = WorldOf(pose.Locals[i], pose.Inherits[i], ParentWorld(m, pose.World, i));
+        }
+
+        /// <summary>본 i의 월드를 w로 만드는 로컬 값을 넣는다(핵심 set_world). 그 뒤 UpdateFrom을 불러야 한다.</summary>
+        public static void SetWorld(SkeletonModel m, PoseState pose, int i, in WorldBone w)
+        {
+            pose.Locals[i] = WorldToLocal(w, ParentWorld(m, pose.World, i), pose.Inherits[i]);
+        }
+
+        /// <summary>월드 변환 w를 부모 아래 로컬 값으로 되돌린다(기울기는 shearY로, 핵심 world_to_local_transform).</summary>
+        public static LocalTransform WorldToLocal(in WorldBone w, WorldBone? parent, Inherit inherit)
+        {
+            float pa = 1, pb = 0, pc = 0, pd = 1, x = w.X, y = w.Y;
+            if (parent.HasValue)
+            {
+                InheritedMatrix(parent.Value, inherit, out pa, out pb, out pc, out pd);
+                (x, y) = parent.Value.WorldToLocal(w.X, w.Y);
+            }
+            float det = pa * pd - pb * pc;
+            float inv = MathF.Abs(det) < 1e-12f ? 0f : 1f / det;
+            float ia = pd * inv, ib = -pb * inv, ic = -pc * inv, id = pa * inv;
+            float l0 = ia * w.A + ib * w.C, l1 = ia * w.B + ib * w.D, l2 = ic * w.A + id * w.C, l3 = ic * w.B + id * w.D;
+            float sx = MathF.Sqrt(l0 * l0 + l2 * l2);
+            float rotation = MathF.Atan2(l2, l0) * WorldMath.RadToDeg;
+            float sy = MathF.Sqrt(l1 * l1 + l3 * l3);
+            float ry = MathF.Atan2(l3, l1) * WorldMath.RadToDeg;
+            float shearY = ry - 90f - rotation;
+            while (shearY > 180f) shearY -= 360f;
+            while (shearY < -180f) shearY += 360f;
+            return new LocalTransform { X = x, Y = y, Rotation = rotation, ScaleX = sx, ScaleY = sy, ShearX = 0, ShearY = MathF.Abs(shearY) < 1e-4f ? 0f : shearY };
         }
     }
 }

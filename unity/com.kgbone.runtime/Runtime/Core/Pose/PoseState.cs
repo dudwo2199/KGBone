@@ -15,6 +15,14 @@ namespace KGBone.Core
         public readonly int[] DrawOrder;
         /// <summary>(슬롯, 첨부물) → 셋업 정점에 더할 변형 값(이번 계산에서 키가 있는 것만).</summary>
         public readonly Dictionary<(string slot, string attachment), float[]> Deform = new Dictionary<(string, string), float[]>();
+        /// <summary>
+        /// 제약마다 현재 값(제약 순서, 핵심 constraint_values와 같은 모양):
+        /// ik [mix, softness, bendPositive(1/−1), compress(0/1), stretch(0/1)], transform [mixRotate, mixX, mixY, mixScaleX, mixScaleY, mixShearY],
+        /// path [position, spacing, mixRotate, mixX, mixY], physics [inertia, strength, damping, mass, wind, gravity, mix], slider [time, mix].
+        /// </summary>
+        public readonly float[][] ConstraintValues;
+        /// <summary>제약마다 셋업 값(바꾸지 않는다).</summary>
+        public readonly float[][] ConstraintSetup;
 
         // 매 프레임 할당하지 않도록 다시 쓰는 임시 버퍼
         readonly Dictionary<(string, string), float[]> deformPool = new Dictionary<(string, string), float[]>();
@@ -52,6 +60,13 @@ namespace KGBone.Core
             DrawOrder = new int[m.Slots.Count];
             DrawOrderPlaced = new int[m.Slots.Count];
             DrawOrderMoved = new bool[m.Slots.Count];
+            ConstraintValues = new float[m.Constraints.Count][];
+            ConstraintSetup = new float[m.Constraints.Count][];
+            for (int i = 0; i < ConstraintValues.Length; i++)
+            {
+                ConstraintValues[i] = SetupValues(m.Constraints[i]);
+                ConstraintSetup[i] = SetupValues(m.Constraints[i]);
+            }
             ResetToSetup(m);
         }
 
@@ -73,6 +88,51 @@ namespace KGBone.Core
                 DrawOrder[i] = i;
             }
             Deform.Clear();
+            for (int i = 0; i < ConstraintValues.Length; i++) System.Array.Copy(ConstraintSetup[i], ConstraintValues[i], ConstraintSetup[i].Length);
+        }
+
+        /// <summary>제약의 셋업 값(핵심 constraint_setup_values).</summary>
+        public static float[] SetupValues(ConstraintData c)
+        {
+            var v = new float[ValueCount(c.Type)];
+            SetupValues(c, v);
+            return v;
+        }
+
+        public static int ValueCount(ConstraintType t)
+        {
+            switch (t)
+            {
+                case ConstraintType.Ik: return 5;
+                case ConstraintType.Transform: return 6;
+                case ConstraintType.Path: return 5;
+                case ConstraintType.Physics: return 7;
+                default: return 2;
+            }
+        }
+
+        static float B(bool v) => v ? 1f : 0f;
+
+        static void SetupValues(ConstraintData c, float[] v)
+        {
+            switch (c)
+            {
+                case IkConstraintData k:
+                    v[0] = k.Mix; v[1] = k.Softness; v[2] = k.BendPositive ? 1f : -1f; v[3] = B(k.Compress); v[4] = B(k.Stretch);
+                    break;
+                case TransformConstraintData t:
+                    v[0] = t.MixRotate; v[1] = t.MixX; v[2] = t.MixY; v[3] = t.MixScaleX; v[4] = t.MixScaleY; v[5] = t.MixShearY;
+                    break;
+                case PathConstraintData p:
+                    v[0] = p.Position; v[1] = p.Spacing; v[2] = p.MixRotate; v[3] = p.MixX; v[4] = p.MixY;
+                    break;
+                case PhysicsConstraintData p:
+                    v[0] = p.Inertia; v[1] = p.Strength; v[2] = p.Damping; v[3] = p.Mass; v[4] = p.Wind; v[5] = p.Gravity; v[6] = p.Mix;
+                    break;
+                case SliderConstraintData s:
+                    v[0] = s.Time; v[1] = s.Mix;
+                    break;
+            }
         }
     }
 }

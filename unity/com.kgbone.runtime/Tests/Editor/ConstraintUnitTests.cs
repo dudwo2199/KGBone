@@ -160,6 +160,150 @@ namespace KGBone.Tests
         }
 
         [Test]
+        public void m13_empty_constraint_name_targets_all_physics()
+        {
+            var m = Load(@"""constraints"":[{""type"":""physics"",""name"":""p"",""bone"":""a""},{""type"":""ik"",""name"":""k"",""bones"":[""a""],""target"":""t""},{""type"":""physics"",""name"":""q"",""bone"":""a""}],
+                ""animations"":[{""name"":""wind"",""constraints"":{"""":{""wind"":[{""time"":0,""v"":[3]}]}}}]");
+            var pose = new PoseState(m);
+            AnimationApplier.Apply(m, m.FindAnimation("wind"), 0, null, pose);
+            Assert.AreEqual(3f, pose.ConstraintValues[0][4]);
+            Assert.AreEqual(5, pose.ConstraintValues[1].Length);
+            Assert.AreEqual(3f, pose.ConstraintValues[2][4]);
+        }
+
+        // ---------- M13 제약 값·키·섞기 ----------
+        [Test]
+        public void m13_constraint_setup_values()
+        {
+            var m = Load(@"""constraints"":[{""type"":""ik"",""name"":""k"",""bones"":[""a""],""target"":""t"",""mix"":0.5,""bendPositive"":false,""stretch"":true},
+                {""type"":""slider"",""name"":""s"",""animation"":""x"",""time"":2,""mix"":0.25}]");
+            var pose = new PoseState(m);
+            CollectionAssert.AreEqual(new[] { 0.5f, 0f, -1f, 0f, 1f }, pose.ConstraintValues[0]);
+            CollectionAssert.AreEqual(new[] { 2f, 0.25f }, pose.ConstraintValues[1]);
+        }
+
+        [Test]
+        public void m13_constraint_key_sets_ik_mix()
+        {
+            var m = Load(@"""constraints"":[{""type"":""ik"",""name"":""k"",""bones"":[""a""],""target"":""t""}],
+                ""animations"":[{""name"":""go"",""constraints"":{""k"":{""ik"":[{""time"":0,""v"":[1,0,1,0,0]},{""time"":1,""v"":[0,10,-1,1,1]}]}}}]");
+            var pose = new PoseState(m);
+            AnimationApplier.Apply(m, m.FindAnimation("go"), 0.5f, null, pose);
+            Assert.AreEqual(0.5f, pose.ConstraintValues[0][0], 1e-6f);
+            Assert.AreEqual(5f, pose.ConstraintValues[0][1], 1e-5f);
+            // 참거짓 값(bend, compress, stretch)은 계단
+            Assert.AreEqual(1f, pose.ConstraintValues[0][2]);
+            Assert.AreEqual(0f, pose.ConstraintValues[0][3]);
+            pose.ResetToSetup(m);
+            Assert.AreEqual(1f, pose.ConstraintValues[0][0]);
+        }
+
+        const string RotAnim = @"""animations"":[{""name"":""r"",""bones"":{""a"":{""rotate"":[{""time"":0,""v"":[40]}],""translate"":[{""time"":0,""v"":[10,0]}]}},
+            ""slots"":{""s"":{""alpha"":[{""time"":0,""v"":[0]}],""attachment"":[{""time"":0}]}}}],
+            ""slots"":[{""name"":""s"",""bone"":""a"",""attachment"":""img""}]";
+
+        [Test]
+        public void m13_alpha_half_blends_bone_rotation()
+        {
+            var m = Load(RotAnim);
+            var pose = new PoseState(m);
+            AnimationApplier.Apply(m, m.FindAnimation("r"), 0, null, pose, 0.5f);
+            Assert.AreEqual(20f, pose.Locals[1].Rotation, 1e-5f);
+            Assert.AreEqual(5f, pose.Locals[1].X, 1e-5f);
+            Assert.AreEqual(0.5f, pose.SlotColors[0].A, 1e-6f);
+            // 이산 값은 alpha ≥ 0.5일 때만 바뀐다
+            Assert.IsNull(pose.SlotAttachments[0]);
+            pose.ResetToSetup(m);
+            AnimationApplier.Apply(m, m.FindAnimation("r"), 0, null, pose, 0.4f);
+            Assert.AreEqual("img", pose.SlotAttachments[0]);
+        }
+
+        [Test]
+        public void m13_alpha_blend_takes_short_way_round()
+        {
+            // 현재 170, 목표 −170(= 셋업 0 + 키 −170): 짧은 쪽(+20)으로 절반 → 180
+            var m = Load(@"""animations"":[{""name"":""r"",""bones"":{""a"":{""rotate"":[{""time"":0,""v"":[-170]}]}}}]");
+            var pose = new PoseState(m);
+            pose.Locals[1].Rotation = 170;
+            AnimationApplier.Apply(m, m.FindAnimation("r"), 0, null, pose, 0.5f);
+            Assert.AreEqual(180f, pose.Locals[1].Rotation, 1e-4f);
+        }
+
+        [Test]
+        public void m13_additive_adds_on_current_pose()
+        {
+            // 가산: 현재 + (목표 − 셋업) × alpha. 현재 회전 15, 키 40 → 15 + 40 × 0.5 = 35
+            var m = Load(RotAnim);
+            var pose = new PoseState(m);
+            pose.Locals[1].Rotation = 15;
+            pose.SlotColors[0].A = 0.8f;
+            AnimationApplier.Apply(m, m.FindAnimation("r"), 0, null, pose, 0.5f, true);
+            Assert.AreEqual(35f, pose.Locals[1].Rotation, 1e-5f);
+            // 색: 0.8 + (0 − 1) × 0.5 = 0.3
+            Assert.AreEqual(0.3f, pose.SlotColors[0].A, 1e-6f);
+        }
+
+        [Test]
+        public void m13_skip_constraint_keys()
+        {
+            var m = Load(@"""constraints"":[{""type"":""ik"",""name"":""k"",""bones"":[""a""],""target"":""t""}],
+                ""animations"":[{""name"":""go"",""constraints"":{""k"":{""ik"":[{""time"":0,""v"":[0,0,1,0,0]}]}}}]");
+            var pose = new PoseState(m);
+            AnimationApplier.Apply(m, m.FindAnimation("go"), 0, null, pose, 1, false, 0);
+            Assert.AreEqual(1f, pose.ConstraintValues[0][0]);
+        }
+
+        [Test]
+        public void m13_skin_required_constraint_skipped_without_skin()
+        {
+            var m = KGBoneLoader.Load(@"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},{""name"":""a"",""parent"":""root""},
+                {""name"":""t"",""parent"":""root""},{""name"":""only"",""parent"":""root"",""skinRequired"":true}],
+                ""constraints"":[{""type"":""ik"",""name"":""k"",""skinRequired"":true,""bones"":[""a""],""target"":""t""},
+                    {""type"":""ik"",""name"":""free"",""bones"":[""a""],""target"":""t""},
+                    {""type"":""ik"",""name"":""toOnly"",""bones"":[""a""],""target"":""only""},
+                    {""type"":""ik"",""name"":""missing"",""bones"":[""a""],""target"":""없음""}],
+                ""skins"":[{""name"":""default""},{""name"":""big"",""bones"":[""only""],""constraints"":[""k""]}]}}");
+            var active = new bool[m.Bones.Count];
+            var on = new bool[m.Constraints.Count];
+            ActiveBones.Compute(m, null, active);
+            ConstraintSolvers.ActiveConstraints(m, active, null, on);
+            CollectionAssert.AreEqual(new[] { false, true, false, false }, on);
+            ActiveBones.Compute(m, "big", active);
+            ConstraintSolvers.ActiveConstraints(m, active, "big", on);
+            CollectionAssert.AreEqual(new[] { true, true, true, false }, on);
+        }
+
+        [Test]
+        public void m13_world_to_local_round_trip()
+        {
+            var parent = BoneTransform.WorldOf(new LocalTransform { X = 3, Y = 4, Rotation = 30, ScaleX = 2, ScaleY = 1, ShearY = 10 }, Inherit.Normal, null);
+            var local = new LocalTransform { X = 5, Y = -2, Rotation = 50, ScaleX = 1.5f, ScaleY = 0.5f };
+            var w = BoneTransform.WorldOf(local, Inherit.Normal, parent);
+            var back = BoneTransform.WorldToLocal(w, parent, Inherit.Normal);
+            var w2 = BoneTransform.WorldOf(back, Inherit.Normal, parent);
+            Assert.AreEqual(w.A, w2.A, 1e-4f);
+            Assert.AreEqual(w.B, w2.B, 1e-4f);
+            Assert.AreEqual(w.C, w2.C, 1e-4f);
+            Assert.AreEqual(w.D, w2.D, 1e-4f);
+            Assert.AreEqual(w.X, w2.X, 1e-4f);
+            Assert.AreEqual(w.Y, w2.Y, 1e-4f);
+            Assert.AreEqual(0f, back.ShearX);
+        }
+
+        [Test]
+        public void m13_wrap_deg_and_world_parts()
+        {
+            Assert.AreEqual(-170f, WorldMath.WrapDeg(190));
+            Assert.AreEqual(170f, WorldMath.WrapDeg(-190));
+            Assert.AreEqual(180f, WorldMath.WrapDeg(180));
+            var w = WorldMath.FromParts(30, 2, 0.5f, 10, 0, 0);
+            Assert.AreEqual(30f, w.RotationX, 1e-4f);
+            Assert.AreEqual(2f, w.ScaleX, 1e-5f);
+            Assert.AreEqual(0.5f, w.ScaleY, 1e-5f);
+            Assert.AreEqual(10f, WorldMath.WorldShearY(w), 1e-3f);
+        }
+
+        [Test]
         public void m14_loads_path_attachment()
         {
             var m = Load(@"""slots"":[{""name"":""s"",""bone"":""root"",""attachment"":""p""}],

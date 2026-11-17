@@ -163,7 +163,8 @@ namespace KGBone.Core
                         Animation = S(v, "animation") ?? "",
                         Time = F(v, "time", 0), Mix = F(v, "mix", 1),
                         Loop = B(v, "loop", false), Additive = B(v, "additive", false), Local = B(v, "local", false),
-                        Bone = m.BoneIndex(S(v, "bone")),
+                        // 이름이 있는데 못 찾으면 MissingBone(제약 비활성)
+                        Bone = S(v, "bone") == null ? -1 : m.BoneIndex(S(v, "bone")) is int sb && sb >= 0 ? sb : SliderConstraintData.MissingBone,
                         Property = Property(v, "property"),
                         PropertyFrom = F(v, "propertyFrom", 0), PropertyTo = F(v, "propertyTo", 1),
                     };
@@ -222,6 +223,7 @@ namespace KGBone.Core
         {
             var skin = new SkinData { Name = S(v, "name") ?? SkinData.DefaultName };
             foreach (var b in Items(v.Get("bones"))) if (b.AsString() != null) skin.Bones.Add(b.AsString());
+            foreach (var c in Items(v.Get("constraints"))) if (c.AsString() != null) skin.Constraints.Add(c.AsString());
             var atts = v.Get("attachments");
             if (atts == null) return skin;
             foreach (var slot in atts.Members)
@@ -370,11 +372,12 @@ namespace KGBone.Core
             }
             foreach (var c in v.Get("constraints")?.Members ?? new KeyValuePair<string, JsonValue>[0])
             {
-                int ci = m.ConstraintIndex(c.Key);
+                // 이름 ""의 키는 모든 물리 제약에 적용된다(Constraint = AllPhysics)
+                int ci = c.Key.Length == 0 ? ConstraintTimeline.AllPhysics : m.ConstraintIndex(c.Key);
                 foreach (var tl in c.Value.Members)
                 {
                     var keys = ReadKeys(tl.Value, ref d);
-                    if (ci >= 0) a.Constraints.Add(new ConstraintTimeline { Constraint = ci, Name = tl.Key, Keys = keys });
+                    if (ci != -1) a.Constraints.Add(new ConstraintTimeline { Constraint = ci, Name = tl.Key, Keys = keys });
                 }
             }
             foreach (var skin in v.Get("deform")?.Members ?? new KeyValuePair<string, JsonValue>[0])

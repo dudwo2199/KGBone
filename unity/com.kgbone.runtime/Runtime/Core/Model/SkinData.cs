@@ -9,6 +9,8 @@ namespace KGBone.Core
 
         public string Name;
         public List<string> Bones = new List<string>();
+        /// <summary>이 스킨이 켜는 스킨 전용 제약 이름.</summary>
+        public List<string> Constraints = new List<string>();
         internal readonly Dictionary<string, Dictionary<string, AttachmentData>> Attachments =
             new Dictionary<string, Dictionary<string, AttachmentData>>(System.StringComparer.Ordinal);
 
