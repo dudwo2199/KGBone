@@ -44,7 +44,7 @@ namespace KGBone.Core
         /// time 시점의 값을 pose에 적용한다(핵심 apply_scoped). deform은 기본 스킨과 skin 것만.
         /// alpha는 0~1로 자르고 0 이하면 아무것도 하지 않는다. skipConstraint번 제약의 값 키는 건너뛴다(슬라이더 순환 방지).
         /// </summary>
-        public static void Apply(SkeletonModel m, AnimationData a, float time, string skin, PoseState pose,
+        public static void Apply(SkeletonModel m, AnimationData a, float time, SkinSet skin, PoseState pose,
             float alpha = 1f, bool additive = false, int skipConstraint = -1)
         {
             var mix = new Mix(Math.Min(Math.Max(alpha, 0f), 1f), additive);
@@ -58,11 +58,11 @@ namespace KGBone.Core
         }
 
         /// <summary>시퀀스 키: 기본 스킨과 skin 것만(deform과 같은 범위). 핵심 attachment_keys.rs.</summary>
-        static void ApplySequences(SkeletonModel m, AnimationData a, float t, string skin, PoseState pose)
+        static void ApplySequences(SkeletonModel m, AnimationData a, float t, SkinSet skin, PoseState pose)
         {
             foreach (var tl in a.Sequences)
             {
-                if (tl.Skin != SkinData.DefaultName && tl.Skin != skin) continue;
+                if (!SkinSet.Includes(skin, tl.Skin)) continue;
                 var s = m.FindSkin(tl.Skin);
                 if (s == null) continue;
                 int count = s.Get(tl.Slot, tl.Attachment)?.Sequence?.Count ?? 1;
@@ -208,11 +208,11 @@ namespace KGBone.Core
             }
         }
 
-        static void ApplyDeform(SkeletonModel m, AnimationData a, float t, string skin, PoseState pose, Mix mix)
+        static void ApplyDeform(SkeletonModel m, AnimationData a, float t, SkinSet skin, PoseState pose, Mix mix)
         {
             foreach (var tl in a.Deform)
             {
-                if (tl.Skin != SkinData.DefaultName && tl.Skin != skin) continue;
+                if (!SkinSet.Includes(skin, tl.Skin)) continue;
                 var att = m.FindSkin(tl.Skin)?.Get(tl.Slot, tl.Attachment);
                 if (att == null) continue;
                 // 정점 데이터가 있는 첨부물(패스·클리핑) 또는 그리는 메시(메시·링크드 메시)

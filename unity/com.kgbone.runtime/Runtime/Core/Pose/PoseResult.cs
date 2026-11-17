@@ -23,6 +23,10 @@ namespace KGBone.Core
         public float? LastTime;
         /// <summary>켤 스킨(null이면 기본 스킨만).</summary>
         public string Skin;
+        /// <summary>함께 켤 스킨들(유니티 전용, 뒤가 이김). null이 아니면 Skin 대신 쓴다.</summary>
+        public string[] Skins;
+        /// <summary>게임 코드가 정한 첨부물·본 값(유니티 전용). null이면 없음.</summary>
+        public PoseOverrides Overrides;
         public bool Looping;
         /// <summary>물리 진행 방법(기본: 진행하지 않음).</summary>
         public PhysicsStep Physics = PhysicsStep.None;

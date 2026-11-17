@@ -134,7 +134,7 @@ namespace KGBone.Core
         }
 
         /// <summary>패스 첨부물의 월드 정점(핵심 path_world). 첨부물이 패스가 아니면 null.</summary>
-        PathAttachmentData PathWorld(SkeletonModel m, PoseState pose, string skin, int slot)
+        PathAttachmentData PathWorld(SkeletonModel m, PoseState pose, SkinSet skin, int slot)
         {
             var s = m.Slots[slot];
             string name = pose.SlotAttachments[slot];
@@ -151,7 +151,7 @@ namespace KGBone.Core
         {
             var c = (PathConstraintData)m.Constraints[index];
             if (c.Target < 0) return;
-            var att = PathWorld(m, pose, ctx.Skin, c.Target);
+            var att = PathWorld(m, pose, ctx.Skins, c.Target);
             if (att == null || !BuildCurve(att.Closed, att.ConstantSpeed)) return;
             var v = pose.ConstraintValues[index];
             float position = v[0], spacing = v[1], mixR = v[2], mixX = v[3], mixY = v[4];

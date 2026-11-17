@@ -60,7 +60,7 @@ namespace KGBone.Core
         readonly Dictionary<AnimationData, KeyedMask> masks = new Dictionary<AnimationData, KeyedMask>();
         PoseState x, y, z;
         KeyedMask tmpMask;
-        string skin;
+        SkinSet skin;
 
         public AnimationTracks(SkeletonModel model) { this.model = model; }
 
@@ -323,7 +323,7 @@ namespace KGBone.Core
         /// <summary>트랙을 차례로 pose(셋업에서 시작한 포즈)에 적용한다.</summary>
         public void Apply(PoseState pose, SkinSet skins)
         {
-            skin = skins?.Primary;
+            skin = skins;
             for (int i = 0; i < tracks.Count; i++)
             {
                 var tr = tracks[i];

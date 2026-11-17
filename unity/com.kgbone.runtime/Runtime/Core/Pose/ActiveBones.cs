@@ -4,13 +4,13 @@ namespace KGBone.Core
 {
     public static class ActiveBones
     {
-        public static void Compute(SkeletonModel m, string skin, bool[] outActive)
+        /// <summary>skins: 켠 스킨들(하나라도 그 본을 가지면 켜짐, null이면 기본 스킨만).</summary>
+        public static void Compute(SkeletonModel m, SkinSet skins, bool[] outActive)
         {
-            var s = m.FindSkin(skin);
             for (int i = 0; i < m.Bones.Count; i++)
             {
                 var b = m.Bones[i];
-                bool own = !b.SkinRequired || (s != null && s.Bones.Contains(b.Name));
+                bool own = !b.SkinRequired || SkinSet.HasBone(skins, m, b.Name);
                 bool parentOk = b.Parent < 0 || b.Parent >= i || outActive[b.Parent];
                 outActive[i] = own && parentOk;
             }

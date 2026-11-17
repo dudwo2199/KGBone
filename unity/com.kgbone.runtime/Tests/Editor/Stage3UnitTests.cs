@@ -401,6 +401,133 @@ namespace KGBone.Tests
             Assert.AreEqual(0, poser.Compute(new PoseRequest { Tracks = tracks }).Events.Count);
         }
 
+        // ---------- M21 스킨 합치기·첨부물 덮어쓰기 ----------
+        const string SkinModelJson = @"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},{""name"":""x"",""parent"":""root"",""skinRequired"":true}],
+            ""slots"":[{""name"":""무기"",""bone"":""root"",""attachment"":""칼""},{""name"":""s"",""bone"":""root"",""attachment"":""a""}],
+            ""skins"":[
+              {""name"":""default"",""attachments"":{""s"":{""a"":{""path"":""pa""},""b"":{""path"":""pb""}}}},
+              {""name"":""A"",""attachments"":{""무기"":{""칼"":{""path"":""칼A""}}}},
+              {""name"":""B"",""bones"":[""x""],""attachments"":{""무기"":{""칼"":{""path"":""칼B""}}}}],
+            ""animations"":[{""name"":""바꾸기"",""slots"":{""s"":{""attachment"":[{""time"":0,""s"":""b""}]}}}]}}";
+
+        static PoseResult Pose(SkeletonModel m, PoseRequest r) => new SkeletonPoser(m).Compute(r);
+
+        static string ImageOf(PoseResult r, string slot)
+        {
+            foreach (var d in r.Draw) if (d.Slot == slot) return d.Image;
+            return null;
+        }
+
+        [Test]
+        public void m21_skinset_single_equals_string_path()
+        {
+            var m = KGBoneLoader.Load(System.IO.File.ReadAllText(System.IO.Path.Combine(GoldenFile.GoldenDir(), "spine43-skins.kgbone")));
+            foreach (var s in m.Skins)
+            {
+                var a = Pose(m, new PoseRequest { Skin = s.Name });
+                var aDraw = a.Draw.Select(d => d.Image + ":" + string.Join(",", d.Positions)).ToList();
+                var aActive = (bool[])a.Active.Clone();
+                var b = Pose(m, new PoseRequest { Skins = new[] { s.Name } });
+                CollectionAssert.AreEqual(aDraw, b.Draw.Select(d => d.Image + ":" + string.Join(",", d.Positions)).ToList(), s.Name);
+                CollectionAssert.AreEqual(aActive, b.Active, s.Name);
+            }
+        }
+
+        [Test]
+        public void m21_later_skin_wins()
+        {
+            var m = KGBoneLoader.Load(SkinModelJson);
+            Assert.AreEqual("칼B", ImageOf(Pose(m, new PoseRequest { Skins = new[] { "A", "B" } }), "무기"));
+            Assert.AreEqual("칼A", ImageOf(Pose(m, new PoseRequest { Skins = new[] { "B", "A" } }), "무기"));
+            Assert.AreEqual("pa", ImageOf(Pose(m, new PoseRequest { Skins = new[] { "A", "B" } }), "s"), "기본 스킨도 쓴다");
+        }
+
+        [Test]
+        public void m21_skin_only_bone_active_if_any_skin()
+        {
+            var m = KGBoneLoader.Load(SkinModelJson);
+            Assert.IsTrue(Pose(m, new PoseRequest { Skins = new[] { "A", "B" } }).Active[1]);
+            Assert.IsFalse(Pose(m, new PoseRequest { Skins = new[] { "A" } }).Active[1]);
+        }
+
+        [Test]
+        public void m21_attachment_override_beats_key_and_clears()
+        {
+            var m = KGBoneLoader.Load(SkinModelJson);
+            var poser = new SkeletonPoser(m);
+            var o = new PoseOverrides();
+            int s = m.SlotIndex("s");
+            var r = new PoseRequest { Animation = "바꾸기", Overrides = o };
+            Assert.AreEqual("pb", ImageOf(poser.Compute(r), "s"), "키");
+            o.SetAttachment(s, "a");
+            Assert.AreEqual("pa", ImageOf(poser.Compute(r), "s"), "덮어쓰기가 키보다 우선");
+            o.SetAttachment(s, null);
+            Assert.IsNull(ImageOf(poser.Compute(r), "s"), "null이면 숨김");
+            o.ClearAttachment(s);
+            Assert.AreEqual("pb", ImageOf(poser.Compute(r), "s"), "해제하면 키");
+        }
+
+        // ---------- M22 본 덮어쓰기 ----------
+        [Test]
+        public void m22_local_override_mix_half()
+        {
+            var m = KGBoneLoader.Load(@"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},{""name"":""b"",""parent"":""root""}],
+                ""animations"":[{""name"":""돌기"",""bones"":{""b"":{""rotate"":[{""time"":0,""v"":[90]}]}}}]}}");
+            var o = new PoseOverrides();
+            o.SetBoneLocal(1, new BoneOverride { Rotation = 0, Mix = 0.5f });
+            var r = Pose(m, new PoseRequest { Animation = "돌기", Overrides = o });
+            Assert.AreEqual(45f, r.Locals[1].Rotation, 1e-4f);
+            o.SetBoneLocal(1, new BoneOverride { X = 10 });
+            r = Pose(m, new PoseRequest { Animation = "돌기", Overrides = o });
+            Assert.AreEqual(90f, r.Locals[1].Rotation, 1e-4f, "정하지 않은 채널은 애니메이션 값");
+            Assert.AreEqual(10f, r.Bones[1].X, 1e-4f);
+        }
+
+        [Test]
+        public void m22_world_position_drives_ik()
+        {
+            var m = KGBoneLoader.Load(@"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},
+                {""name"":""윗팔"",""parent"":""root"",""length"":50},{""name"":""아랫팔"",""parent"":""윗팔"",""x"":50,""length"":50},{""name"":""목표"",""parent"":""root"",""x"":100}],
+                ""constraints"":[{""type"":""ik"",""name"":""팔"",""bones"":[""윗팔"",""아랫팔""],""target"":""목표""}]}}");
+            var o = new PoseOverrides();
+            o.SetBoneWorldPosition(3, 60, 40, 1);
+            var r = Pose(m, new PoseRequest { Overrides = o });
+            Assert.AreEqual(60f, r.Bones[3].X, 1e-3f);
+            Assert.AreEqual(40f, r.Bones[3].Y, 1e-3f);
+            var (tx, ty) = r.Bones[2].LocalToWorld(50, 0);
+            Assert.AreEqual(60f, tx, 1e-2f);
+            Assert.AreEqual(40f, ty, 1e-2f);
+        }
+
+        [Test]
+        public void m22_world_rotation_with_parent_rotated()
+        {
+            var m = KGBoneLoader.Load(@"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},{""name"":""p"",""parent"":""root"",""rotation"":30},
+                {""name"":""c"",""parent"":""p"",""x"":20,""rotation"":10},{""name"":""cc"",""parent"":""c"",""x"":10}]}}");
+            var o = new PoseOverrides();
+            o.SetBoneWorldRotation(2, 90, 1);
+            var r = Pose(m, new PoseRequest { Overrides = o });
+            Assert.AreEqual(90f, r.Bones[2].RotationX, 1e-3f);
+            Assert.AreEqual(60f, r.Locals[2].Rotation, 1e-3f);
+            Assert.AreEqual(90f, r.Bones[3].RotationX, 1e-3f, "자식도 다시 계산");
+            o.SetBoneWorldRotation(2, 90, 0.5f);
+            Assert.AreEqual(65f, Pose(m, new PoseRequest { Overrides = o }).Bones[2].RotationX, 1e-3f, "40°와 90°의 절반");
+            o.ClearBone(2);
+            Assert.AreEqual(40f, Pose(m, new PoseRequest { Overrides = o }).Bones[2].RotationX, 1e-3f);
+        }
+
+        [Test]
+        public void m22_constraint_wins_on_constrained_bone()
+        {
+            var m = KGBoneLoader.Load(@"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},{""name"":""a"",""parent"":""root"",""length"":50},{""name"":""t"",""parent"":""root"",""x"":80,""rotation"":40}],
+                ""constraints"":[{""type"":""transform"",""name"":""tr"",""bones"":[""a""],""source"":""t""}]}}");
+            var plain = Pose(m, new PoseRequest()).Bones[1];
+            var o = new PoseOverrides();
+            o.SetBoneLocal(1, new BoneOverride { Rotation = -70 });
+            var got = Pose(m, new PoseRequest { Overrides = o }).Bones[1];
+            Assert.AreEqual(plain.RotationX, got.RotationX, 1e-3f);
+        }
+
         [Test]
         public void m19_unknown_name_returns_null()
         {

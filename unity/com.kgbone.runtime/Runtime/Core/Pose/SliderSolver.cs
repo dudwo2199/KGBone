@@ -25,7 +25,7 @@ namespace KGBone.Core
             else t = timeValue;
             if (c.Loop) t = AnimationApplier.AnimationTime(duration, t, true);
             else t = Math.Min(Math.Max(t, 0f), Math.Max(duration, 0f));
-            AnimationApplier.Apply(m, anim, t, ctx.Skin, pose, mix, c.Additive, index);
+            AnimationApplier.Apply(m, anim, t, ctx.Skins, pose, mix, c.Additive, index);
             BoneTransform.UpdateFrom(m, pose, 0);
         }
     }

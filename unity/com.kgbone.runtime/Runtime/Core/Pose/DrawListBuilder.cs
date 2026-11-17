@@ -19,16 +19,10 @@ namespace KGBone.Core
         readonly List<DrawItem> pool = new List<DrawItem>();
         readonly List<float> clipPolygon = new List<float>();
 
-        /// <summary>첨부물 찾기: 켠 스킨 → 기본 스킨(핵심 find_attachment).</summary>
-        public static AttachmentData FindAttachment(SkeletonModel m, string skin, string slot, string name)
-        {
-            var s = m.FindSkin(skin);
-            var a = s?.Get(slot, name);
-            if (a != null) return a;
-            return m.FindSkin(SkinData.DefaultName)?.Get(slot, name);
-        }
+        /// <summary>첨부물 찾기: 켠 스킨(뒤가 이김) → 기본 스킨(핵심 find_attachment).</summary>
+        public static AttachmentData FindAttachment(SkeletonModel m, SkinSet skins, string slot, string name) => SkinSet.Find(skins, m, slot, name);
 
-        public void Build(SkeletonModel m, PoseState pose, string skin, List<DrawItem> output)
+        public void Build(SkeletonModel m, PoseState pose, SkinSet skin, List<DrawItem> output)
         {
             output.Clear();
             int used = 0;
@@ -50,7 +44,7 @@ namespace KGBone.Core
         }
 
         /// <summary>슬롯 하나를 그리기 목록에 더한다. 클리핑 슬롯이면 자르기를 시작하고 true(그 슬롯은 end 검사를 하지 않음).</summary>
-        bool AddSlot(SkeletonModel m, PoseState pose, string skin, int si, List<DrawItem> output, ref int used,
+        bool AddSlot(SkeletonModel m, PoseState pose, SkinSet skin, int si, List<DrawItem> output, ref int used,
             ref Clipper clip, ref string clipEnd, ref bool clipping)
         {
             {
