@@ -5,6 +5,8 @@ Windows 11용이고 화면은 한국어다.
 
 **바로 써 보기: https://dudwo2199.github.io/KGBone/** (Edge 또는 Chrome)
 
+**사용 설명서: [manual/](manual/README.md)** — 설치부터 캐릭터 만들기, 애니메이션, 메시, 제약, 내보내기까지 스크린샷과 함께 순서대로 안내한다.
+
 ## 주요 기능
 
 - **본**: 계층, 이동·회전·크기·기울기, 상속 5종, 한글 이름
@@ -32,6 +34,8 @@ Windows 11용이고 화면은 한국어다.
 프로젝트를 열 때 폴더를 고르라고 하면 **프로젝트 파일이 있는 폴더**를 고른다. 그래야 옆의 이미지 폴더까지 읽힌다.
 
 ## 처음 써 보기
+
+자세한 안내는 [사용 설명서 2장: 첫 캐릭터 만들기](manual/02-first-character.md)에 있다.
 
 1. **파일 → 이미지 폴더 지정**으로 파츠 PNG가 든 폴더를 고른다(기본은 프로젝트 옆 `images/`).
 2. **생성 도구(N)**로 뷰포트를 끌어 본을 만든다. 본을 고른 채 끌면 그 본의 자식이 된다.
@@ -97,6 +101,7 @@ npm run dev         # 개발 서버 http://localhost:1420
 | `npm run build:exe` | Tauri 실행 파일 |
 | `npm run samples` | 시험 파일 다시 만들기 |
 | `npm run icons` | 앱 아이콘 다시 만들기 |
+| `npm run manual:shots` | 사용 설명서 스크린샷 다시 찍기(개발 서버를 띄운 상태에서) |
 | `npm test` | 아래 테스트 전부 |
 | `npm run test:rust` | Rust 핵심 테스트(wasm32-wasip1로 빌드해 Node로 실행) |
 | `npm run test:ui` | 화면 단위 테스트(vitest) |
@@ -121,6 +126,7 @@ tools/                생성기, 빌드 도우미, MCP 서버(tools/mcp)
 samples/              직접 만든 시험 파일
 e2e/                  화면 흐름 테스트
 docs/                 명세(SPEC, UI_SPEC, FORMAT), 근거(SOURCES), 미구현(GAPS), 기록(LOG), 인수인계(HANDOFF)
+manual/               사용 설명서(장별 md + images/ 스크린샷, tools/manual-shots.mjs로 다시 찍기)
 ```
 
 계산 로직은 `kgbone-core` 한 곳에만 있고, 화면은 이것을 WebAssembly로, 실행 파일 판은 Rust 라이브러리로 쓴다. 유니티 런타임만 예외로 C#으로 다시 구현하고, 핵심이 만든 정답과 자동으로 비교한다.

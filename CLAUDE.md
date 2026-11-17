@@ -35,6 +35,7 @@ app/                  화면(React + TypeScript + Vite)
   src/ui/             패널: 메뉴, 도구 모음, 뷰포트, 트리, 속성, 도프시트, 그래프, 재생
 interface/            commands.json(명령 목록 원본), core-api.md, tauri-commands.md
 docs/                 SPEC, UI_SPEC, FORMAT, SOURCES, GAPS, LOG
+manual/               사용 설명서(장별 md, images/ 스크린샷). 화면을 바꾸면 해당 장과 스크린샷도 고친다
 samples/              직접 만든 시험 파일(tools/gen-samples.mjs)
 e2e/                  Playwright 화면 흐름 테스트
 unity/                유니티 런타임
@@ -81,6 +82,7 @@ npm run unity:editmode           # 유니티 EditMode 테스트(unity/KGBoneSand
 npm run unity:sandbox            # 확인용 유니티 프로젝트에 시험 파일 복사(-- 폴더 로 추가 복사)
 npm test                         # 전부
 npm run icons                    # 아이콘 다시 만들기(tools/icon.png, app/public/icons)
+npm run manual:shots             # 사용 설명서 스크린샷 다시 찍기(npm run dev를 띄운 상태, 설치된 Edge 사용)
 npx tauri build                  # 실행 파일(이 PC에서는 막힘 → GitHub Actions)
 ```
 웹 판(설치형 웹 앱)은 main에 push하면 `.github/workflows/deploy-pages.yml`이 GitHub Pages에 올린다. 화면 빌드는 상대 경로(`base: './'`)를 쓰므로 화면 코드에서 `/`로 시작하는 절대 경로로 파일을 부르지 않는다.
