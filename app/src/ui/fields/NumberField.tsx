@@ -70,7 +70,12 @@ export function NumberField({ label, value, onCommit, step = 1, dragLabel, testI
         value={editing ?? formatNumber(value)}
         onFocus={(e) => {
           setEditing(formatNumber(value));
-          requestAnimationFrame(() => e.target.select());
+          // 다음 프레임에 전체 선택. 그 사이에 확정(Enter)·취소로 초점이 떠났으면 select()가 초점을 도로 가져가므로 하지 않는다
+          // (그러면 이후 글자 단축키가 입력칸으로 가서 먹히지 않는다)
+          const input = e.target;
+          requestAnimationFrame(() => {
+            if (document.activeElement === input) input.select();
+          });
         }}
         onChange={(e) => setEditing(e.target.value)}
         onBlur={() => {
