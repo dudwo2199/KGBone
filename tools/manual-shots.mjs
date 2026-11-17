@@ -5,6 +5,8 @@ import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { createServer } from 'node:net';
+import { Link } from './mcp/link.mjs';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(repo, 'manual', 'images');
@@ -286,5 +288,44 @@ await run('bone.setTransform', { name: '꼬리3', rotation: 35 });
 await select([{ kind: 'bone', name: '꼬리3' }]);
 await cmd('tool.rotate');
 await shot('04-bend', viewport);
+
+// ---------- 9. AI 연결 ----------
+// 이 스크립트 안에 MCP 서버 중계소를 열고(빈 포트), AI 프로그램 둘(Claude Code, Cursor)이 붙은 모습을 찍는다
+const aiPort = await new Promise((resolve) => {
+  const srv = createServer();
+  srv.listen(0, '127.0.0.1', () => {
+    const { port } = srv.address();
+    srv.close(() => resolve(port));
+  });
+});
+const hub = new Link({ name: 'Claude Code', port: aiPort, origins: [] });
+const second = new Link({ name: 'Cursor', port: aiPort, origins: [] });
+await hub.start();
+await second.start();
+await openMenu('도구', 'AI 연결');
+await shot('09-tools-menu', null, { x: 0, y: 0, width: 640, height: 220 });
+await page.locator('.menu-dropdown .menu-item', { hasText: 'AI 연결' }).last().click();
+const aiDialog = page.getByRole('dialog', { name: 'AI 연결' });
+await aiDialog.getByLabel('포트').fill(String(aiPort));
+await aiDialog.getByRole('button', { name: '연결', exact: true }).click();
+await aiDialog.getByTestId('ai-clients').filter({ hasText: 'Cursor' }).waitFor();
+// AI가 꼬리를 더 휘게 한다(창에 바로 보이고 최근 작업에 남는다)
+await second.call('core', { request: { method: 'execute', id: 'bone.setTransform', args: { name: '꼬리3', rotation: 60 } } });
+await aiDialog.getByTestId('ai-last').filter({ hasText: 'Cursor' }).waitFor();
+// 포트 칸은 연결 중에 잠기므로 기본값으로 보이게 바꿔 찍는다(설명서의 기본 포트)
+await page.evaluate(() => {
+  const input = document.querySelector('[aria-label="포트"]');
+  if (input) input.value = '47821';
+  const st = document.querySelector('[data-testid="ai-status"]');
+  if (st) st.textContent = st.textContent.replace(/127\.0\.0\.1:\d+/, '127.0.0.1:47821');
+});
+await shot('09-ai-connect', aiDialog);
+await aiDialog.getByRole('button', { name: '닫기' }).click();
+await callouts([[1, '[data-testid="status-ai"]', -34, -4]]);
+await shot('09-status-ai', null, { x: 760, y: 860, width: 680, height: 40 });
+await clearCallouts();
+await shot('09-ai-window');
+second.close();
+hub.close();
 
 await browser.close();
