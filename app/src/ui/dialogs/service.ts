@@ -14,6 +14,7 @@ export type DialogSpec =
   | { kind: 'pickImage'; names: string[] }
   | { kind: 'file'; mode: 'open' | 'save' | 'folder'; title: string; files: string[]; defaultPath: string }
   | { kind: 'shortcuts' }
+  | { kind: 'aiConnect' }
   | { kind: 'confirm'; title: string; text: string; ok: string; cancel: string };
 
 export interface OpenDialog {
@@ -72,6 +73,9 @@ export class DialogService extends Store<{ stack: OpenDialog[] }> implements App
   }
   shortcuts(): Promise<void> {
     return this.open({ kind: 'shortcuts' });
+  }
+  aiConnect(): Promise<void> {
+    return this.open({ kind: 'aiConnect' });
   }
 
   // WebDialogProvider

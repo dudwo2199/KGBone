@@ -4,7 +4,15 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { basename, delimiter, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { readPng } from "./png.mjs";
 
-function allowedRoots() {
+/** full이 roots 중 하나의 안인지 */
+export function isInside(roots, full) {
+  return roots.some((root) => {
+    const rel = relative(root, full);
+    return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+  });
+}
+
+export function allowedRoots() {
   const extra = (process.env.KGBONE_MCP_ROOTS || "").split(delimiter).map((s) => s.trim()).filter(Boolean);
   return [process.cwd(), ...extra].map((p) => resolve(p));
 }
@@ -20,6 +28,8 @@ function listPngs(dir, prefix = "") {
 }
 
 export class EditorSession {
+  /** 창 없이 이 서버 안에서 편집한다 */
+  where = "headless";
   /** 저장할 .kgbone 경로(새 문서·가져온 문서는 null) */
   filePath = null;
   /** imagesPath 상대 경로의 기준 폴더 */
@@ -36,11 +46,7 @@ export class EditorSession {
   resolvePath(path) {
     if (typeof path !== "string" || !path) throw new Error("경로가 없습니다");
     const full = resolve(path); // 상대 경로는 서버를 띄운 폴더 기준
-    const inside = this.roots.some((root) => {
-      const rel = relative(root, full);
-      return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
-    });
-    if (!inside) throw new Error(`허용한 폴더 밖입니다: ${full} (허용: ${this.roots.join(", ")})`);
+    if (!isInside(this.roots, full)) throw new Error(`허용한 폴더 밖입니다: ${full} (허용: ${this.roots.join(", ")})`);
     return full;
   }
 
@@ -109,6 +115,11 @@ export class EditorSession {
       writeFileSync(out, Buffer.from(f.base64, "base64"));
       return out;
     });
+  }
+
+  /** 요약용 파일 정보 */
+  info() {
+    return { where: this.where, filePath: this.filePath, imagesDir: this.imagesDir(), images: this.images };
   }
 
   /** 내보내기 파일 이름 앞부분 */

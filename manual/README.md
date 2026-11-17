@@ -17,6 +17,7 @@ KGBone은 그림 파츠를 본(뼈)에 붙이고, 본을 움직여 2D 애니메�
 | [6. 스킨과 이벤트](06-skins-events.md) | 옷·장비 바꿔 끼우기, 소리·효과 신호 |
 | [7. 파일과 내보내기](07-files-export.md) | 저장·열기, 이미지 폴더, Spine JSON 호환 내보내기, PNG 시퀀스, 유니티 |
 | [8. 참고표](08-reference.md) | 단축키 전체, 마우스 조작, 숫자 입력칸 수식, 자주 묻는 것 |
+| [9. AI 연결](09-ai-connect.md) | Claude·Cursor·Codex 같은 AI 프로그램이 열린 창의 문서를 고치게 하기(MCP) |
 
 ## 처음이라면
 

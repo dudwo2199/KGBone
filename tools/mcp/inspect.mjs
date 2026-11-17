@@ -1,12 +1,13 @@
 // 문서 살펴보기: 전체 Project JSON은 크므로 기본은 요약, 필요한 부분만 경로로 꺼낸다.
 
 /** 한눈에 보는 요약(이름 위주) */
-export function summarize(project, state, session) {
+export function summarize(project, state, info) {
   const sk = project.skeleton;
   return {
-    file: session.filePath,
-    imagesDir: session.imagesDir(),
-    images: session.images,
+    where: info.where === "window" ? "창(열린 KGBone 화면)" : "창 없음(이 서버 안)",
+    file: info.filePath,
+    imagesDir: info.imagesDir,
+    images: info.images,
     state,
     editor: { mode: project.editor.mode, activeAnimation: project.editor.activeAnimation, activeSkin: project.editor.activeSkin, time: project.editor.time },
     fps: sk.fps,

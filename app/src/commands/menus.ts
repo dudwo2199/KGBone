@@ -141,6 +141,7 @@ export const MENUS: Menu[] = [
       },
     ],
   },
+  { label: '도구', items: [c('ai.connect')] },
   { label: '도움말', items: [c('help.shortcuts'), c('help.about')] },
 ];
 

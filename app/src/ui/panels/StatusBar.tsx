@@ -24,6 +24,8 @@ export function StatusBar() {
   const messages = useStore(s.ui, (u) => u.messages);
   const playing = useStore(s.ui, (u) => u.playing);
   const pick = useStore(s.ui, (u) => u.pickParent);
+  const agent = useStore(s.agent, (a) => a.status);
+  const agentClients = useStore(s.agent, (a) => a.clients);
   const warnCount = messages.filter((m) => m.level !== 'info').length;
   const selText = sel.length === 0 ? '선택 없음' : sel.length === 1 ? `${KIND[sel[0].kind]}: ${sel[0].name}` : `${sel.length}개 선택`;
   return (
@@ -36,6 +38,16 @@ export function StatusBar() {
       <span className={'status-msg ' + (status?.level ?? '')} data-testid="status-message" title={status?.text}>
         {status?.text ?? '준비됨'}
       </span>
+      {agent !== 'off' && (
+        <button
+          className={'status-ai ' + agent}
+          data-testid="status-ai"
+          title={agentClients.length ? `붙은 AI: ${agentClients.join(', ')}` : 'AI 연결'}
+          onClick={() => s.run('ai.connect')}
+        >
+          {agent === 'connected' ? `AI 연결됨${agentClients.length ? ` (${agentClients.length})` : ''}` : 'AI 기다리는 중'}
+        </button>
+      )}
       <span className="status-warn" title="경고·오류 수">
         경고 {warnCount}
       </span>

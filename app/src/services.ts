@@ -1,10 +1,13 @@
 // 화면 전체가 함께 쓰는 서비스 묶음(React 컨텍스트로 내려준다).
 import { createContext, useContext } from 'react';
+import { createAgentHandler } from './ai/agentHandler';
+import { AgentLink } from './ai/agentLink';
 import { Player } from './anim/player';
 import { buildRegistry } from './commands/handlers';
 import type { CommandRegistry } from './commands/registry';
 import type { Core } from './core/bridge';
 import { FileFlow } from './files/fileFlow';
+import { DiskPlatform } from './platform/diskPlatform';
 import type { Platform } from './platform/platform';
 import { SAMPLE_DIR, WebPlatform } from './platform/web';
 import { DocStore } from './state/document';
@@ -25,14 +28,18 @@ export interface Services {
   player: Player;
   pose: PoseService;
   commands: CommandRegistry<Services>;
+  /** AI 연결(MCP 서버 중계소) */
+  agent: AgentLink;
   /** 명령 실행(메뉴·단축키·버튼 공용). 오류는 알림으로 */
   run(id: string, args?: Record<string, unknown>): void;
 }
 
-export function createServices(core: Core, platform: Platform, dialogs: DialogService): Services {
+export function createServices(core: Core, basePlatform: Platform, dialogs: DialogService, agent: AgentLink = new AgentLink()): Services {
   const ui = new UiStore();
   const notify = ui.notify;
-  const doc = new DocStore(core, notify, platform instanceof WebPlatform ? SAMPLE_DIR : '');
+  // 'disk:' 경로(AI가 연 이 PC의 파일)는 AI 연결을 거쳐 읽고 쓴다
+  const platform = new DiskPlatform(basePlatform, agent);
+  const doc = new DocStore(core, notify, basePlatform instanceof WebPlatform ? SAMPLE_DIR : '');
   const images = new ImageLibrary(platform, core, notify);
   const pose = new PoseService(core, doc, ui, notify);
   const player = new Player(doc, ui);
@@ -47,6 +54,7 @@ export function createServices(core: Core, platform: Platform, dialogs: DialogSe
     pose,
     player,
     commands,
+    agent,
     files: null as unknown as FileFlow,
     run(id, args = {}) {
       commands.run(s, id, args).catch((e: unknown) => notify('error', e instanceof Error ? e.message : String(e)));
@@ -72,6 +80,7 @@ export function createServices(core: Core, platform: Platform, dialogs: DialogSe
       ui.set({ selection: [], selectedKeys: [], graphRow: null, view: { ...ed.view }, playTime: ed.time, loop: ed.playback.loop, speed: ed.playback.speed, onion: ed.onion.enabled });
     },
   });
+  agent.setHandler(createAgentHandler(s));
   // 문서가 바뀌면 사라진 항목은 선택에서 뺀다
   doc.subscribe(() => {
     const sel = ui.get().selection;

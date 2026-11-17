@@ -147,5 +147,13 @@
 | M15 | 물리 제약(고정 간격, reset 키, 초기화)이 연속 프레임에서 핵심과 같음 | C: `m15_*`, `m15_golden_sequences_match_core`(`spine43-physics`, `unity-stage2-physics`) |
 | M16 | 물리 월드 움직임 반영 옵션(기본 0)과 컴포넌트 물리 진행(플레이 모드, 0.1초 상한, 멈춰도 진행, `ResetPhysics`), 제약 경고 없음 | C: `m16_*`. Y: `m16_*`, `m10_importer_no_constraint_warning` |
 
+## N. AI 연결 (MCP)
+MCP 서버(`tools/mcp/server.mjs`)가 열린 KGBone 창의 문서를 편집한다. 메시지: `interface/agent-link.md`. 사용 설명서 9장.
+| 번호 | 기능 | 완료 기준 |
+|---|---|---|
+| N01 | 창 쪽 연결(도구 → AI 연결): 인사, 붙은 AI 목록, 받은 차례대로 처리, AI 프로그램이 없으면 기다렸다가 다시 붙기, 다른 창에 연결을 넘김, 포트·자동 연결 기억, `disk:` 경로는 연결을 거쳐 읽고 쓰기 | U: `f_n01_*`. E: `e_n01_ai_connect_edits_open_window`(AI가 만든 본이 트리에 보이고 창의 Ctrl+Z로 되돌림, 화면 명령, 디스크 파일 열기·무편집 저장 바이트 동일, 화면 찍기, 허용 폴더 밖 거절) |
+| N02 | 중계소: 먼저 뜬 MCP 서버가 열고 나중 서버는 그 중계소를 거쳐 붙음(여러 AI 동시), 중계소가 꺼지면 이어받음, 다른 웹사이트의 연결 거절(Origin), 창의 파일 작업은 허용 폴더 안만 | N: `mcp_link_allowed_origins`, `mcp_link_hub_routes_calls_from_several_clients_and_refuses_other_sites`, `mcp_link_client_takes_over_when_hub_closes` |
+| N03 | MCP 도구가 창이 붙으면 창의 문서를, 아니면 창 없는 문서를 고침. 창이 붙으면 화면 명령(scope: ui)과 `view_screenshot`, 연결 상태는 `app_status` | N: `mcp_stdio_server_edits_connected_window_document` |
+
 ## 이번에 제외 (→ docs/GAPS.md)
 바이너리 .skel 입출력, PSD 직접 관리, HTML/웹 컴포넌트 내보내기, 스킨별 아틀라스 패킹, 프로젝트 ZIP 패키징, GIF/동영상 내보내기, 문제(Issues) 뷰 자동 해결.

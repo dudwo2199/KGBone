@@ -49,8 +49,9 @@ export class FileFlow {
     await this.d.images.open(this.imagesDir());
   }
 
-  async newFile(): Promise<void> {
-    if (!(await this.confirmDiscard())) return;
+  /** 새 문서. 사용자가 저장 확인에서 취소하면 false */
+  async newFile(): Promise<boolean> {
+    if (!(await this.confirmDiscard())) return false;
     try {
       this.d.core.newDocument();
     } catch (e) {
@@ -59,6 +60,42 @@ export class FileFlow {
     this.d.doc.setFile(null, this.d.doc.defaultBaseDir);
     await this.afterReplace();
     this.d.notify('info', '새 문서를 만들었습니다');
+    return true;
+  }
+
+  /** 경로의 파일을 문서로 읽는다(.kgbone 열기 또는 Spine JSON 호환 가져오기). 실패하면 예외 */
+  private async load(p: string, kind: 'kgbone' | 'spineJson'): Promise<Warning[]> {
+    const text = await this.d.platform.readText(p);
+    if (kind === 'kgbone') {
+      const { warnings } = this.d.core.openKgbone(text);
+      this.d.doc.setFile(p, paths.dirname(p));
+      await this.afterReplace();
+      return warnings;
+    }
+    const { warnings } = this.d.core.importSpineJson(text);
+    this.d.doc.setFile(null, paths.dirname(p), paths.stem(p));
+    await this.afterReplace();
+    return warnings;
+  }
+
+  /**
+   * AI 연결에서 열기·가져오기: 대화상자 없이 경고를 돌려준다. 저장하지 않은 변경이 있으면 사용자에게 묻고,
+   * 취소하면 예외. 실패도 예외(부른 쪽이 알린다)
+   */
+  async openForAgent(path: string, kind: 'kgbone' | 'spineJson'): Promise<Warning[]> {
+    if (!(await this.confirmDiscard())) throw new Error('사용자가 취소했습니다(저장하지 않은 변경이 있음)');
+    const warnings = await this.load(path, kind);
+    this.d.notify('info', `${kind === 'kgbone' ? '열었습니다' : '가져왔습니다'}: ${paths.basename(path)}`);
+    return warnings;
+  }
+
+  /** AI 연결에서 저장: path가 없으면 연 파일에. 저장한 경로를 돌려주고, 실패하면 예외 */
+  async saveForAgent(path: string | null): Promise<string> {
+    const target = path ?? this.d.doc.get().filePath;
+    if (!target) throw new Error('저장할 경로가 없습니다. path를 주세요.');
+    await this.writeFile(target);
+    this.d.notify('info', `저장했습니다: ${paths.basename(target)}`);
+    return target;
   }
 
   async open(path?: string, opts: { skipConfirm?: boolean } = {}): Promise<boolean> {
@@ -66,10 +103,7 @@ export class FileFlow {
     const p = path ?? (await this.d.platform.openFileDialog('열기', [KGBONE_FILTER]));
     if (!p) return false;
     try {
-      const text = await this.d.platform.readText(p);
-      const { warnings } = this.d.core.openKgbone(text);
-      this.d.doc.setFile(p, paths.dirname(p));
-      await this.afterReplace();
+      const warnings = await this.load(p, 'kgbone');
       this.d.notify('info', `열었습니다: ${paths.basename(p)}`);
       if (warnings.length) await this.d.dialogs.report('열기 경고', [], warningLines(warnings));
       return true;
@@ -94,14 +128,19 @@ export class FileFlow {
     return this.writeTo(p);
   }
 
+  /** 저장(실패하면 예외) */
+  private async writeFile(path: string): Promise<void> {
+    this.d.beforeSave?.();
+    const text = this.d.core.saveKgbone();
+    await this.d.platform.writeText(path, text);
+    const before = this.d.doc.get().baseDir;
+    this.d.doc.setFile(path, paths.dirname(path));
+    if (paths.dirname(path) !== before) await this.d.images.open(this.imagesDir());
+  }
+
   private async writeTo(path: string): Promise<boolean> {
     try {
-      this.d.beforeSave?.();
-      const text = this.d.core.saveKgbone();
-      await this.d.platform.writeText(path, text);
-      const before = this.d.doc.get().baseDir;
-      this.d.doc.setFile(path, paths.dirname(path));
-      if (paths.dirname(path) !== before) await this.d.images.open(this.imagesDir());
+      await this.writeFile(path);
       this.d.notify('info', `저장했습니다: ${paths.basename(path)}`);
       return true;
     } catch (e) {
@@ -115,10 +154,7 @@ export class FileFlow {
     const p = path ?? (await this.d.platform.openFileDialog('가져오기: Spine JSON 호환', [SPINE_JSON_FILTER]));
     if (!p) return;
     try {
-      const text = await this.d.platform.readText(p);
-      const { warnings } = this.d.core.importSpineJson(text);
-      this.d.doc.setFile(null, paths.dirname(p), paths.stem(p));
-      await this.afterReplace();
+      const warnings = await this.load(p, 'spineJson');
       this.d.notify('info', `가져왔습니다: ${paths.basename(p)}`);
       if (warnings.length) await this.d.dialogs.report('가져오기 경고', [], warningLines(warnings));
     } catch (e) {
@@ -126,8 +162,8 @@ export class FileFlow {
     }
   }
 
-  /** 이미지 폴더의 PNG 원본을 핵심에 등록(내보내기용) */
-  private async registerPngs(): Promise<void> {
+  /** 이미지 폴더의 PNG 원본을 핵심에 등록(내보내기·AI 연결의 그림용) */
+  async registerPngs(): Promise<void> {
     const dir = this.imagesDir();
     for (const e of this.d.images.get().entries) {
       try {

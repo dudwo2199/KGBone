@@ -5,9 +5,10 @@ import type { PngSequenceChoice, SpineExportChoice } from '../../files/dialogs';
 import { useServices } from '../../services';
 import { useStore } from '../../state/store';
 import { TextField } from '../fields/TextField';
+import { AiConnectDialog } from './AiConnectDialog';
 import type { DialogSpec, OpenDialog } from './service';
 
-function Modal({ title, children, buttons, onCancel }: { title: string; children: ReactNode; buttons: ReactNode; onCancel(): void }) {
+export function Modal({ title, children, buttons, onCancel }: { title: string; children: ReactNode; buttons: ReactNode; onCancel(): void }) {
   return (
     <div className="modal-back" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
       <div
@@ -317,6 +318,8 @@ function DialogView({ d }: { d: OpenDialog }) {
       return <PickImageDialog spec={spec} done={(v) => d.resolve(v)} />;
     case 'shortcuts':
       return <ShortcutsDialog done={() => d.resolve(undefined)} />;
+    case 'aiConnect':
+      return <AiConnectDialog done={() => d.resolve(undefined)} />;
   }
 }
 

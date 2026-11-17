@@ -27,8 +27,8 @@ before(async () => {
 after(() => rmSync(tmp, { recursive: true, force: true }));
 
 /** 도구 호출 → { ok, text(JSON이면 풀어서), content } */
-function call(name, args = {}) {
-  const res = handleMessage(session, { jsonrpc: "2.0", id: nextId++, method: "tools/call", params: { name, arguments: args } });
+async function call(name, args = {}) {
+  const res = await handleMessage(session, { jsonrpc: "2.0", id: nextId++, method: "tools/call", params: { name, arguments: args } });
   const content = res.result.content;
   const raw = content.find((c) => c.type === "text")?.text ?? "";
   let data = raw;
@@ -40,50 +40,50 @@ function call(name, args = {}) {
   return { ok: !res.result.isError, data, content };
 }
 
-test("mcp_initialize_and_tool_list", () => {
-  const init = handleMessage(session, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26" } });
+test("mcp_initialize_and_tool_list", async () => {
+  const init = await handleMessage(session, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26" } });
   assert.equal(init.result.protocolVersion, "2025-03-26");
   assert.equal(init.result.serverInfo.name, "kgbone");
   // 알림에는 답하지 않는다
-  assert.equal(handleMessage(session, { jsonrpc: "2.0", method: "notifications/initialized" }), null);
+  assert.equal(await handleMessage(session, { jsonrpc: "2.0", method: "notifications/initialized" }), null);
   const names = listTools().map((t) => t.name);
   for (const n of ["doc_new", "doc_open", "doc_save", "doc_inspect", "command_list", "command_run", "command_batch", "pose", "render", "export_spine"]) {
     assert.ok(names.includes(n), n);
   }
-  assert.equal(handleMessage(session, { jsonrpc: "2.0", id: 2, method: "nope" }).error.code, -32601);
+  assert.equal((await handleMessage(session, { jsonrpc: "2.0", id: 2, method: "nope" })).error.code, -32601);
 });
 
-test("mcp_open_unedited_save_is_byte_identical", () => {
-  assert.ok(call("doc_open", { path: sample }).ok);
+test("mcp_open_unedited_save_is_byte_identical", async () => {
+  assert.ok((await call("doc_open", { path: sample })).ok);
   const out = join(tmp, "same.kgbone");
-  assert.ok(call("doc_save", { path: out }).ok);
+  assert.ok((await call("doc_save", { path: out })).ok);
   assert.ok(readFileSync(out).equals(readFileSync(sample)));
 });
 
-test("mcp_command_run_edits_and_undo_restores", () => {
-  call("doc_new");
-  const made = call("command_run", { id: "bone.create", args: { parent: "root", name: "팔", x: 10, y: 20 } });
+test("mcp_command_run_edits_and_undo_restores", async () => {
+  await call("doc_new");
+  const made = await call("command_run", { id: "bone.create", args: { parent: "root", name: "팔", x: 10, y: 20 } });
   assert.ok(made.ok, JSON.stringify(made.data));
   assert.equal(made.data.state.dirty, true);
-  const bone = call("doc_inspect", { path: "skeleton.bones.팔" });
+  const bone = await call("doc_inspect", { path: "skeleton.bones.팔" });
   assert.equal(bone.data.parent, "root");
   assert.equal(bone.data.x, 10);
-  assert.ok(call("command_run", { id: "edit.undo" }).ok);
-  assert.deepEqual(call("doc_inspect").data.bones.map((b) => b.name), ["root"]);
+  assert.ok((await call("command_run", { id: "edit.undo" })).ok);
+  assert.deepEqual((await call("doc_inspect")).data.bones.map((b) => b.name), ["root"]);
 });
 
-test("mcp_command_run_rejects_non_core_and_unknown", () => {
-  const platform = call("command_run", { id: "file.open" });
+test("mcp_command_run_rejects_non_core_and_unknown", async () => {
+  const platform = await call("command_run", { id: "file.open" });
   assert.equal(platform.ok, false);
   assert.match(platform.data, /doc_open/);
-  assert.equal(call("command_run", { id: "nope.nope" }).ok, false);
+  assert.equal((await call("command_run", { id: "nope.nope" })).ok, false);
   // 핵심이 돌려준 오류도 그대로 전한다
-  assert.equal(call("command_run", { id: "bone.delete", args: { name: "없는본" } }).ok, false);
+  assert.equal((await call("command_run", { id: "bone.delete", args: { name: "없는본" } })).ok, false);
 });
 
-test("mcp_command_batch_is_one_undo_step_and_rolls_back_on_failure", () => {
-  call("doc_new");
-  const ok = call("command_batch", {
+test("mcp_command_batch_is_one_undo_step_and_rolls_back_on_failure", async () => {
+  await call("doc_new");
+  const ok = await call("command_batch", {
     label: "팔 만들기",
     commands: [
       { id: "bone.create", args: { parent: "root", name: "a" } },
@@ -92,10 +92,10 @@ test("mcp_command_batch_is_one_undo_step_and_rolls_back_on_failure", () => {
   });
   assert.ok(ok.ok, JSON.stringify(ok.data));
   assert.equal(ok.data.state.undoLabel, "팔 만들기");
-  call("command_run", { id: "edit.undo" });
-  assert.deepEqual(call("doc_inspect").data.bones.map((b) => b.name), ["root"]);
+  await call("command_run", { id: "edit.undo" });
+  assert.deepEqual((await call("doc_inspect")).data.bones.map((b) => b.name), ["root"]);
 
-  const bad = call("command_batch", {
+  const bad = await call("command_batch", {
     label: "실패할 묶음",
     commands: [
       { id: "bone.create", args: { parent: "root", name: "c" } },
@@ -104,16 +104,16 @@ test("mcp_command_batch_is_one_undo_step_and_rolls_back_on_failure", () => {
   });
   assert.equal(bad.ok, false);
   assert.match(bad.data, /2번째/);
-  assert.deepEqual(call("doc_inspect").data.bones.map((b) => b.name), ["root"]);
+  assert.deepEqual((await call("doc_inspect")).data.bones.map((b) => b.name), ["root"]);
 });
 
-test("mcp_pose_and_render_return_bones_and_png", () => {
-  call("doc_open", { path: sample });
-  const pose = call("pose", {});
+test("mcp_pose_and_render_return_bones_and_png", async () => {
+  await call("doc_open", { path: sample });
+  const pose = await call("pose", {});
   assert.ok(pose.ok);
   assert.equal(pose.data.bones[0].name, "root");
   assert.equal(typeof pose.data.bones[1].world.x, "number");
-  const r = call("render", { scale: 0.5 });
+  const r = await call("render", { scale: 0.5 });
   assert.ok(r.ok, JSON.stringify(r.data));
   const image = r.content.find((c) => c.type === "image");
   assert.equal(image.mimeType, "image/png");
@@ -122,22 +122,22 @@ test("mcp_pose_and_render_return_bones_and_png", () => {
   assert.deepEqual(r.data.warnings, []);
 });
 
-test("mcp_export_spine_writes_json_atlas_png", () => {
-  call("doc_open", { path: sample });
-  const r = call("export_spine", { dir: join(tmp, "out"), name: "char" });
+test("mcp_export_spine_writes_json_atlas_png", async () => {
+  await call("doc_open", { path: sample });
+  const r = await call("export_spine", { dir: join(tmp, "out"), name: "char" });
   assert.ok(r.ok, JSON.stringify(r.data));
   const exts = r.data.files.map((f) => f.slice(f.lastIndexOf(".")));
   for (const e of [".json", ".atlas", ".png"]) assert.ok(exts.includes(e), e);
 });
 
-test("mcp_paths_outside_allowed_roots_are_refused", () => {
+test("mcp_paths_outside_allowed_roots_are_refused", async () => {
   const outside = join(repo, "..", "밖.kgbone");
-  const r = call("doc_save", { path: outside });
+  const r = await call("doc_save", { path: outside });
   assert.equal(r.ok, false);
   assert.match(r.data, /허용한 폴더 밖/);
 });
 
-test("mcp_png_reader_extracts_size_and_alpha", () => {
+test("mcp_png_reader_extracts_size_and_alpha", async () => {
   // 2×1 RGBA: 불투명 빨강, 반투명 파랑
   const raw = Buffer.from([0, 255, 0, 0, 255, 0, 0, 255, 128]);
   const chunk = (type, data) => {
@@ -159,7 +159,7 @@ test("mcp_png_reader_extracts_size_and_alpha", () => {
 });
 
 test("mcp_stdio_server_answers_line_by_line", async () => {
-  const child = spawn(process.execPath, [join(repo, "tools", "mcp", "server.mjs")], { cwd: repo, stdio: ["pipe", "pipe", "inherit"] });
+  const child = spawn(process.execPath, [join(repo, "tools", "mcp", "server.mjs")], { cwd: repo, stdio: ["pipe", "pipe", "inherit"], env: { ...process.env, KGBONE_MCP_LIVE: "0" } });
   let out = "";
   child.stdout.on("data", (d) => (out += d));
   child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} })}\n`);
@@ -174,7 +174,7 @@ test("mcp_stdio_server_answers_line_by_line", async () => {
   assert.equal(JSON.parse(lines[2].result.content[0].text).bones[0].name, "root");
 });
 
-test("mcp_registered_in_project_mcp_json", () => {
+test("mcp_registered_in_project_mcp_json", async () => {
   const cfg = JSON.parse(readFileSync(join(repo, ".mcp.json"), "utf8"));
   assert.equal(cfg.mcpServers.kgbone.command, "node");
   assert.deepEqual(cfg.mcpServers.kgbone.args, ["tools/mcp/server.mjs"]);
@@ -190,7 +190,7 @@ test("mcp_server_loads_wasm_later_without_reconnect", async () => {
   }
   copyFileSync(join(repo, "interface", "commands.json"), join(fake, "interface", "commands.json"));
 
-  const child = spawn(process.execPath, [join(fake, "tools", "mcp", "server.mjs")], { cwd: fake, stdio: ["pipe", "pipe", "inherit"], env: { ...process.env, KGBONE_WASM: "" } });
+  const child = spawn(process.execPath, [join(fake, "tools", "mcp", "server.mjs")], { cwd: fake, stdio: ["pipe", "pipe", "inherit"], env: { ...process.env, KGBONE_WASM: "", KGBONE_MCP_LIVE: "0" } });
   const replies = [];
   let buf = "";
   child.stdout.on("data", (d) => {

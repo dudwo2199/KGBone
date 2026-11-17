@@ -45,7 +45,7 @@ export function buildRegistry(): CommandRegistry<Services> {
   });
 
   // ---------- 파일(platform) ----------
-  r.register('file.new', (s) => s.files.newFile());
+  r.register('file.new', async (s) => void (await s.files.newFile()));
   r.register('file.open', async (s, a) => {
     await s.files.open(a.path as string | undefined);
   });
@@ -227,6 +227,7 @@ export function buildRegistry(): CommandRegistry<Services> {
   r.register('option.compensate', (s) => s.ui.set({ compensate: !s.ui.get().compensate }));
 
   // ---------- 도움말 ----------
+  r.register('ai.connect', (s) => s.dialogs.aiConnect());
   r.register('help.shortcuts', (s) => s.dialogs.shortcuts());
   r.register('help.about', (s) =>
     s.dialogs.message('KGBone 정보', 'KGBone 0.1.0\n2D 스켈레탈 애니메이션 에디터\n\nRust 핵심(WebAssembly) + React 화면으로 만든 독자 구현입니다.'),

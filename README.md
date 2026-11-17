@@ -135,8 +135,10 @@ manual/               사용 설명서(장별 md + images/ 스크린샷, tools/m
 
 ### MCP 서버 (AI 에이전트로 편집하기)
 
-`tools/mcp/server.mjs`는 창 없이 `kgbone.wasm`을 Node로 돌리는 [MCP](https://modelcontextprotocol.io) 서버다.
-저장소 루트의 `.mcp.json`에 등록돼 있어, 이 폴더에서 Claude Code를 열면 쓸 수 있다.
+`tools/mcp/server.mjs`는 `kgbone.wasm`을 Node로 돌리는 [MCP](https://modelcontextprotocol.io) 서버다.
+저장소 루트의 `.mcp.json`에 등록돼 있어, 이 폴더에서 Claude Code를 열면 쓸 수 있다. Cursor·Codex·VS Code 등 다른 AI 프로그램 설정은 [사용 설명서 9장](manual/09-ai-connect.md).
+
+- KGBone 창에서 **도구 → AI 연결**을 누르면 AI가 열린 창의 문서를 고친다(화면에 바로 보이고 Ctrl+Z로 되돌림). 여러 AI 프로그램이 동시에 붙을 수 있다. 연결하지 않으면 창 없이 서버 안의 문서를 고친다.
 
 - 도구: 문서 열기·저장, 구조 읽기, 편집 명령 실행(묶음 = 되돌리기 한 번), 본 계산 결과 읽기, PNG로 그려 보기, 내보내기
 - 파일은 서버를 띄운 폴더 안에서만 읽고 쓴다(더 허용하려면 환경 변수 `KGBONE_MCP_ROOTS`)
