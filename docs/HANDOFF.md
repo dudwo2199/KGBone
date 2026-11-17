@@ -84,6 +84,40 @@ npm run build:exe   # Tauri 실행 파일(src-tauri/target/release/KGBone.exe) �
 - **MCP 연결(창 잇기)**: 먼저 뜬 MCP 서버가 `127.0.0.1:47821`에 중계소(WebSocket)를 열고, 창에서 도구 → MCP 연결을 누르면 창이 거기 붙는다. 그러면 도구가 창의 문서를 고친다(화면 명령·`view_screenshot`도 됨, 상태는 `app_status`). 나중에 뜬 다른 MCP 서버(Cursor·Codex 등)는 그 중계소를 거쳐 같은 창에 붙고, 중계소가 꺼지면 남은 서버가 이어받는다. 메시지 형식 `interface/agent-link.md`, 사용 설명서 9장(AI 프로그램별 설정), SPEC N, GAPS G-29. 환경 변수: `KGBONE_MCP_PORT`, `KGBONE_MCP_LIVE=0`(끄기), `KGBONE_MCP_ORIGINS`(허용 웹 주소 추가).
 - `app/public/kgbone.wasm`이 필요하다. Rust가 있으면 `npm run wasm`, 없으면 `npm run wasm:fetch`(GitHub Pages에 올라간 origin main 빌드를 받는다 — Rust 핵심을 이 PC에서 고쳤다면 쓰면 안 된다).
 - Rust 없이 화면 흐름 테스트를 돌리려면: `npm run wasm:fetch` 후 `npx vite --config app/vite.config.ts`를 띄워 두고 `npx playwright test`.
+- 도구 추가(창 연결용): `app_status`(연결 상태), `view_screenshot`(창 뷰포트 PNG). 창이 붙으면 화면 명령(scope: ui)도 `command_run`으로 쓴다.
+
+### 4-3. Claude에서 MCP 쓰는 법 (사용자용 요약)
+처음 한 번 등록하고, 쓸 때는 KGBone에서 [연결]을 누르고 말로 시키면 된다. Cursor·Codex·VS Code·Gemini CLI 설정은 사용 설명서 9장.
+
+**등록**
+- **Claude Code, KGBone 저장소 폴더에서 열 때**: 할 일 없음. `.mcp.json`으로 자동 등록되고, 처음에 MCP 서버를 쓸지 물으면 허용한다.
+- **Claude Code, 다른 폴더에서도 쓸 때**: 한 번만 실행(`-s user` = 모든 폴더, `KGBONE_MCP_ROOTS` = 파일을 읽고 쓸 폴더, 여러 개면 `;`).
+  ```bash
+  claude mcp add kgbone -s user -e KGBONE_MCP_ROOTS=D:/내작업 -- node D:/workspace/KGSpine/KGBone/tools/mcp/server.mjs
+  ```
+- **Claude 데스크톱 앱**: 설정 → 개발자 → 설정 편집(`claude_desktop_config.json`)에 넣고 앱을 다시 켠다.
+  ```json
+  {
+    "mcpServers": {
+      "kgbone": {
+        "command": "node",
+        "args": ["D:/workspace/KGSpine/KGBone/tools/mcp/server.mjs"],
+        "env": { "KGBONE_MCP_ROOTS": "D:/내작업" }
+      }
+    }
+  }
+  ```
+
+**쓸 때마다**
+1. Claude를 켠다(kgbone 서버가 같이 켜지고 연결 창구 127.0.0.1:47821을 연다).
+2. KGBone에서 도구 → MCP 연결… → [연결]. "창을 열 때 자동으로 연결"을 켜 두면 생략.
+3. 말로 시킨다. 예: "팔 본 두 개 만들고 화면 맞춰줘", "걷기 애니메이션 만들어서 0초·0.5초에 다리 회전 키 넣어줘", "지금 화면 찍어서 보여줘", "D:/내작업/char.kgbone 열어줘", "저장해줘".
+
+**주의**
+- 필요한 것: Node.js 22 이상, `app/public/kgbone.wasm`(`npm run wasm` 또는 `npm run wasm:fetch`).
+- **서버 코드(`tools/mcp/`)를 고친 뒤에는 Claude 쪽 서버를 다시 켜야 반영된다.** Claude Code는 `/mcp`에서 다시 연결하거나 새 세션, 데스크톱 앱은 앱 재시작. 옛 서버가 계속 돌면 창 연결이 안 되거나 새 도구가 안 보인다(도구 수로 확인: 창 연결 판은 14개).
+- 연결이 됐는지 모르겠으면 Claude에게 "KGBone 연결 상태 확인해줘"(→ `app_status`).
+- 창 상태 "AI 프로그램을 기다리는 중" = 연결 창구를 연 MCP 서버가 없음(Claude가 꺼졌거나 옛 서버). "다른 KGBone 창이 연결돼 있어 기다리는 중" = 다른 창이 연결을 쓰는 중, 이 창으로 가져오려면 [연결 끊기] 뒤 [연결].
 
 ## 5. 구조 요약
 - `crates/kgbone-core`: 계산 로직 전부(모델, .kgbone/Spine JSON/atlas, 뼈대 계산·제약·물리, 명령, 되돌리기, 내보내기). `api.rs`가 JSON 요청 처리기.
