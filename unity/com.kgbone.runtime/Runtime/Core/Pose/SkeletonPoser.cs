@@ -63,6 +63,7 @@ namespace KGBone.Core
             ConstraintSolvers.ActiveConstraints(m, state.Active, r.Skin, constraintOn);
             ctx.Skin = r.Skin;
             ctx.Physics = r.Physics;
+            ctx.WorldMotion = r.WorldMotion;
             for (int i = 0; i < solvers.Length; i++)
                 if (constraintOn[i] && solvers[i] != null) solvers[i].Apply(m, i, state, ctx);
             draw.Build(m, state, r.Skin, result.Draw);

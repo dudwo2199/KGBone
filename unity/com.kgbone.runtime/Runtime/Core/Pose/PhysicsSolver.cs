@@ -81,6 +81,17 @@ namespace KGBone.Core
             p.LastY = curY;
         }
 
+        /// <summary>점 p의 지난 위치에서 바깥 움직임이 만든 이동(평행 이동 + 원점 기준 회전)을 뺀다.</summary>
+        static void ShiftLast(ref PhysicsState.Point p, in WorldMotion w)
+        {
+            float r = w.Rotation * WorldMath.DegToRad;
+            float cs = MathF.Cos(r), sn = MathF.Sin(r);
+            float dx = w.X + (cs * p.LastX - sn * p.LastY) - p.LastX;
+            float dy = w.Y + (sn * p.LastX + cs * p.LastY) - p.LastY;
+            p.LastX -= dx;
+            p.LastY -= dy;
+        }
+
         public void Apply(SkeletonModel m, int index, PoseState pose, SolveContext ctx)
         {
             var c = (PhysicsConstraintData)m.Constraints[index];
@@ -105,6 +116,13 @@ namespace KGBone.Core
             }
             if (ctx.Physics.Kind == PhysicsStep.StepKind.Advance)
             {
+                // 바깥 움직임은 본 이동량처럼 다룬다: 지난 위치를 반대로 옮겨 두면 (cur − last)에 더해지고,
+                // inertia가 곱해지며, 단계가 0이면 last가 그대로라 다음 단계로 미뤄진다. 0이면 아무것도 하지 않는다(핵심과 같은 경로).
+                if (!ctx.WorldMotion.IsZero)
+                {
+                    ShiftLast(ref st.Origin, ctx.WorldMotion);
+                    ShiftLast(ref st.Tip, ctx.WorldMotion);
+                }
                 double fps = c.Fps > 0f ? c.Fps : 60.0;
                 st.Remaining += Math.Max(ctx.Physics.Dt, 0f);
                 double steps = Math.Max(Math.Floor(st.Remaining * fps + 1e-6), 0.0);

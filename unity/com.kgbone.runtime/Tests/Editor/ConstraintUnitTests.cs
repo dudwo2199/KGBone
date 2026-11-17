@@ -579,6 +579,101 @@ namespace KGBone.Tests
             Assert.AreEqual(100f, after[2].Y, 1e-6f);
         }
 
+        // ---------- M16 월드 움직임 반영(계산부) ----------
+        const string StillPhys = @"{""formatVersion"":1,""skeleton"":{""bones"":[{""name"":""root""},{""name"":""tail"",""parent"":""root"",""length"":50}],
+            ""constraints"":[{""type"":""physics"",""name"":""p"",""bone"":""tail"",""x"":1,""y"":1,""rotate"":1,""strength"":100,""damping"":1}]}}";
+
+        static PoseRequest Adv(float dt, float wx = 0, float wy = 0, float wr = 0) =>
+            new PoseRequest { Physics = PhysicsStep.Advance(dt), WorldMotion = new WorldMotion { X = wx, Y = wy, Rotation = wr } };
+
+        [Test]
+        public void m16_zero_world_motion_matches_golden()
+        {
+            // WorldMotion을 명시적으로 0으로 넣어도 연속 정답과 같다
+            foreach (var path in GoldenFile.All())
+            {
+                var root = JsonValue.Parse(System.IO.File.ReadAllText(path));
+                if (root.Get("stateful")?.AsBool() != true) continue;
+                var m = KGBoneLoader.Load(System.IO.File.ReadAllText(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(path), root.Get("kgbone").AsString())));
+                var a = new SkeletonPoser(m);
+                var b = new SkeletonPoser(m);
+                for (int i = 0; i < 120; i++)
+                {
+                    var ra = new PoseRequest { Animation = m.Animations.Count > 0 ? m.Animations[0].Name : null, Time = i / 60f, Looping = true, Physics = PhysicsStep.Advance(1 / 60f) };
+                    var rb = new PoseRequest { Animation = ra.Animation, Time = ra.Time, Looping = true, Physics = ra.Physics, WorldMotion = new WorldMotion() };
+                    SameBones((WorldBone[])a.Compute(ra).Bones.Clone(), (WorldBone[])b.Compute(rb).Bones.Clone());
+                }
+            }
+        }
+
+        [Test]
+        public void m16_move_right_makes_tip_lag_left()
+        {
+            var p = new SkeletonPoser(KGBoneLoader.Load(StillPhys));
+            p.Compute(Adv(1 / 60f));
+            var o = p.Compute(Adv(1 / 60f, 10));
+            Assert.Less(o.Bones[1].X, -0.01f, "원점 질점이 왼쪽으로 뒤처진다");
+            for (int i = 0; i < 3; i++) o = p.Compute(Adv(1 / 60f));
+            Assert.Less(o.Bones[1].X, -0.01f);
+            // 아래로 처지는 쪽(꼬리가 왼쪽으로 남음 = 끝도 왼쪽): 오른쪽을 향한 꼬리는 크게 돌지 않지만 위치는 뒤처진다
+            Assert.AreEqual(0f, o.Bones[1].Y, 1e-4f);
+        }
+
+        [Test]
+        public void m16_half_factor_halves_first_offset()
+        {
+            var full = new SkeletonPoser(KGBoneLoader.Load(StillPhys));
+            var half = new SkeletonPoser(KGBoneLoader.Load(StillPhys));
+            full.Compute(Adv(1 / 60f));
+            half.Compute(Adv(1 / 60f));
+            float a = full.Compute(Adv(1 / 60f, 10)).Bones[1].X;
+            float b = half.Compute(Adv(1 / 60f, 5)).Bones[1].X;
+            Assert.AreEqual(0.5f, b / a, 1e-4f);
+        }
+
+        [Test]
+        public void m16_rotation_motion_moves_tip()
+        {
+            // 본 원점 = 뼈대 원점이라 원점 질점은 회전으로 움직이지 않고, 끝 질점만 뒤처져 본이 반대로 돈다
+            var p = new SkeletonPoser(KGBoneLoader.Load(StillPhys));
+            p.Compute(Adv(1 / 60f));
+            var o = p.Compute(Adv(1 / 60f, 0, 0, 10));
+            Assert.AreEqual(0f, o.Bones[1].X, 1e-5f);
+            Assert.AreEqual(0f, o.Bones[1].Y, 1e-5f);
+            Assert.Less(o.Bones[1].RotationX, -0.01f);
+        }
+
+        [Test]
+        public void m16_world_motion_waits_for_a_step()
+        {
+            // 진행 단계가 0인 프레임(dt 0)의 월드 움직임은 다음 단계로 미뤄진다: dt 0 + 이동 10, 그다음 1/60 = 한 번에 1/60 + 이동 10
+            var a = new SkeletonPoser(KGBoneLoader.Load(StillPhys));
+            var b = new SkeletonPoser(KGBoneLoader.Load(StillPhys));
+            a.Compute(Adv(1 / 60f)); b.Compute(Adv(1 / 60f));
+            a.Compute(Adv(0, 10));
+            float x1 = a.Compute(Adv(1 / 60f)).Bones[1].X;
+            float x2 = b.Compute(Adv(1 / 60f, 10)).Bones[1].X;
+            Assert.Less(x2, -0.01f);
+            Assert.AreEqual(x2, x1, 1e-5f);
+        }
+
+        [Test]
+        public void m16_reset_clears_pending_world_motion()
+        {
+            var p = new SkeletonPoser(KGBoneLoader.Load(StillPhys));
+            p.Compute(Adv(1 / 60f));
+            p.Compute(Adv(0, 50));
+            // 초기화하지 않으면 쌓인 움직임이 다음 단계에 나타난다
+            var control = new SkeletonPoser(KGBoneLoader.Load(StillPhys));
+            control.Compute(Adv(1 / 60f));
+            control.Compute(Adv(0, 50));
+            Assert.Less(control.Compute(Adv(1 / 60f)).Bones[1].X, -0.01f);
+            p.ResetPhysics();
+            var o = p.Compute(Adv(1 / 60f));
+            Assert.AreEqual(0f, o.Bones[1].X, 1e-6f);
+            Assert.AreEqual(0f, o.Bones[1].RotationX, 1e-6f);
+        }
+
         [Test]
         public void m14_loads_path_attachment()
         {

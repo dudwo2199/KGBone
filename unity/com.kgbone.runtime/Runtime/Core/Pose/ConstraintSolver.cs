@@ -19,6 +19,7 @@ namespace KGBone.Core
     {
         public string Skin;
         public PhysicsStep Physics;
+        public WorldMotion WorldMotion;
     }
 
     public interface IConstraintSolver

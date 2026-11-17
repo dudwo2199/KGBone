@@ -3,6 +3,16 @@ using System.Collections.Generic;
 
 namespace KGBone.Core
 {
+    /// <summary>
+    /// 이번 프레임에 뼈대 좌표계 자체가 움직인 양: (X, Y)만큼 옮기고 뼈대 원점을 중심으로 Rotation도 돌린 것.
+    /// 유니티 컴포넌트가 GameObject의 이동·회전 변화로 만든다(유니티 전용, 핵심에는 없음).
+    /// </summary>
+    public struct WorldMotion
+    {
+        public float X, Y, Rotation;
+        public bool IsZero => X == 0f && Y == 0f && Rotation == 0f;
+    }
+
     public sealed class PoseRequest
     {
         /// <summary>적용할 애니메이션(null이면 셋업 포즈).</summary>
@@ -16,6 +26,8 @@ namespace KGBone.Core
         public bool Looping;
         /// <summary>물리 진행 방법(기본: 진행하지 않음).</summary>
         public PhysicsStep Physics = PhysicsStep.None;
+        /// <summary>이번 프레임 바깥(GameObject) 움직임(뼈대 좌표, 반영 비율을 곱한 값). 물리 질점의 관성으로 들어간다. 기본 0.</summary>
+        public WorldMotion WorldMotion;
     }
 
     /// <summary>그릴 삼각형 묶음 하나(슬롯 하나의 이미지·메시).</summary>
