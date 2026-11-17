@@ -7,6 +7,7 @@
   "scripts": {
     "wasm": "node tools/build-wasm.mjs",
     "wasm:fetch": "node tools/fetch-wasm.mjs",
+    "pack:mcp": "node tools/pack-mcp.mjs",
     "dev": "npm run wasm && vite --config app/vite.config.ts",
     "build": "npm run wasm && tsc -p app/tsconfig.json --noEmit && vite build --config app/vite.config.ts",
     "test:rust": "cargo test -p kgbone-core --target wasm32-wasip1",

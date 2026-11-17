@@ -12,8 +12,8 @@ AI가 고친 것은 화면에 바로 보이고, 내가 손으로 고친 것과 �
 KGBone MCP 서버는 Node.js로 도는 작은 프로그램입니다(`tools/mcp/server.mjs`). 필요한 것:
 
 - Node.js 22 이상
-- KGBone 저장소 폴더 중 `tools/mcp/`, `interface/commands.json`, `app/public/kgbone.wasm` (폴더 구조 그대로)
-  - `kgbone.wasm`은 저장소에서 `npm run wasm`(Rust 필요) 또는 `npm run wasm:fetch`(배포된 것 받기)로 만듭니다.
+- KGBone MCP 서버 파일: [GitHub 릴리스](https://github.com/dudwo2199/KGBone/releases)에서 `kgbone-mcp-<버전>.zip`을 받아 원하는 곳에 풉니다(안의 폴더 구조는 그대로). 아래 예시의 `D:/KGBone`은 푼 폴더(`…/kgbone-mcp`)로 바꿉니다.
+  - 저장소를 받아 쓴다면 `tools/mcp/`, `interface/commands.json`, `app/public/kgbone.wasm`이 같은 역할입니다(`kgbone.wasm`은 `npm run wasm` 또는 `npm run wasm:fetch`).
 
 AI 프로그램마다 설정 파일에 아래처럼 적습니다. `D:/KGBone`은 KGBone 폴더, `D:/내작업`은 AI가 파일을 읽고 쓸 폴더로 바꿉니다.
 

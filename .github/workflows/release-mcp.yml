@@ -1,0 +1,59 @@
+# KGBone MCP 서버 배포 묶음(zip)을 GitHub 릴리스에 올린다.
+# 'mcp-v0.2.0' 같은 태그를 push하면 돈다(또는 Actions 탭에서 태그 이름을 넣어 직접 실행).
+# 묶음: tools/pack-mcp.mjs (서버 코드 + interface/commands.json + kgbone.wasm + README)
+name: MCP 서버 릴리스
+
+on:
+  push:
+    tags: ['mcp-v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '릴리스 태그(예: mcp-v0.2.0). 없으면 지금 커밋에 만든다'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+    steps:
+      - name: 저장소 받기
+        uses: actions/checkout@v4
+
+      - name: Node 준비
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Rust 준비
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
+
+      - name: 의존성 설치
+        run: npm ci --no-audit --no-fund
+
+      - name: 핵심(wasm) 빌드
+        run: npm run wasm
+
+      - name: MCP 서버 테스트
+        run: npm run test:mcp
+
+      - name: 묶음 만들기
+        run: node tools/pack-mcp.mjs "$TAG"
+
+      - name: 릴리스 올리기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist-mcp/*.zip --clobber
+          else
+            gh release create "$TAG" dist-mcp/*.zip --title "KGBone MCP 서버 ${TAG#mcp-v}" --notes-file dist-mcp/NOTES.md --target "$GITHUB_SHA"
+          fi

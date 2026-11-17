@@ -89,6 +89,8 @@ npm run build:exe   # Tauri 실행 파일(src-tauri/target/release/KGBone.exe) �
 ### 4-3. Claude에서 MCP 쓰는 법 (사용자용 요약)
 처음 한 번 등록하고, 쓸 때는 KGBone에서 [연결]을 누르고 말로 시키면 된다. Cursor·Codex·VS Code·Gemini CLI 설정은 사용 설명서 9장.
 
+**받기(다른 PC)**: 저장소 대신 GitHub 릴리스의 `kgbone-mcp-<버전>.zip`을 받아 풀면 된다(서버 코드 + commands.json + kgbone.wasm + README). 묶음은 `npm run pack:mcp`(→ `dist-mcp/`), 릴리스는 `mcp-v0.2.0` 같은 태그를 push하면 `.github/workflows/release-mcp.yml`이 올린다. 아래 경로의 `D:/workspace/KGSpine/KGBone`은 푼 폴더(`…/kgbone-mcp`)로 바꾼다.
+
 **등록**
 - **Claude Code, KGBone 저장소 폴더에서 열 때**: 할 일 없음. `.mcp.json`으로 자동 등록되고, 처음에 MCP 서버를 쓸지 물으면 허용한다.
 - **Claude Code, 다른 폴더에서도 쓸 때**: 한 번만 실행(`-s user` = 모든 폴더, `KGBONE_MCP_ROOTS` = 파일을 읽고 쓸 폴더, 여러 개면 `;`).
