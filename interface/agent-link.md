@@ -13,8 +13,8 @@
 | relay → 중계소 | `{type:"hello", role:"relay", name, roots}` (name: MCP initialize의 clientInfo.name, roots: 파일 허용 폴더) |
 | relay → 중계소 | `{type:"call", id, method, params}` |
 | 중계소 → relay | `{type:"page", connected}`, `{type:"result", id, result \| error}` |
-| page → 중계소 | `{type:"hello", role:"page", app:"kgbone"}` |
-| 중계소 → page | `{type:"clients", clients:[{id, name}]}`, `{type:"call", id, client, method, params}`, `{type:"replaced"}`(다른 창이 붙음) |
+| page → 중계소 | `{type:"hello", role:"page", app:"kgbone", takeover}` — takeover: 사용자가 [연결]을 누름. 붙은 창이 있을 때 takeover면 앞 창에 `replaced`를 보내고 가져가고, 아니면(자동 연결·다시 붙기) 새 창에 `busy`를 보내고 끊는다(새 창은 기다렸다가 다시 시도) |
+| 중계소 → page | `{type:"clients", clients:[{id, name}]}`, `{type:"call", id, client, method, params}`, `{type:"replaced"}`(다른 창이 가져감), `{type:"busy"}`(다른 창이 붙어 있음) |
 | page → 중계소 | `{type:"result", id, result \| error}` |
 | page → 중계소 | `{type:"fs", id, op, ...}` → `{type:"fs-result", id, result \| error}`; 폴더가 바뀌면 `{type:"fs-changed", dir}` |
 

@@ -32,11 +32,12 @@ const until = async (cond, ms = 5000) => {
 };
 
 /** 가짜 KGBone 창: handler(method, params, client)로 답한다 */
-async function fakePage(port, handler) {
+async function fakePage(port, handler, { takeover = false } = {}) {
   const ws = new WebSocket(`ws://127.0.0.1:${port}/`);
-  const page = { ws, clients: [], calls: [], fs: new Map(), nextFs: 1 };
+  const page = { ws, clients: [], calls: [], fs: new Map(), nextFs: 1, events: [] };
   ws.addEventListener("message", async (ev) => {
     const m = JSON.parse(String(ev.data));
+    if (m.type === "busy" || m.type === "replaced") page.events.push(m.type);
     if (m.type === "clients") page.clients = m.clients.map((c) => c.name);
     if (m.type === "fs-result") page.fs.get(m.id)?.(m);
     if (m.type !== "call") return;
@@ -48,7 +49,7 @@ async function fakePage(port, handler) {
     }
   });
   await new Promise((r) => ws.addEventListener("open", r));
-  ws.send(JSON.stringify({ type: "hello", role: "page" }));
+  ws.send(JSON.stringify({ type: "hello", role: "page", takeover }));
   page.fsCall = (op, args) =>
     new Promise((resolve) => {
       const id = page.nextFs++;
@@ -115,6 +116,24 @@ test("mcp_link_hub_routes_calls_from_several_clients_and_refuses_other_sites", a
     req.end();
   });
   assert.equal(status, 403);
+});
+
+test("mcp_link_auto_connect_waits_and_explicit_connect_takes_over", async () => {
+  const port = await freePort();
+  const a = new Link({ name: "A", port, origins: [] });
+  cleanups.push(() => a.close());
+  await a.start();
+  const first = await fakePage(port, () => "첫 창");
+  await until(() => a.pageConnected);
+  // 자동 연결(takeover 없음)은 붙어 있는 창을 밀어내지 않는다
+  const auto = await fakePage(port, () => "자동 창");
+  await until(() => auto.events.includes("busy"));
+  assert.equal(await a.call("x"), "첫 창");
+  // 사용자가 [연결]을 누른 창은 가져간다
+  const explicit = await fakePage(port, () => "누른 창", { takeover: true });
+  await until(() => first.events.includes("replaced"));
+  await until(() => explicit.clients.length === 1);
+  assert.equal(await a.call("x"), "누른 창");
 });
 
 test("mcp_link_client_takes_over_when_hub_closes", async () => {

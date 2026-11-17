@@ -10,6 +10,7 @@ const STATUS_TEXT: Record<AgentLinkState['status'], string> = {
   connecting: '연결하는 중…',
   connected: '연결됨',
   waiting: 'AI 프로그램을 기다리는 중(MCP 서버가 켜지면 저절로 붙습니다)',
+  busy: '다른 KGBone 창이 연결돼 있어 기다리는 중(그 창이 끊기면 이어받습니다. 이 창으로 가져오려면 [연결 끊기] 뒤 [연결])',
 };
 
 function ago(at: number): string {

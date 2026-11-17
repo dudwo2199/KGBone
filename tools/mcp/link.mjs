@@ -6,9 +6,10 @@
 // 메시지(한 프레임에 JSON 하나):
 //   relay→hub  {type:"hello", role:"relay", name, roots}   {type:"call", id, method, params}
 //   hub→relay  {type:"page", connected}   {type:"result", id, result | error}
-//   page→hub   {type:"hello", role:"page"}   {type:"result", id, result | error}   {type:"fs", id, op, ...}
+//   page→hub   {type:"hello", role:"page", takeover}   (takeover: 사용자가 [연결]을 누름 → 붙은 창이 있어도 가져감)   {type:"result", id, result | error}   {type:"fs", id, op, ...}
 //   hub→page   {type:"clients", clients:[{id,name}]}   {type:"call", id, client, method, params}
 //              {type:"fs-result", id, result | error}   {type:"fs-changed", dir}   {type:"replaced"}
+//              {type:"busy"}(다른 창이 붙어 있어 이번 자동 연결은 거절)
 import { existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { dirname, join } from "node:path";
@@ -293,6 +294,12 @@ export class Link {
         return;
       }
       if (m.type === "hello" && m.role === "page") {
+        // 이미 붙은 창이 있으면: 사용자가 [연결]을 누른 창(takeover)만 가져가고, 자동 연결·재시도는 기다리게 한다
+        if (this.#page && this.#page !== conn && !m.takeover) {
+          conn.send(JSON.stringify({ type: "busy" }));
+          conn.close();
+          return;
+        }
         if (this.#page && this.#page !== conn) {
           this.#page.send(JSON.stringify({ type: "replaced" }));
           this.#page.close();

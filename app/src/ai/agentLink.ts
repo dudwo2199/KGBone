@@ -5,7 +5,8 @@ import { Store } from '../state/store';
 
 export const DEFAULT_AGENT_PORT = 47821;
 
-export type AgentLinkStatus = 'off' | 'connecting' | 'connected' | 'waiting';
+/** busy: 다른 창이 연결돼 있어 기다림(그 창이 끊기면 이어받는다) */
+export type AgentLinkStatus = 'off' | 'connecting' | 'connected' | 'waiting' | 'busy';
 
 export interface AgentActivity {
   client: string;
@@ -72,6 +73,9 @@ const QUIET = new Set(['project', 'state', 'history.begin', 'history.end', 'doc.
 export class AgentLink extends Store<AgentLinkState> {
   private ws: SocketLike | null = null;
   private want = false;
+  /** 다음 인사에서 붙어 있는 다른 창의 연결을 가져올지(사용자가 [연결]을 눌렀을 때만) */
+  private takeover = false;
+  private busy = false;
   private retry: ReturnType<typeof setTimeout> | null = null;
   private handler: AgentHandler | null = null;
   private queue: Promise<void> = Promise.resolve();
@@ -98,14 +102,21 @@ export class AgentLink extends Store<AgentLinkState> {
 
   /** 창을 열 때: 자동 연결이 켜져 있으면 잇는다 */
   autoStart(): void {
-    if (this.get().auto) this.connect();
+    if (this.get().auto) this.start(undefined, false);
   }
 
+  /** 사용자가 [연결]을 누름: 다른 창이 연결돼 있으면 그 연결을 가져온다 */
   connect(port?: number): void {
+    this.start(port, true);
+  }
+
+  private start(port: number | undefined, takeover: boolean): void {
     const p = validPort(port) ?? this.get().port;
     this.set({ port: p, error: null });
     this.save();
     this.want = true;
+    this.takeover = takeover;
+    this.busy = false;
     this.closeSocket();
     this.open();
   }
@@ -190,7 +201,8 @@ export class AgentLink extends Store<AgentLinkState> {
   }
 
   private open(): void {
-    this.set({ status: this.get().status === 'waiting' ? 'waiting' : 'connecting' });
+    const cur = this.get().status;
+    this.set({ status: cur === 'waiting' || cur === 'busy' ? cur : 'connecting' });
     let ws: SocketLike;
     try {
       ws = this.makeSocket(`ws://127.0.0.1:${this.get().port}/`);
@@ -201,7 +213,10 @@ export class AgentLink extends Store<AgentLinkState> {
     }
     this.ws = ws;
     ws.onopen = () => {
-      ws.send(JSON.stringify({ type: 'hello', role: 'page', app: 'kgbone' }));
+      ws.send(JSON.stringify({ type: 'hello', role: 'page', app: 'kgbone', takeover: this.takeover }));
+      // 가져오기는 한 번만: 끊겼다 다시 붙을 때는 다른 창을 밀어내지 않는다
+      this.takeover = false;
+      this.busy = false;
       this.set({ status: 'connected', error: null });
       // 다시 붙었으면 지켜보던 폴더를 다시 건다
       for (const dir of this.watchers.keys()) void this.fs('watch', { dir }).catch(() => undefined);
@@ -213,8 +228,8 @@ export class AgentLink extends Store<AgentLinkState> {
       this.ws = null;
       this.failFs('AI 연결이 끊겼습니다');
       if (!this.want) return this.set({ status: 'off', clients: [] });
-      // AI 프로그램(MCP 서버)이 아직 없거나 꺼졌다: 기다렸다가 다시 붙는다
-      this.set({ status: 'waiting', clients: [] });
+      // AI 프로그램(MCP 서버)이 아직 없거나 꺼졌다(또는 다른 창이 연결돼 있다): 기다렸다가 다시 붙는다
+      this.set({ status: this.busy ? 'busy' : 'waiting', clients: [] });
       this.retry = setTimeout(() => {
         this.retry = null;
         if (this.want) this.open();
@@ -232,6 +247,10 @@ export class AgentLink extends Store<AgentLinkState> {
     switch (m.type) {
       case 'clients':
         this.set({ clients: ((m.clients as { name: string }[]) ?? []).map((c) => c.name) });
+        return;
+      case 'busy':
+        this.busy = true;
+        this.set({ status: 'busy', clients: [] });
         return;
       case 'replaced':
         this.want = false;

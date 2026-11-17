@@ -55,7 +55,7 @@ describe('AI 연결', () => {
     expect(sockets[0].url).toBe('ws://127.0.0.1:50000/');
     expect(link.get().status).toBe('connecting');
     sockets[0].open();
-    expect(sockets[0].sent[0]).toEqual({ type: 'hello', role: 'page', app: 'kgbone' });
+    expect(sockets[0].sent[0]).toEqual({ type: 'hello', role: 'page', app: 'kgbone', takeover: true });
     expect(link.get().status).toBe('connected');
     sockets[0].receive({ type: 'clients', clients: [{ id: '0', name: 'Claude Code' }, { id: '1', name: 'Cursor' }] });
     expect(link.get().clients).toEqual(['Claude Code', 'Cursor']);
@@ -98,6 +98,37 @@ describe('AI 연결', () => {
       expect(link.get().status).toBe('off');
       vi.advanceTimersByTime(10000);
       expect(sockets.length).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('f_n01_auto_connect_does_not_take_over_and_waits_when_busy', () => {
+    vi.useFakeTimers();
+    try {
+      const { link, sockets, store } = setup();
+      link.setAuto(true);
+      const auto = new AgentLink(
+        (url) => {
+          const s = new FakeSocket(url);
+          sockets.push(s);
+          return s;
+        },
+        { getItem: (k) => store.get(k) ?? null, setItem: () => undefined },
+      );
+      auto.autoStart();
+      const s0 = sockets.at(-1)!;
+      s0.open();
+      expect(s0.sent[0]).toMatchObject({ type: 'hello', takeover: false });
+      s0.receive({ type: 'busy' });
+      s0.drop();
+      expect(auto.get().status).toBe('busy');
+      vi.advanceTimersByTime(3100);
+      const s1 = sockets.at(-1)!;
+      expect(s1).not.toBe(s0);
+      s1.open();
+      expect(s1.sent[0]).toMatchObject({ takeover: false });
+      expect(auto.get().status).toBe('connected');
     } finally {
       vi.useRealTimers();
     }
