@@ -81,15 +81,22 @@ namespace KGBone.Core
             p.LastY = curY;
         }
 
-        /// <summary>점 p의 지난 위치에서 바깥 움직임이 만든 이동(평행 이동 + 원점 기준 회전)을 뺀다.</summary>
+        /// <summary>바깥 움직임(평행 이동 + 뼈대 원점 기준 회전)만큼 점 p의 상태를 이번 프레임 좌표계로 옮긴다.</summary>
         static void ShiftLast(ref PhysicsState.Point p, in WorldMotion w)
         {
-            float r = w.Rotation * WorldMath.DegToRad;
+            // 지난 좌표계의 점 = R·(이번 좌표계의 점) + T 이므로, 지난 위치를 이번 좌표계로 옮기면 R⁻¹(Last − T).
+            // 벗어난 양·속도(월드에 고정된 방향)도 같은 회전으로 이번 좌표계에 맞춘다.
+            float r = -w.Rotation * WorldMath.DegToRad;
             float cs = MathF.Cos(r), sn = MathF.Sin(r);
-            float dx = w.X + (cs * p.LastX - sn * p.LastY) - p.LastX;
-            float dy = w.Y + (sn * p.LastX + cs * p.LastY) - p.LastY;
-            p.LastX -= dx;
-            p.LastY -= dy;
+            float lx = p.LastX - w.X, ly = p.LastY - w.Y;
+            p.LastX = cs * lx - sn * ly;
+            p.LastY = sn * lx + cs * ly;
+            if (w.Rotation == 0f) return;
+            float ox = p.OffX, oy = p.OffY, vx = p.VelX, vy = p.VelY;
+            p.OffX = cs * ox - sn * oy;
+            p.OffY = sn * ox + cs * oy;
+            p.VelX = cs * vx - sn * vy;
+            p.VelY = sn * vx + cs * vy;
         }
 
         public void Apply(SkeletonModel m, int index, PoseState pose, SolveContext ctx)

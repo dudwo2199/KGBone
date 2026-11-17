@@ -644,6 +644,18 @@ namespace KGBone.Tests
         }
 
         [Test]
+        public void m16_quarter_turn_lags_tip_fully_behind()
+        {
+            // 한 프레임에 90° 돌면 지난 프레임의 끝(월드에 남은 점)은 새 좌표계에서 (0, −50)에 있다:
+            // 끝 질점이 그만큼 뒤처져 꼬리가 거의 −90° 쪽을 향해야 한다(1차 근사로 계산하면 약 −27°로 틀린 방향)
+            var p = new SkeletonPoser(KGBoneLoader.Load(StillPhys));
+            p.Compute(Adv(1 / 60f));
+            var o = p.Compute(Adv(1 / 60f, 0, 0, 90));
+            Assert.Less(o.Bones[1].RotationX, -80f);
+            Assert.Greater(o.Bones[1].RotationX, -95f);
+        }
+
+        [Test]
         public void m16_world_motion_waits_for_a_step()
         {
             // 진행 단계가 0인 프레임(dt 0)의 월드 움직임은 다음 단계로 미뤄진다: dt 0 + 이동 10, 그다음 1/60 = 한 번에 1/60 + 이동 10
