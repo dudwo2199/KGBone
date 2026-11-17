@@ -54,6 +54,21 @@ namespace KGBone.Core
             if (mix.Discrete) ApplyDrawOrder(m, a, time, pose);
             ConstraintKeys.Apply(m, a, time, pose, mix, skipConstraint);
             ApplyDeform(m, a, time, skin, pose, mix);
+            if (mix.Discrete) ApplySequences(m, a, time, skin, pose);
+        }
+
+        /// <summary>시퀀스 키: 기본 스킨과 skin 것만(deform과 같은 범위). 핵심 attachment_keys.rs.</summary>
+        static void ApplySequences(SkeletonModel m, AnimationData a, float t, string skin, PoseState pose)
+        {
+            foreach (var tl in a.Sequences)
+            {
+                if (tl.Skin != SkinData.DefaultName && tl.Skin != skin) continue;
+                var s = m.FindSkin(tl.Skin);
+                if (s == null) continue;
+                int count = s.Get(tl.Slot, tl.Attachment)?.Sequence?.Count ?? 1;
+                int? frame = SequenceKeys.Frame(tl.Keys, t, count);
+                if (frame.HasValue) pose.SequenceFrames[(tl.Slot, tl.Attachment)] = frame.Value;
+            }
         }
 
         static void ApplyBones(SkeletonModel m, AnimationData a, float t, PoseState pose, Mix mix)

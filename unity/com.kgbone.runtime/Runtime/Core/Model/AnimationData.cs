@@ -23,6 +23,13 @@ namespace KGBone.Core
         public Key[] Keys;
     }
 
+    /// <summary>시퀀스 타임라인(키 s = 모드, v = [시작 프레임, 간격]).</summary>
+    public sealed class SequenceTimeline
+    {
+        public string Skin, Slot, Attachment;
+        public Key[] Keys;
+    }
+
     /// <summary>제약 타임라인(FORMAT.md 3.7 표: 채널 이름 mix, softness, position, reset …).</summary>
     public sealed class ConstraintTimeline
     {
@@ -55,6 +62,7 @@ namespace KGBone.Core
         public List<BoneTimeline> Bones = new List<BoneTimeline>();
         public List<SlotTimeline> Slots = new List<SlotTimeline>();
         public List<DeformTimeline> Deform = new List<DeformTimeline>();
+        public List<SequenceTimeline> Sequences = new List<SequenceTimeline>();
         public List<ConstraintTimeline> Constraints = new List<ConstraintTimeline>();
         public List<DrawOrderKey> DrawOrder = new List<DrawOrderKey>();
         public List<EventKey> Events = new List<EventKey>();

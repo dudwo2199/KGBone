@@ -2,7 +2,7 @@
 // - region: 슬롯 본 기준 (x, y, rotation, scaleX, scaleY)로 놓인 width × height 사각형. 모서리 순서 왼아래, 오른아래, 오른위, 왼위,
 //   uv (0,1)(1,1)(1,0)(0,0), 삼각형 [0,1,2, 2,3,0].
 // - mesh: 가중치/비가중치 정점 + deform. linkedmesh: 부모 메시의 uv·삼각형·정점(Timelines면 부모의 deform).
-// - 비활성 본에 붙은 슬롯, 찾지 못한 첨부물, 그림이 없는 종류는 그리지 않는다. 클리핑은 1단계에서 자르지 않는다.
+// - 비활성 본에 붙은 슬롯, 찾지 못한 첨부물, 그림이 없는 종류는 그리지 않는다. 클리핑은 아직 자르지 않는다. 시퀀스는 키로 정한 프레임(없으면 셋업 프레임) 이미지.
 using System;
 using System.Collections.Generic;
 
@@ -51,7 +51,7 @@ namespace KGBone.Core
 
                 if (att is RegionAttachment r)
                 {
-                    item.Image = att.ImagePath(name);
+                    item.Image = att.ImagePath(name, Frame(pose, slot.Name, name));
                     item.Color = slotColor * r.Color;
                     RegionCorners(r, bone, item.Positions);
                     item.Uvs.AddRange(RegionUvs);
@@ -61,7 +61,7 @@ namespace KGBone.Core
                 {
                     var mesh = MeshVertices.ResolveMesh(m, slot.Name, name, att, out string deformName);
                     if (mesh == null) { used--; continue; }
-                    item.Image = att.ImagePath(name);
+                    item.Image = att.ImagePath(name, Frame(pose, slot.Name, name));
                     item.Color = slotColor * (att is LinkedMeshAttachment l ? l.Color : mesh.Color);
                     pose.Deform.TryGetValue((slot.Name, deformName), out float[] deform);
                     MeshVertices.WorldPositions(mesh.Weighted, mesh.Vertices, bone, pose.World, deform, item.Positions);
@@ -72,6 +72,9 @@ namespace KGBone.Core
                 output.Add(item);
             }
         }
+
+        static int? Frame(PoseState pose, string slot, string name) =>
+            pose.SequenceFrames.TryGetValue((slot, name), out int f) ? f : (int?)null;
 
         DrawItem Take(ref int used)
         {

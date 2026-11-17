@@ -650,4 +650,49 @@ const unityStage2Physics = {
   ],
 };
 write("kgbone/unity-stage2-physics.kgbone", k(unityStage2Physics));
+// 유니티 런타임 3단계 시험 파일: 시퀀스(모드 7종, 간격 0, 자리수 0·2, 키 없는 셋업 프레임, 메시 시퀀스)
+const seqColors = [[230, 80, 60], [240, 170, 40], [90, 200, 90], [70, 140, 230]];
+seqColors.forEach((c, i) => write(`images/seq/불꽃${i + 1}.png`, circle(24, c)));
+[0, 1, 2].forEach((i) => write(`images/seq/별${String(i).padStart(2, "0")}.png`, rect(20, 20, seqColors[i])));
+const seqModes = ["hold", "once", "loop", "pingpong", "onceReverse", "loopReverse", "pingpongReverse"];
+const flame = (x, setup = 0) => ({ 불꽃: { path: "seq/불꽃", x, width: 24, height: 24, sequence: { count: 4, start: 1, digits: 0, setup } } });
+const seqSlots = [...seqModes.map((m) => `s-${m}`), "s-간격0", "s-자리수", "s-키없음", "s-메시"];
+const unityStage3Sequence = {
+  fps: 30,
+  bones: [{ name: "root" }],
+  slots: seqSlots.map((name) => ({ name, bone: "root", attachment: name === "s-자리수" ? "별" : "불꽃" })),
+  skins: [
+    {
+      name: "default",
+      attachments: {
+        ...Object.fromEntries(seqModes.map((m, i) => [`s-${m}`, flame(i * 30)])),
+        "s-간격0": flame(210),
+        "s-자리수": { 별: { path: "seq/별", x: 240, width: 20, height: 20, sequence: { count: 3, start: 0, digits: 2, setup: 1 } } },
+        "s-키없음": flame(270, 2),
+        "s-메시": {
+          불꽃: {
+            type: "mesh", path: "seq/불꽃", width: 24, height: 24, uvs: [0, 1, 1, 1, 1, 0, 0, 0], triangles: [0, 1, 2, 0, 2, 3],
+            vertices: [288, -12, 312, -12, 312, 12, 288, 12], hull: 4, sequence: { count: 4, start: 1, digits: 0, setup: 0 },
+          },
+        },
+      },
+    },
+  ],
+  animations: [
+    {
+      name: "넘기기",
+      bones: { root: { rotate: lin([[0, 0], [1, 0]]) } },
+      sequence: {
+        default: {
+          ...Object.fromEntries(seqModes.map((m) => [`s-${m}`, { 불꽃: [{ time: 0, s: m, v: [0, 0.1] }, ...(m === "loop" ? [{ time: 0.6, s: m, v: [1, 0.15] }] : [])] }])),
+          "s-간격0": { 불꽃: [{ time: 0, s: "loop", v: [2, 0] }] },
+          "s-자리수": { 별: [{ time: 0.1, s: "once", v: [0, 0.2] }] },
+          "s-메시": { 불꽃: [{ time: 0, s: "pingpong", v: [1, 0.1] }] },
+        },
+      },
+    },
+  ],
+};
+write("kgbone/unity-stage3-sequence.kgbone", k(unityStage3Sequence));
+
 console.log("samples 생성 완료:", root);

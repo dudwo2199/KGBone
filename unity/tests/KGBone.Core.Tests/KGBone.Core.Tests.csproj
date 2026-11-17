@@ -12,7 +12,7 @@
   <ItemGroup>
     <Compile Include="*.cs" />
     <Compile Include="../../com.kgbone.runtime/Runtime/Core/**/*.cs" LinkBase="Core" />
-    <Compile Include="../../com.kgbone.runtime/Tests/Editor/Golden*.cs;../../com.kgbone.runtime/Tests/Editor/CoreUnitTests*.cs;../../com.kgbone.runtime/Tests/Editor/ConstraintUnitTests*.cs" LinkBase="Shared" />
+    <Compile Include="../../com.kgbone.runtime/Tests/Editor/Golden*.cs;../../com.kgbone.runtime/Tests/Editor/CoreUnitTests*.cs;../../com.kgbone.runtime/Tests/Editor/ConstraintUnitTests*.cs;../../com.kgbone.runtime/Tests/Editor/Stage3UnitTests*.cs" LinkBase="Shared" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />

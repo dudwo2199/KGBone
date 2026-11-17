@@ -15,13 +15,16 @@ namespace KGBone.Core
         public SequenceData Sequence;
 
         /// <summary>그릴 이미지 경로(확장자 없음). 시퀀스면 셋업 프레임 번호를 붙인다. 그림이 없는 종류는 null.</summary>
-        public virtual string ImagePath(string key)
+        public string ImagePath(string key) => ImagePath(key, null);
+
+        /// <summary>시퀀스 프레임 frame(없으면 셋업 프레임)의 이미지 경로. 그림이 없는 종류는 null.</summary>
+        public virtual string ImagePath(string key, int? frame)
         {
             string basePath = Path ?? key;
             if (Sequence == null) return basePath;
-            int frame = System.Math.Max(Sequence.Setup, 0) + Sequence.Start;
+            int number = System.Math.Max(frame ?? Sequence.Setup, 0) + Sequence.Start;
             // 핵심 pose/draw.rs의 sequence_path: 번호를 digits 자리로 0 채움(digits 0이면 채우지 않음)
-            return basePath + frame.ToString(CultureInfo.InvariantCulture).PadLeft(Sequence.Digits, '0');
+            return basePath + number.ToString(CultureInfo.InvariantCulture).PadLeft(Sequence.Digits, '0');
         }
     }
 
@@ -58,13 +61,13 @@ namespace KGBone.Core
         public float[] Vertices = new float[0];
         /// <summary>곡선 구간별 누적 길이.</summary>
         public float[] Lengths = new float[0];
-        public override string ImagePath(string key) => null;
+        public override string ImagePath(string key, int? frame) => null;
     }
 
     /// <summary>그리지 않는 종류(boundingbox, point, clipping).</summary>
     public sealed class OtherAttachment : AttachmentData
     {
         public string Type;
-        public override string ImagePath(string key) => null;
+        public override string ImagePath(string key, int? frame) => null;
     }
 }

@@ -102,5 +102,58 @@ namespace KGBone.Tests
             // 2단계: 제약 5종을 모두 계산하므로 제약 경고는 없다(클리핑 등 다른 경고는 그대로)
             foreach (var w in data.Warnings) StringAssert.DoesNotContain("제약", w);
         }
+
+        /// <summary>정답 폴더의 3단계 시험 파일을 하위 폴더 이미지까지 함께 임시 폴더에 놓고 가져온다.</summary>
+        public static KGBoneSkeletonData ImportGolden(string name, System.Action<string> beforeImport = null)
+        {
+            string src = Path.Combine(Repo, "samples", "images");
+            foreach (var png in Directory.GetFiles(src, "*.png", SearchOption.AllDirectories))
+            {
+                string dest = Path.Combine(Tmp, "images", png.Substring(src.Length + 1));
+                Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                File.Copy(png, dest, true);
+            }
+            Directory.CreateDirectory(Path.Combine(Tmp, "kg"));
+            File.Copy(Path.Combine(GoldenFile.GoldenDir(), name + ".kgbone"), Path.Combine(Tmp, "kg", name + ".kgbone"), true);
+            beforeImport?.Invoke(Path.Combine(Tmp, "images"));
+            return Import(Tmp + "/kg/" + name + ".kgbone");
+        }
+
+        // ---------- M17 시퀀스 ----------
+        [Test]
+        public void m17_import_packs_all_sequence_frames()
+        {
+            var data = ImportGolden("unity-stage3-sequence");
+            Assert.IsNotNull(data);
+            CollectionAssert.IsEmpty(data.Warnings);
+            for (int i = 1; i <= 4; i++) Assert.IsTrue(data.TryGetImage("seq/불꽃" + i, out _, out _), "프레임 없음: " + i);
+            for (int i = 0; i <= 2; i++) Assert.IsTrue(data.TryGetImage("seq/별0" + i, out _, out _), "프레임 없음: 별0" + i);
+        }
+
+        [Test]
+        public void m17_missing_frame_image_skipped()
+        {
+            var data = ImportGolden("unity-stage3-sequence", dir => File.Delete(Path.Combine(dir, "seq", "불꽃3.png")));
+            Assert.IsNotNull(data);
+            Assert.IsTrue(System.Linq.Enumerable.Any(data.Warnings, w => w.Contains("이미지를 찾을 수 없습니다: seq/불꽃3")));
+            var go = new GameObject("KGBone 시퀀스");
+            try
+            {
+                var a = go.AddComponent<KGBoneAnimation>();
+                a.playOnAwake = false;
+                a.skeletonData = data;
+                a.Play("넘기기", false);
+                a.Advance(0.25f); // 여러 슬롯이 프레임 2(불꽃3)
+                int missing = 0, expected = 0;
+                foreach (var item in a.LastPose.Draw)
+                {
+                    if (data.TryGetImage(item.Image, out _, out _)) expected += item.Positions.Count / 2;
+                    else missing++;
+                }
+                Assert.Greater(missing, 0);
+                Assert.AreEqual(expected, go.GetComponent<MeshFilter>().sharedMesh.vertexCount);
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
     }
 }

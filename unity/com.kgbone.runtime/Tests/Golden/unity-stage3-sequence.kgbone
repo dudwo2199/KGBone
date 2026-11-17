@@ -1,0 +1,416 @@
+{
+	"formatVersion": 1,
+	"generator": "KGBone sample",
+	"imagesPath": "../images",
+	"skeleton": {
+		"fps": 30,
+		"bones": [
+			{
+				"name": "root"
+			}
+		],
+		"slots": [
+			{
+				"name": "s-hold",
+				"bone": "root",
+				"attachment": "불꽃"
+			},
+			{
+				"name": "s-once",
+				"bone": "root",
+				"attachment": "불꽃"
+			},
+			{
+				"name": "s-loop",
+				"bone": "root",
+				"attachment": "불꽃"
+			},
+			{
+				"name": "s-pingpong",
+				"bone": "root",
+				"attachment": "불꽃"
+			},
+			{
+				"name": "s-onceReverse",
+				"bone": "root",
+				"attachment": "불꽃"
+			},
+			{
+				"name": "s-loopReverse",
+				"bone": "root",
+				"attachment": "불꽃"
+			},
+			{
+				"name": "s-pingpongReverse",
+				"bone": "root",
+				"attachment": "불꽃"
+			},
+			{
+				"name": "s-간격0",
+				"bone": "root",
+				"attachment": "불꽃"
+			},
+			{
+				"name": "s-자리수",
+				"bone": "root",
+				"attachment": "별"
+			},
+			{
+				"name": "s-키없음",
+				"bone": "root",
+				"attachment": "불꽃"
+			},
+			{
+				"name": "s-메시",
+				"bone": "root",
+				"attachment": "불꽃"
+			}
+		],
+		"skins": [
+			{
+				"name": "default",
+				"attachments": {
+					"s-hold": {
+						"불꽃": {
+							"path": "seq/불꽃",
+							"x": 0,
+							"width": 24,
+							"height": 24,
+							"sequence": {
+								"count": 4,
+								"start": 1,
+								"digits": 0,
+								"setup": 0
+							}
+						}
+					},
+					"s-once": {
+						"불꽃": {
+							"path": "seq/불꽃",
+							"x": 30,
+							"width": 24,
+							"height": 24,
+							"sequence": {
+								"count": 4,
+								"start": 1,
+								"digits": 0,
+								"setup": 0
+							}
+						}
+					},
+					"s-loop": {
+						"불꽃": {
+							"path": "seq/불꽃",
+							"x": 60,
+							"width": 24,
+							"height": 24,
+							"sequence": {
+								"count": 4,
+								"start": 1,
+								"digits": 0,
+								"setup": 0
+							}
+						}
+					},
+					"s-pingpong": {
+						"불꽃": {
+							"path": "seq/불꽃",
+							"x": 90,
+							"width": 24,
+							"height": 24,
+							"sequence": {
+								"count": 4,
+								"start": 1,
+								"digits": 0,
+								"setup": 0
+							}
+						}
+					},
+					"s-onceReverse": {
+						"불꽃": {
+							"path": "seq/불꽃",
+							"x": 120,
+							"width": 24,
+							"height": 24,
+							"sequence": {
+								"count": 4,
+								"start": 1,
+								"digits": 0,
+								"setup": 0
+							}
+						}
+					},
+					"s-loopReverse": {
+						"불꽃": {
+							"path": "seq/불꽃",
+							"x": 150,
+							"width": 24,
+							"height": 24,
+							"sequence": {
+								"count": 4,
+								"start": 1,
+								"digits": 0,
+								"setup": 0
+							}
+						}
+					},
+					"s-pingpongReverse": {
+						"불꽃": {
+							"path": "seq/불꽃",
+							"x": 180,
+							"width": 24,
+							"height": 24,
+							"sequence": {
+								"count": 4,
+								"start": 1,
+								"digits": 0,
+								"setup": 0
+							}
+						}
+					},
+					"s-간격0": {
+						"불꽃": {
+							"path": "seq/불꽃",
+							"x": 210,
+							"width": 24,
+							"height": 24,
+							"sequence": {
+								"count": 4,
+								"start": 1,
+								"digits": 0,
+								"setup": 0
+							}
+						}
+					},
+					"s-자리수": {
+						"별": {
+							"path": "seq/별",
+							"x": 240,
+							"width": 20,
+							"height": 20,
+							"sequence": {
+								"count": 3,
+								"start": 0,
+								"digits": 2,
+								"setup": 1
+							}
+						}
+					},
+					"s-키없음": {
+						"불꽃": {
+							"path": "seq/불꽃",
+							"x": 270,
+							"width": 24,
+							"height": 24,
+							"sequence": {
+								"count": 4,
+								"start": 1,
+								"digits": 0,
+								"setup": 2
+							}
+						}
+					},
+					"s-메시": {
+						"불꽃": {
+							"type": "mesh",
+							"path": "seq/불꽃",
+							"width": 24,
+							"height": 24,
+							"uvs": [
+								0,
+								1,
+								1,
+								1,
+								1,
+								0,
+								0,
+								0
+							],
+							"triangles": [
+								0,
+								1,
+								2,
+								0,
+								2,
+								3
+							],
+							"vertices": [
+								288,
+								-12,
+								312,
+								-12,
+								312,
+								12,
+								288,
+								12
+							],
+							"hull": 4,
+							"sequence": {
+								"count": 4,
+								"start": 1,
+								"digits": 0,
+								"setup": 0
+							}
+						}
+					}
+				}
+			}
+		],
+		"animations": [
+			{
+				"name": "넘기기",
+				"bones": {
+					"root": {
+						"rotate": [
+							{
+								"time": 0,
+								"v": [
+									0
+								]
+							},
+							{
+								"time": 1,
+								"v": [
+									0
+								]
+							}
+						]
+					}
+				},
+				"sequence": {
+					"default": {
+						"s-hold": {
+							"불꽃": [
+								{
+									"time": 0,
+									"s": "hold",
+									"v": [
+										0,
+										0.1
+									]
+								}
+							]
+						},
+						"s-once": {
+							"불꽃": [
+								{
+									"time": 0,
+									"s": "once",
+									"v": [
+										0,
+										0.1
+									]
+								}
+							]
+						},
+						"s-loop": {
+							"불꽃": [
+								{
+									"time": 0,
+									"s": "loop",
+									"v": [
+										0,
+										0.1
+									]
+								},
+								{
+									"time": 0.6,
+									"s": "loop",
+									"v": [
+										1,
+										0.15
+									]
+								}
+							]
+						},
+						"s-pingpong": {
+							"불꽃": [
+								{
+									"time": 0,
+									"s": "pingpong",
+									"v": [
+										0,
+										0.1
+									]
+								}
+							]
+						},
+						"s-onceReverse": {
+							"불꽃": [
+								{
+									"time": 0,
+									"s": "onceReverse",
+									"v": [
+										0,
+										0.1
+									]
+								}
+							]
+						},
+						"s-loopReverse": {
+							"불꽃": [
+								{
+									"time": 0,
+									"s": "loopReverse",
+									"v": [
+										0,
+										0.1
+									]
+								}
+							]
+						},
+						"s-pingpongReverse": {
+							"불꽃": [
+								{
+									"time": 0,
+									"s": "pingpongReverse",
+									"v": [
+										0,
+										0.1
+									]
+								}
+							]
+						},
+						"s-간격0": {
+							"불꽃": [
+								{
+									"time": 0,
+									"s": "loop",
+									"v": [
+										2,
+										0
+									]
+								}
+							]
+						},
+						"s-자리수": {
+							"별": [
+								{
+									"time": 0.1,
+									"s": "once",
+									"v": [
+										0,
+										0.2
+									]
+								}
+							]
+						},
+						"s-메시": {
+							"불꽃": [
+								{
+									"time": 0,
+									"s": "pingpong",
+									"v": [
+										1,
+										0.1
+									]
+								}
+							]
+						}
+					}
+				}
+			}
+		]
+	},
+	"editor": {}
+}

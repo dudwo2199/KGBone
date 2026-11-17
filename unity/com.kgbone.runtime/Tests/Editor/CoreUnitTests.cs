@@ -96,7 +96,7 @@ namespace KGBone.Tests
             Assert.AreEqual(32f, ((RegionAttachment)skin.Get("s", "a")).Height);
             Assert.AreEqual("p/q", skin.Get("s", "m").ImagePath("m"));
             Assert.AreEqual("seq02", skin.Get("s", "seq").ImagePath("seq"));
-            Assert.IsTrue(m.HasSequence);
+            CollectionAssert.IsSubsetOf(new[] { "seq01", "seq02", "seq03" }, System.Linq.Enumerable.ToArray(KGBoneLoader.ImagePaths(m)));
             var a = m.FindAnimation("w");
             Assert.AreEqual(3f, a.Duration);
             var keys = a.Bones[0].Keys;

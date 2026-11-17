@@ -28,13 +28,16 @@ const TARGETS = [
   // 물리: 한 엔진으로 연속 요청한 결과를 프레임마다 저장한다(stateful, 아래 sequence)
   ["spine43-physics", "samples/spine43/physics.json", { stateful: true }],
   ["unity-stage2-physics", "samples/kgbone/unity-stage2-physics.kgbone", { stateful: true }],
+  // 시퀀스: 프레임 경계를 지나도록 0.05초 간격 시점을 더한다
+  ["unity-stage3-sequence", "samples/kgbone/unity-stage3-sequence.kgbone", { times: Array.from({ length: 25 }, (_, i) => Math.fround(i * 0.05)) }],
 ];
 
 /** 애니메이션 길이 d에 대한 요청들(시점, 반복 재생, 이벤트 구간) */
-function requests(skin, anim, d) {
+function requests(skin, anim, d, times = []) {
   const r = (time, lastTime, looping) => ({ animation: anim, time, lastTime, skin, looping });
   if (anim === null) return [r(0, null, false)];
   return [
+    ...times.map((t) => r(t, null, false)),
     r(0, null, false), r(d / 3, null, false), r(d / 2, null, false), r((2 * d) / 3, null, false), r(d, null, false),
     r(1.5 * d, null, true),
     r(d / 2, 0, false),
@@ -107,7 +110,7 @@ for (const [name, rel, opts = {}] of TARGETS) {
   }
   for (const skin of opts.stateful ? [] : skins) {
     for (const anim of [null, ...anims]) {
-      for (const request of requests(skin, anim, anim ? durations[anim] : 0)) {
+      for (const request of requests(skin, anim, anim ? durations[anim] : 0, opts.times)) {
         const output = core.call({ method: "pose", request: { ...request, physics: "none" } });
         cases.push({ request, output: pick(output) });
       }

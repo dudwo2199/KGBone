@@ -15,6 +15,8 @@ namespace KGBone.Core
         public readonly int[] DrawOrder;
         /// <summary>(슬롯, 첨부물) → 셋업 정점에 더할 변형 값(이번 계산에서 키가 있는 것만).</summary>
         public readonly Dictionary<(string slot, string attachment), float[]> Deform = new Dictionary<(string, string), float[]>();
+        /// <summary>(슬롯, 첨부물) → 시퀀스 프레임 번호(이번 계산에서 키가 있는 것만, 없으면 셋업 프레임).</summary>
+        public readonly Dictionary<(string slot, string attachment), int> SequenceFrames = new Dictionary<(string, string), int>();
         /// <summary>
         /// 제약마다 현재 값(제약 순서, 핵심 constraint_values와 같은 모양):
         /// ik [mix, softness, bendPositive(1/−1), compress(0/1), stretch(0/1)], transform [mixRotate, mixX, mixY, mixScaleX, mixScaleY, mixShearY],
@@ -88,6 +90,7 @@ namespace KGBone.Core
                 DrawOrder[i] = i;
             }
             Deform.Clear();
+            SequenceFrames.Clear();
             for (int i = 0; i < ConstraintValues.Length; i++) System.Array.Copy(ConstraintSetup[i], ConstraintValues[i], ConstraintSetup[i].Length);
         }
 

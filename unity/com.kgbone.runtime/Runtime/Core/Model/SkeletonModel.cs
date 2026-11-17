@@ -27,7 +27,6 @@ namespace KGBone.Core
         public List<ConstraintData> Constraints = new List<ConstraintData>();
         public int ConstraintCount => Constraints.Count;
         public bool HasClipping;
-        public bool HasSequence;
 
         // 이름 → 번호 사전. 매 프레임 찾으므로 람다 검색(할당) 대신 사전을 쓴다. 목록 길이가 바뀌면(읽는 중) 다시 만든다.
         // 이름이 겹치면 처음 나온 것(List.FindIndex와 같음).

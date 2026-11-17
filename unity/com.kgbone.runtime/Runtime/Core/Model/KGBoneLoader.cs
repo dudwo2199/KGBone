@@ -45,8 +45,13 @@ namespace KGBone.Core
             foreach (var skin in m.Skins)
                 foreach (var (_, name, att) in skin.All())
                 {
-                    string p = att.ImagePath(name);
-                    if (p != null && seen.Add(p)) yield return p;
+                    // 시퀀스는 키로 넘길 수 있는 모든 프레임 이미지
+                    int frames = att.Sequence != null ? Math.Max(att.Sequence.Count, 1) : 1;
+                    for (int f = 0; f < frames; f++)
+                    {
+                        string p = att.Sequence != null ? att.ImagePath(name, f) : att.ImagePath(name);
+                        if (p != null && seen.Add(p)) yield return p;
+                    }
                 }
         }
 
@@ -234,7 +239,6 @@ namespace KGBone.Core
                 {
                     var att = ReadAttachment(a.Value);
                     if (att is OtherAttachment o && o.Type == "clipping") m.HasClipping = true;
-                    if (att.Sequence != null) m.HasSequence = true;
                     map[a.Key] = att;
                 }
                 skin.Attachments[slot.Key] = map;
@@ -387,7 +391,8 @@ namespace KGBone.Core
                         a.Deform.Add(new DeformTimeline { Skin = skin.Key, Slot = slot.Key, Attachment = att.Key, Keys = ReadKeys(att.Value, ref d) });
             foreach (var skin in v.Get("sequence")?.Members ?? new KeyValuePair<string, JsonValue>[0])
                 foreach (var slot in skin.Value.Members)
-                    foreach (var att in slot.Value.Members) ReadKeys(att.Value, ref d);
+                    foreach (var att in slot.Value.Members)
+                        a.Sequences.Add(new SequenceTimeline { Skin = skin.Key, Slot = slot.Key, Attachment = att.Key, Keys = ReadKeys(att.Value, ref d) });
             foreach (var k in Items(v.Get("drawOrder")))
             {
                 var dk = new DrawOrderKey { Time = F(k, "time", 0) };
