@@ -350,6 +350,58 @@ namespace KGBone.Tests
         }
 
         [Test]
+        public void m19_poser_tracks_equal_plain_request()
+        {
+            var text = System.IO.File.ReadAllText(System.IO.Path.Combine(GoldenFile.GoldenDir(), "unity-stage1.kgbone"));
+            var m = KGBoneLoader.Load(text);
+            foreach (var anim in m.Animations)
+            {
+                var plain = new SkeletonPoser(m);
+                var byTrack = new SkeletonPoser(m);
+                var tracks = new AnimationTracks(m);
+                tracks.SetAnimation(0, anim.Name, true, 0);
+                float time = 0;
+                foreach (float dt in new[] { 0.1f, 0.37f, 0.5f, 0.016f, 0.9f, 0.25f })
+                {
+                    float last = time;
+                    time += dt;
+                    var a = plain.Compute(new PoseRequest { Animation = anim.Name, Time = time, LastTime = last, Looping = true });
+                    var aBones = (WorldBone[])a.Bones.Clone();
+                    var aDraw = a.Draw.Select(d => d.Positions.ToArray()).ToList();
+                    var aEvents = a.Events.Select(e => e.Name + "@" + e.Time).ToList();
+                    tracks.Update(dt, null);
+                    var b = byTrack.Compute(new PoseRequest { Tracks = tracks, LastTime = last });
+                    string at = anim.Name + "@" + time;
+                    for (int i = 0; i < aBones.Length; i++)
+                    {
+                        Assert.AreEqual(aBones[i].A, b.Bones[i].A, at);
+                        Assert.AreEqual(aBones[i].X, b.Bones[i].X, at);
+                        Assert.AreEqual(aBones[i].Y, b.Bones[i].Y, at);
+                    }
+                    Assert.AreEqual(aDraw.Count, b.Draw.Count, at);
+                    for (int i = 0; i < aDraw.Count; i++) CollectionAssert.AreEqual(aDraw[i], b.Draw[i].Positions, at);
+                    CollectionAssert.AreEqual(aEvents, b.Events.Select(e => e.Name + "@" + e.Time).ToList(), at);
+                    foreach (var e in b.Events) Assert.AreEqual(anim.Name, e.Animation);
+                }
+            }
+        }
+
+        [Test]
+        public void m19_poser_two_tracks_events_tagged()
+        {
+            var m = KGBoneLoader.Load(TrackModelJson);
+            var poser = new SkeletonPoser(m);
+            var tracks = new AnimationTracks(m);
+            tracks.SetAnimation(0, "걷기", false, 0);
+            tracks.SetAnimation(1, "달리기", false, 0);
+            tracks.Update(0.6f, null);
+            var r = poser.Compute(new PoseRequest { Tracks = tracks, LastTime = 0 });
+            CollectionAssert.AreEqual(new[] { "0:걷기", "1:달리기" }, r.Events.Select(e => e.Track + ":" + e.Animation).ToArray());
+            // 이벤트를 내지 않는 계산(LastTime 없음)
+            Assert.AreEqual(0, poser.Compute(new PoseRequest { Tracks = tracks }).Events.Count);
+        }
+
+        [Test]
         public void m19_unknown_name_returns_null()
         {
             var r = new TrackRig();

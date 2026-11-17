@@ -26,6 +26,11 @@ namespace KGBone.Core
         public bool Looping;
         /// <summary>물리 진행 방법(기본: 진행하지 않음).</summary>
         public PhysicsStep Physics = PhysicsStep.None;
+        /// <summary>
+        /// 트랙 재생(유니티 전용). null이 아니면 Animation·Time·Looping 대신 트랙을 적용한다.
+        /// 이벤트·물리 reset 키는 LastTime이 있을 때만(값은 쓰지 않고 "이번 계산에서 낼지" 표시로만) 트랙의 마지막 Update 구간으로 낸다.
+        /// </summary>
+        public AnimationTracks Tracks;
         /// <summary>이번 프레임 바깥(GameObject) 움직임(뼈대 좌표, 반영 비율을 곱한 값). 물리 질점의 관성으로 들어간다. 기본 0.</summary>
         public WorldMotion WorldMotion;
     }
